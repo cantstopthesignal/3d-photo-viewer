@@ -2,11 +2,11 @@
 
 goog.provide('pics3.main');
 
-goog.require('pics3.App');
 goog.require('goog.asserts');
 goog.require('goog.debug.Console');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
+goog.require('pics3.App');
 
 // To appease closure missing types warnings.
 goog.require('goog.debug.ErrorHandler');
