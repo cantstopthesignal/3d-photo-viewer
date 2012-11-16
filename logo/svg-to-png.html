@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<script type="text/javascript">
+window.addEventListener('load', function() {
+  var canvasEl = document.createElement('canvas');
+  canvasEl.width = "256";
+  canvasEl.height = "256";
+  document.body.appendChild(canvasEl);
+  var ctx = canvasEl.getContext('2d');
+
+  // NOTE: All embedded images should be data urls.
+  var imgSrc = 'logo256.svg';
+
+  var img = new Image();
+  img.onload = function() {
+    window.console.log('imageload');
+    ctx.drawImage(img, 0, 0);
+    var imgData = canvasEl.toDataURL("image/png");
+    var img3 = document.createElement('img');
+    img3.src = imgData;
+    document.body.appendChild(img3);
+  }
+  img.src = imgSrc;
+
+  var img2 = document.createElement('img');
+  img2.src = imgSrc;
+  document.body.appendChild(img2);
+}, true);
+</script>
+<style>
+</style>
+</head>
+<body>
+</body>
+</html>

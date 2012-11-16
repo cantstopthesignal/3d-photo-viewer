@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+    "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="128px" height="128px" version="1.0"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink= "http://www.w3.org/1999/xlink">
+  <xrect x="0" y="0" width="128" height="128" fill="#eee" />
+  <g transform="translate(30, -20) rotate(30) skewX(28) skewY(-15)" >
+    <rect x="2" y="18" width="110" height="83" stroke="black" fill="#fdfdfd" />
+    <image xlink:href="hillside3.jpg" x="7" y="9" height="100px" width="100px"/>
+    <image xlink:href="person-outline2.png" x="-48" y="38" height="80px"
+        width="80px"/>
+    <image xlink:href="person-outline1.png" x="10" y="38" height="80px"
+        width="80px"/>
+  </g>
+</svg>
