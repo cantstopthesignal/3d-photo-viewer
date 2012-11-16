@@ -23,7 +23,8 @@ goog.inherits(pics3.Auth, goog.events.EventTarget);
 
 pics3.Auth.GAPI_API_KEY = 'AIzaSyA7jCmXxuW-fZk1_OZGJ2HRwVY2z1vGDhQ';
 pics3.Auth.GAPI_CLIENT_ID = '416949524888.apps.googleusercontent.com';
-pics3.Auth.GAPI_SCOPES = ['https://www.googleapis.com/auth/drive'];
+pics3.Auth.GAPI_SCOPES = ['https://www.googleapis.com/auth/drive.readonly',
+    'https://www.googleapis.com/auth/drive.install'];
 
 /** @type {goog.debug.Logger} */
 pics3.Auth.prototype.logger_ = goog.debug.Logger.getLogger('pics3.Auth');
