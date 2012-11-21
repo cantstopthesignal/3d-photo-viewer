@@ -27,6 +27,53 @@ a:hover {
 .app {
   height: 100%;
 }
+.app-bar {
+  background-color: #666;
+  position: relative;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 8px;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* FF lt 4 */
+  -webkit-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* Safari le 5 */
+}
+.app-bar-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.app-icon {
+  display: inline-block;
+  overflow: hidden;
+  width: 32px;
+  height: 32px;
+}
+.app-icon > .inner {
+  width: 32px;
+  height: 32px;
+  background: url(/images/logo64.png) no-repeat;
+  background-size: contain;
+}
+.app-bar-main-menu {
+  color: white;
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+  font-size: 18px;
+  height: 32px;
+  line-height: 32px;
+}
+.app-bar-main-menu > .title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+  margin-right: 24px;
+}
+.app-bar > .spinner {
+  float: right;
+  margin: 2px 5px 2px 0;
+}
 .footer {
   color: #ddd;
   text-align: center;
@@ -35,6 +82,32 @@ a:hover {
 }
 .footer > a {
   color: #99f;
+}
+.media-picker {
+  background-color: #89b;
+  width: 100%;
+  height: 48px;
+  padding: 8px;
+  box-sizing: border-box;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* FF lt 4 */
+  -webkit-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* Safari le 5 */
+  position: relative;
+}
+.media-picker-button {
+  background-color: #89b;
+  color: #f0f8ff;
+  cursor: pointer;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  display: inline-block;
+  text-align: center;
+  line-height: 32px;
+  font-size: 18px;
+  padding: 0px 16px 8px 16px;
+  margin-bottom: -8px;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 .button {
   background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
