@@ -20,6 +20,7 @@ goog.inherits(pics3.AllTests, goog.events.EventTarget);
 
 /** @type {Array.<string>} */
 pics3.AllTests.TESTS = [
+    'parser/mpotest.html'
     ];
 
 /** @type {goog.testing.MultiTestRunner} */

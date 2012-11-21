@@ -11,6 +11,7 @@ goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 goog.require('pics3.AppContext');
 goog.require('pics3.Auth');
+goog.require('pics3.parser.Mpo');
 
 
 /**
