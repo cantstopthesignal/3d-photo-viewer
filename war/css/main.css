@@ -74,13 +74,12 @@ a:hover {
   float: right;
   margin: 2px 5px 2px 0;
 }
-.footer {
+.about-content {
   color: #ddd;
-  text-align: center;
   font-size: 13px;
   padding: 10px;
 }
-.footer > a {
+.about-content a {
   color: #99f;
 }
 .media-picker {
@@ -94,20 +93,26 @@ a:hover {
   -webkit-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* Safari le 5 */
   position: relative;
 }
-.media-picker-button {
-  background-color: #89b;
-  color: #f0f8ff;
+.app-bar-button {
   cursor: pointer;
-  border-top-left-radius: 2px;
-  border-top-right-radius: 2px;
-  display: inline-block;
-  text-align: center;
-  line-height: 32px;
-  font-size: 18px;
-  padding: 0px 16px 8px 16px;
-  margin-bottom: -8px;
   box-sizing: border-box;
   vertical-align: middle;
+  display: inline-block;
+  text-align: center;
+  font-size: 18px;
+  color: white;
+  margin-right: 16px;
+  line-height: 32px;
+}
+.media-picker-button {
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  padding: 0px 16px 8px 16px;
+  margin-bottom: -8px;
+}
+.media-picker-button.active {
+  background-color: #89b;
+  color: #f0f8ff;
 }
 .button {
   background: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ccc));
@@ -151,4 +156,14 @@ a:hover {
   display: inline-block;
   width: 28px;
   height: 28px;
+}
+.album-view {
+  outline: 0;
+}
+.photo-display {
+  position: relative;
+}
+.photo-display > .image {
+  display: inline-block;
+  position: absolute;
 }

@@ -7,6 +7,7 @@ goog.require('goog.dom');
 goog.require('goog.events.EventTarget');
 goog.require('goog.style');
 
+
 /**
  * @constructor
  * @extends {goog.events.EventTarget}

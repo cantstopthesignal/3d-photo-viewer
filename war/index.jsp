@@ -49,12 +49,21 @@
   </head>
   <body class="main">
     <div class="app"></div>
-    <div class="footer">
-      Contact by
-      <a href="mailto:cantstopthesignals@gmail.com">Email</a> or
-      <a target="_blank" href="http://www.reddit.com/user/CantStopTheSignal/">Reddit</a>
-      &nbsp;
-      <a target="_blank" href="https://github.com/cantstopthesignal/3d-photo-viewer">Project source</a>
+    <div class="about-content">
+      <h2>3d Photo Viewer</h2>
+      <p>Contact by:
+        <ul>
+          <li>
+            Email: <a href="mailto:cantstopthesignals@gmail.com">cantstopthesignals@gmail.com</a>
+          </li>
+          <li>
+            Reddit: <a target="_blank" href="http://www.reddit.com/user/CantStopTheSignal/">CantStopTheSignal</a>
+          </li>
+        </ul>
+      </p>
+      <p>
+        <a target="_blank" href="https://github.com/cantstopthesignal/3d-photo-viewer">Project source</a>
+      </p>
     </div>
   </body>
 </html>
