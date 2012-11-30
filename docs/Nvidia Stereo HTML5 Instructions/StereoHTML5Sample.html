@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>HTML5 Video Player</title>
+
+  <script launguage="Javascript" src="NvStereoUtils.js"></script>
+  <!-- Include the VideoJS Library -->
+  <script src="video.js" type="text/javascript" charset="utf-8"></script>
+
+  <script type="text/javascript">
+    // Must come after the video.js library
+
+    // Add VideoJS to all video tags on the page when the DOM is ready
+    VideoJS.setupAllWhenReady();
+
+  </script>
+
+  <!-- Include the VideoJS Stylesheet -->
+  <link rel="stylesheet" href="video-js.css" type="text/css" media="screen" title="Video JS">
+</head>
+<body>
+
+  <h1> NVIDIA 3D Vision Detection </h1>
+  <div id="message">
+  </div>
+
+  <!-- Begin VideoJS -->
+  <div class="video-js-box">
+    <!-- Using the Video for Everybody Embed Code http://camendesign.com/code/video_for_everybody -->
+    <video id="example_video_1" class="video-js" width="640" height="360" controls="controls" preload="auto" >
+    <!-- <source src="" type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"' /> -->
+      <source src="http://www.3dvisionlive.com/sites/default/files/NVIDIA_3DVision.webm" type='video/webm; codecs="vp8, vorbis"' />
+      <source src="NVIDIA_3DVision.webm" type='video/webm; codecs="vp8, vorbis"' />
+    </video>
+    <p>
+      <!-- Support VideoJS by keeping this link. -->
+      <a href="http://videojs.com">HTML5 Video Player</a> by VideoJS
+    </p>
+  </div>
+  <!-- End VideoJS -->
+
+  <script type="text/javascript">
+    var utils = new NvStereoUtils();
+    var isPresent;
+    var message;
+
+    isPresent = utils.NvIsDriverPresent();
+    
+    if (!isPresent) {
+        message = "NVIDIA 3DVision system not detected. Please use a system with valid 3DVision graphics kit and latest NVIDIA driver. Your video will be in 2D. ";
+    }
+    else {
+        if (utils.NvIsStereoCapable())
+	    message = "Stereo is capable. <br>";
+        else
+	    message = "Stereo is NOT capable. <br>";
+
+        if (utils.NvIsStereoEnabled())
+	    message = message + "Stereo is enabled. <br>";
+        else
+	    message = message + "Stereo is NOT enabled. <br>";
+
+        message = message + "NV Driver version: " + utils.NvGetDriverVersion();
+    }
+
+    document.getElementById("message").innerHTML = message;
+  </script>
+
+</body>
+</html>
