@@ -2,12 +2,12 @@
 
 goog.provide('pics3.PhotoList');
 
-goog.require('goog.Disposable');
 goog.require('goog.asserts');
+goog.require('goog.events.EventTarget');
 
 
 /**
- * @extends {goog.Disposable}
+ * @extends {goog.events.EventTarget}
  * @constructor
  */
 pics3.PhotoList = function() {
@@ -16,11 +16,17 @@ pics3.PhotoList = function() {
   /** @type {!Array.<!pics3.Photo>} */
   this.photos = [];
 };
-goog.inherits(pics3.PhotoList, goog.Disposable);
+goog.inherits(pics3.PhotoList, goog.events.EventTarget);
+
+/** @enum {string} */
+pics3.PhotoList.EventType = {
+  CHANGED: goog.events.getUniqueId('changed')
+};
 
 /** @param {!pics3.Photo} photo */
 pics3.PhotoList.prototype.add = function(photo) {
   this.photos.push(photo);
+  this.dispatchEvent(pics3.PhotoList.EventType.CHANGED);
 };
 
 /** @return {number} */

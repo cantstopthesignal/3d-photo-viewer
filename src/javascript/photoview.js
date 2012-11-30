@@ -29,6 +29,10 @@ pics3.PhotoView = function(photo) {
 };
 goog.inherits(pics3.PhotoView, pics3.Component);
 
+/** @type {goog.debug.Logger} */
+pics3.PhotoView.prototype.logger_ = goog.debug.Logger.getLogger(
+    'pics3.PhotoView');
+
 pics3.PhotoView.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'photo-view');
@@ -38,11 +42,11 @@ pics3.PhotoView.prototype.createDom = function() {
 
 pics3.PhotoView.prototype.updateDisplay_ = function() {
   if (this.photo_.getState() == pics3.Photo.State.ERROR) {
-    window.console.error('Update photo: error' + this.photo_.getError());
+    this.logger_.severe('Update photo: error' + this.photo_.getError());
     return;
   } else if (this.photo_.getState() == pics3.Photo.State.LOADED) {
     goog.dispose(this.display_);
-    if (this.photo_.getType() == pics3.Photo.Type.MPO) {
+    if (this.photo_.getMimeType() == pics3.Photo.MimeType.MPO) {
       this.display_ = new pics3.display.ThreeDCross(this.photo_);
       this.display_.render(this.el);
     } else {

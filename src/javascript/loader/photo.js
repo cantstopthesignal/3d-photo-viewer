@@ -1,6 +1,6 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('pics3.PhotoLoader');
+goog.provide('pics3.loader.Photo');
 
 goog.require('goog.Disposable');
 goog.require('goog.asserts');
@@ -10,9 +10,9 @@ goog.require('goog.asserts');
  * @constructor
  * @extends {goog.Disposable}
  */
-pics3.PhotoLoader = function() {
+pics3.loader.Photo = function() {
 };
-goog.inherits(pics3.PhotoLoader, goog.Disposable);
+goog.inherits(pics3.loader.Photo, goog.Disposable);
 
 /** @return {goog.async.Deferred} */
-pics3.PhotoLoader.prototype.loadAsync = goog.abstractMethod;
+pics3.loader.Photo.prototype.loadAsync = goog.abstractMethod;

@@ -17,13 +17,18 @@ goog.require('pics3.Service');
 pics3.MediaManager = function() {
   goog.base(this);
 
-  /** @type {!pics3.PhotoList} */
-  this.uploadPhotoList_ = new pics3.PhotoList();
-  this.registerDisposable(this.uploadPhotoList_);
+  /** @type {!Object.<pics3.MediaManager.Source,!pics3.PhotoList>} */
+  this.photoListMap_ = {};
 };
 goog.inherits(pics3.MediaManager, goog.events.EventTarget);
 
 pics3.MediaManager.SERVICE_ID = 's' + goog.getUid(pics3.MediaManager);
+
+/** @enum {string} */
+pics3.MediaManager.Source = {
+  UPLOAD: 'UPLOAD',
+  GOOGLE_DRIVE: 'GOOGLE_DRIVE'
+};
 
 /**
  * @param {!pics3.AppContext} appContext
@@ -43,12 +48,22 @@ pics3.MediaManager.prototype.register = function(appContext) {
   appContext.register(pics3.MediaManager.SERVICE_ID, this);
 };
 
-/** @return {!pics3.PhotoList} */
-pics3.MediaManager.prototype.getUploadPhotoList = function() {
-  return this.uploadPhotoList_;
+/**
+ * @param {pics3.MediaManager.Source} source
+ * @return {!pics3.PhotoList}
+ */
+pics3.MediaManager.prototype.getPhotoList = function(source) {
+  var photoList = this.photoListMap_[source];
+  if (!photoList) {
+    photoList = new pics3.PhotoList();
+    this.photoListMap_[source] = photoList;
+  }
+  return photoList;
 };
 
 /** @override */
 pics3.MediaManager.prototype.disposeInternal = function() {
+  goog.disposeAll(goog.object.getValues(this.photoListMap_));
+  this.photoListMap_ = {};
   goog.base(this, 'disposeInternal');
 };

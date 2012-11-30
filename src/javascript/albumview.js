@@ -42,6 +42,7 @@ pics3.AlbumView.prototype.createDom = function() {
 
 /** @param {pics3.PhotoList} photoList */
 pics3.AlbumView.prototype.setPhotoList = function(photoList) {
+  this.focus();
   if (photoList == this.photoList_) {
     return;
   }
@@ -111,11 +112,11 @@ pics3.AlbumView.prototype.resizePhotoView_ = function() {
 /** @param {goog.events.BrowserEvent} e */
 pics3.AlbumView.prototype.handleKeyDown_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.LEFT) {
-    if (this.photoIndex_ > 0) {
+    if (this.photoList_ && this.photoIndex_ > 0) {
       this.displayPhotoByIndex_(this.photoIndex_ - 1);
     }
   } else if (e.keyCode == goog.events.KeyCodes.RIGHT) {
-    if (this.photoIndex_ + 1 < this.photoList_.getLength()) {
+    if (this.photoList_ && this.photoIndex_ + 1 < this.photoList_.getLength()) {
       this.displayPhotoByIndex_(this.photoIndex_ + 1);
     }
   }

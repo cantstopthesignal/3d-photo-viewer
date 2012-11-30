@@ -83,18 +83,6 @@ a:hover {
 .about-content a {
   color: #99f;
 }
-.media-picker {
-  background-color: #89b;
-  width: 100%;
-  height: 48px;
-  padding: 8px;
-  box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);
-  -moz-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* FF lt 4 */
-  -webkit-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* Safari le 5 */
-  position: relative;
-}
 .app-bar-button {
   cursor: pointer;
   box-sizing: border-box;
@@ -107,15 +95,46 @@ a:hover {
   margin-right: 16px;
   line-height: 32px;
 }
-.media-picker-button {
+.source-picker {
+  background-color: #89b;
+  width: 100%;
+  height: 48px;
+  padding: 4px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* FF lt 4 */
+  -webkit-box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);  /* Safari le 5 */
+  position: relative;
+}
+.source-picker-button {
   border-top-left-radius: 2px;
   border-top-right-radius: 2px;
   padding: 0px 16px 8px 16px;
   margin-bottom: -8px;
 }
-.media-picker-button.active {
+.source-picker-button.active {
   background-color: #89b;
   color: #f0f8ff;
+}
+.source-tile {
+  cursor: pointer;
+  display: inline-block;
+  padding: 4px;
+  margin-right: 4px;
+}
+.source-tile:hover {
+  background-color: #78a;
+}
+.source-tile.selected {
+  background-color: #7080a0;
+  }
+.source-tile > .note {
+  display: inline-block;
+  color: #f0f8ff;
+  padding: 0px 8px;
+  font-size: 14px;
+  line-height: 32px;
 }
 .button {
   background: -moz-linear-gradient(top, #eee, #ccc);
@@ -171,4 +190,17 @@ a:hover {
 .photo-display > .image {
   display: inline-block;
   position: absolute;
+}
+.google-drive-logo {
+  background-image: url(/images/googledriveicon48.png);
+  background-size: contain;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+.source-tile > .note > .google-drive-logo {
+  vertical-align: middle;
+}
+.source-tile > .button .google-drive-logo {
+  vertical-align: top;
 }

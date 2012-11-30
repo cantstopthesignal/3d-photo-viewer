@@ -10,7 +10,7 @@ goog.require('pics3.parser.Mpo');
 
 
 /**
- * @param {!pics3.PhotoLoader} loader
+ * @param {!pics3.loader.Photo} loader
  * @extends {goog.Disposable}
  * @constructor
  */
@@ -18,7 +18,7 @@ pics3.Photo = function(loader) {
   /** @type {number} */
   this.id_ = pics3.Photo.nextId_++;
 
-  /** @type {!pics3.PhotoLoader} */
+  /** @type {!pics3.loader.Photo} */
   this.loader_ = loader;
   this.registerDisposable(this.loader_);
 
@@ -29,16 +29,16 @@ goog.inherits(pics3.Photo, goog.Disposable);
 
 /**
  * @param {!ArrayBuffer} buffer
- * @param {string=} opt_type
+ * @param {string=} opt_mimeType
  * @param {string=} opt_name
  * @constructor
  */
-pics3.Photo.LoadResult = function(buffer, opt_type, opt_name) {
+pics3.Photo.LoadResult = function(buffer, opt_mimeType, opt_name) {
   /** @type {!ArrayBuffer} */
   this.buffer = buffer;
 
   /** @type {?string} */
-  this.type = opt_type || null;
+  this.mimeType = opt_mimeType || null;
 
   /** @type {?string} */
   this.name = opt_name || null;
@@ -53,7 +53,7 @@ pics3.Photo.State = {
 };
 
 /** @enum {string} */
-pics3.Photo.Type = {
+pics3.Photo.MimeType = {
   MPO: 'image/mpo',
   JPG: 'image/jpeg',
   PNG: 'image/png',
@@ -63,11 +63,19 @@ pics3.Photo.Type = {
 /** @type {number} */
 pics3.Photo.nextId_ = 1;
 
+/**
+ * @param {string} mimeType
+ * @return {boolean}
+ */
+pics3.Photo.isSupportedMimeType = function(mimeType) {
+  return goog.object.containsValue(pics3.Photo.MimeType, mimeType);
+};
+
 /** @type {ArrayBuffer} */
 pics3.Photo.prototype.buffer_;
 
 /** @type {?string} */
-pics3.Photo.prototype.type_;
+pics3.Photo.prototype.mimeType_;
 
 /** @type {?string} */
 pics3.Photo.prototype.name_;
@@ -102,13 +110,13 @@ pics3.Photo.prototype.stateIn = function(var_args) {
 };
 
 /** @return {boolean} */
-pics3.Photo.prototype.hasType = function() {
-  return !!this.type_;
+pics3.Photo.prototype.hasMimeType = function() {
+  return !!this.mimeType_;
 };
 
 /** @return {?string} */
-pics3.Photo.prototype.getType = function() {
-  return this.type_;
+pics3.Photo.prototype.getMimeType = function() {
+  return this.mimeType_;
 };
 
 /** @return {Error} */
@@ -119,7 +127,7 @@ pics3.Photo.prototype.getError = function() {
 /** @return {number} */
 pics3.Photo.prototype.getImageCount = function() {
   goog.asserts.assert(this.state_ == pics3.Photo.State.LOADED);
-  if (this.type_ == pics3.Photo.Type.MPO) {
+  if (this.mimeType_ == pics3.Photo.MimeType.MPO) {
     return this.mpo_.getImages().length;
   }
   return 1;
@@ -132,12 +140,12 @@ pics3.Photo.prototype.getImageCount = function() {
 pics3.Photo.prototype.getImageDataUrl = function(index) {
   goog.asserts.assert(this.state_ == pics3.Photo.State.LOADED);
   goog.asserts.assert(index < this.getImageCount());
-  goog.asserts.assertString(this.type_);
-  if (this.type_ == pics3.Photo.Type.MPO) {
+  goog.asserts.assertString(this.mimeType_);
+  if (this.mimeType_ == pics3.Photo.MimeType.MPO) {
     return this.mpo_.getImages()[index].toDataUrl();
   }
   return pics3.parser.DataUrl.fromUint8Array(
-      this.type_, new Uint8Array(this.buffer_));
+      this.mimeType_, new Uint8Array(this.buffer_));
 };
 
 /** @return {!goog.async.Deferred} */
@@ -147,20 +155,16 @@ pics3.Photo.prototype.loadAsync = function() {
     this.state_ = pics3.Photo.State.LOADING;
     this.loadDeferred_ = this.loader_.loadAsync().addCallback(function(result) {
           this.buffer_ = result.buffer;
-          this.type_ = result.type;
+          this.mimeType_ = result.mimeType;
           this.name_ = result.name;
         }, this).
         addCallback(this.parseMpoAsync_, this).
         addCallback(function() {
           this.state_ = pics3.Photo.State.LOADED;
-          delete this.loadDeferred_;
         }, this).addErrback(function(err) {
           this.error_ = err;
           this.state_ = pics3.Photo.State.ERROR;
-          delete this.loadDeferred_;
         }, this);
-  } else {
-    goog.asserts.assert(this.state_ == pics3.Photo.State.LOADING);
   }
   return this.loadDeferred_.branch();
 };
@@ -168,13 +172,13 @@ pics3.Photo.prototype.loadAsync = function() {
 pics3.Photo.prototype.parseMpoAsync_ = function() {
   goog.asserts.assert(!this.mpo_);
   goog.asserts.assert(this.buffer_ instanceof ArrayBuffer);
-  if (this.hasType() && this.getType() != pics3.Photo.Type.MPO) {
+  if (this.hasMimeType() && this.getMimeType() != pics3.Photo.MimeType.MPO) {
     return;
   }
   this.mpo_ = new pics3.parser.Mpo();
   var deferred = new goog.async.Deferred();
   if (this.mpo_.parse(this.buffer_)) {
-    this.type_ = pics3.Photo.Type.MPO;
+    this.mimeType_ = pics3.Photo.MimeType.MPO;
     deferred.callback(null);
   } else {
     deferred.errback(this.mpo_.getError());

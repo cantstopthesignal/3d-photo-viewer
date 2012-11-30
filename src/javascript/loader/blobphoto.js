@@ -1,18 +1,18 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('pics3.BlobPhotoLoader');
+goog.provide('pics3.loader.BlobPhoto');
 
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
-goog.require('pics3.PhotoLoader');
+goog.require('pics3.loader.Photo');
 
 
 /**
  * @param {!Blob} blob
- * @extends {pics3.PhotoLoader}
+ * @extends {pics3.loader.Photo}
  * @constructor
  */
-pics3.BlobPhotoLoader = function(blob) {
+pics3.loader.BlobPhoto = function(blob) {
   goog.base(this);
 
   /** @type {!Blob} */
@@ -22,10 +22,10 @@ pics3.BlobPhotoLoader = function(blob) {
   this.eventHandler = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler);
 };
-goog.inherits(pics3.BlobPhotoLoader, pics3.PhotoLoader);
+goog.inherits(pics3.loader.BlobPhoto, pics3.loader.Photo);
 
 /** @override */
-pics3.BlobPhotoLoader.prototype.loadAsync = function() {
+pics3.loader.BlobPhoto.prototype.loadAsync = function() {
   var fileReader = new FileReader();
   var deferred = new goog.async.Deferred();
 
