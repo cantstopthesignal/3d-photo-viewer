@@ -108,7 +108,7 @@ pics3.GooglePickerClient.prototype.loadGoogleLoaderAndPicker_ = function() {
   var scriptEl = document.createElement("script");
   scriptEl.async = true;
   scriptEl.type = "text/javascript";
-  scriptEl.src = "http://www.google.com/jsapi?autoload=" +
+  scriptEl.src = "https://www.google.com/jsapi?autoload=" +
       encodeURIComponent(moduleString);
   document.body.appendChild(scriptEl);
 };
