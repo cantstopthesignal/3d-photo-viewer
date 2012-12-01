@@ -94,7 +94,7 @@ pics3.source.GoogleDriveTile.prototype.handlePhotoListChanged_ = function() {
 };
 
 pics3.source.GoogleDriveTile.prototype.handleClick_ = function() {
-  this.dispatchEvent(pics3.source.Tile.EventType.SELECT);
+  this.select();
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -119,11 +119,9 @@ pics3.source.GoogleDriveTile.prototype.displayPicker_ = function() {
 /** @param {pics3.GooglePickerClient.PickerEvent} e */
 pics3.source.GoogleDriveTile.prototype.handlePickerPick_ = function(e) {
   var photos = e.result.getPhotos();
-  goog.array.forEach(photos, function(photo) {
-    this.photoList_.add(photo);
-  }, this);
+  this.photoList_.addAll(photos);
   if (photos.length) {
-    this.dispatchEvent(pics3.source.Tile.EventType.SELECT);
+    this.select();
   }
 };
 

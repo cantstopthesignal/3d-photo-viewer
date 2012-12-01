@@ -74,6 +74,16 @@ pics3.source.Picker.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
+/** @param {!pics3.PhotoList} photoList */
+pics3.source.Picker.prototype.selectTileByPhotoList = function(photoList) {
+  var tile = goog.array.find(this.tiles_, function(tile) {
+    return tile.getPhotoList() == photoList;
+  }, this);
+  if (tile) {
+    tile.select();
+  }
+};
+
 /** @param {goog.events.Event} e */
 pics3.source.Picker.prototype.handleTileSelect_ = function(e) {
   goog.asserts.assertInstanceof(e.target, pics3.source.Tile);

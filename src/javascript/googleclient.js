@@ -106,7 +106,7 @@ pics3.GoogleClient.prototype.loadAsync = function() {
           goog.bind(this.invalidateToken_, this));
     }
   }
-  return this.loadDeferred_;
+  return this.loadDeferred_.branch();
 };
 
 /** @override */

@@ -2,10 +2,12 @@
 
 goog.provide('pics3.GoogleDriveApi');
 
-goog.require('pics3.Service');
+goog.require('goog.async.Deferred');
+goog.require('goog.async.DeferredList');
 goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
+goog.require('pics3.Service');
 
 
 /**
@@ -40,6 +42,11 @@ pics3.GoogleDriveApi.prototype.logger_ = goog.debug.Logger.getLogger(
 /** @param {!pics3.AppContext} appContext */
 pics3.GoogleDriveApi.prototype.register = function(appContext) {
   appContext.register(pics3.GoogleDriveApi.SERVICE_ID, this);
+};
+
+/** @return {goog.async.Deferred} */
+pics3.GoogleDriveApi.prototype.loadAsync = function() {
+  return this.googleClient_.loadAsync();
 };
 
 /**
@@ -87,6 +94,40 @@ pics3.GoogleDriveApi.prototype.loadFile = function(fileId) {
   };
   return this.callApi_('drive.files.get', 'v2', params).
       addCallbacks(callback, errback, this);
+};
+
+/**
+ * @param {!Array.<string>} fileIds
+ * @return {goog.async.Deferred}
+ */
+pics3.GoogleDriveApi.prototype.loadFileMetadatas = function(fileIds) {
+  var deferreds = [];
+  goog.array.forEach(fileIds, function(fileId) {
+    var params = {
+      'fileId': fileId
+    };
+    var callback = function(resp) {
+      goog.asserts.assert(resp['kind'] == 'drive#file');
+    }
+    var errback = function(error) {
+      this.logger_.severe('Error loading file: ' + error, error);
+    };
+    deferreds.push(this.callApi_('drive.files.get', 'v2', params).
+        addCallbacks(callback, errback, this));
+  }, this);
+  return new goog.async.DeferredList(deferreds, false, true).addBoth(
+      function(responses) {
+        var error;
+        var results = [];
+        goog.array.forEach(responses, function(resp) {
+          if (!resp[0]) {
+            error = resp[1];
+          } else {
+            results.push(resp[1]);
+          }
+        });
+        return error || results;
+      }, this);
 };
 
 /**

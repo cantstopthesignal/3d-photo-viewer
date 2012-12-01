@@ -87,7 +87,7 @@ pics3.source.UploadTile.prototype.handlePhotoListChanged_ = function() {
 };
 
 pics3.source.UploadTile.prototype.handleClick_ = function() {
-  this.dispatchEvent(pics3.source.Tile.EventType.SELECT);
+  this.select();
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -109,6 +109,6 @@ pics3.source.UploadTile.prototype.handleUploadFiles_ = function(fileEl, e) {
       var photo = new pics3.Photo(photoLoader);
       this.photoList_.add(photo);
     }, this);
-    this.dispatchEvent(pics3.source.Tile.EventType.SELECT);
+    this.select();
   }
 };

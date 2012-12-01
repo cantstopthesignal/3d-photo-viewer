@@ -73,7 +73,7 @@ pics3.GooglePickerClient.prototype.loadAsync = function() {
     this.loadStarted_ = true;
     this.loadGoogleLoaderAndPicker_();
   }
-  return this.loadDeferred_;
+  return this.loadDeferred_.branch();
 };
 
 /** @return {!pics3.GooglePickerClient.PickerBuilder} */

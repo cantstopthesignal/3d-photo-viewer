@@ -29,6 +29,15 @@ pics3.PhotoList.prototype.add = function(photo) {
   this.dispatchEvent(pics3.PhotoList.EventType.CHANGED);
 };
 
+/** @param {!Array.<!pics3.Photo>} photos */
+pics3.PhotoList.prototype.addAll = function(photos) {
+  if (!photos.length) {
+    return;
+  }
+  goog.array.extend(this.photos, photos);
+  this.dispatchEvent(pics3.PhotoList.EventType.CHANGED);
+};
+
 /** @return {number} */
 pics3.PhotoList.prototype.getLength = function() {
   return this.photos.length;

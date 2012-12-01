@@ -46,3 +46,7 @@ pics3.source.Tile.prototype.setSelected = function(selected) {
   this.selected = selected;
   goog.dom.classes.enable(this.el, 'selected', this.selected);
 };
+
+pics3.source.Tile.prototype.select = function() {
+  this.dispatchEvent(pics3.source.Tile.EventType.SELECT);
+};
