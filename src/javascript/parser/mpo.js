@@ -2,20 +2,23 @@
 
 goog.provide('pics3.parser.Mpo');
 
+goog.require('goog.Disposable');
 goog.require('goog.array');
 goog.require('goog.asserts');
-goog.require('goog.Disposable');
+goog.require('goog.debug.Logger');
 goog.require('pics3.parser.BaseParser');
 goog.require('pics3.parser.DataReader');
 goog.require('pics3.parser.DataUrl');
 goog.require('pics3.parser.Ifd');
 goog.require('pics3.parser.Exif');
 goog.require('pics3.parser.parseError');
+goog.require('pics3.parser.util');
 
 
 goog.scope(function() {
 
 var Exif = pics3.parser.Exif;
+var util = pics3.parser.util;
 
 /**
  * @extends {pics3.parser.BaseParser}
@@ -33,15 +36,20 @@ pics3.parser.Mpo = function() {
 var Mpo = pics3.parser.Mpo;
 goog.inherits(Mpo, pics3.parser.BaseParser);
 
-Mpo.FORMAT_IDENTIFIER = ['M'.charCodeAt(0), 'P'.charCodeAt(0),
-    'F'.charCodeAt(0), 0x00];
+/** @type {!Array.<number>} */
+Mpo.FORMAT_IDENTIFIER = goog.array.concat(util.strToCodeArray('MPF'), [0x00]);
 
-Mpo.VERSION = ['0'.charCodeAt(0), '1'.charCodeAt(0),
-    '0'.charCodeAt(0), '0'.charCodeAt(0)];
+/** @type {!Array.<number>} */
+Mpo.VERSION = util.strToCodeArray('0100');
 
+/** @type {number} */
 Mpo.IMAGE_DATA_FORMAT_JPEG = 0;
 
+/** @type {!Array.<number>} */
 Mpo.TYPE_CODE_DISPARITY = [0x02, 0x00, 0x02];
+
+/** @type {!goog.debug.Logger} */
+Mpo.prototype.logger_ = goog.debug.Logger.getLogger('pics3.parser.Mpo');
 
 /**
  * @param {ArrayBuffer} data
@@ -49,6 +57,7 @@ Mpo.TYPE_CODE_DISPARITY = [0x02, 0x00, 0x02];
  * @return {boolean}
  */
 Mpo.prototype.parse = function(data, opt_throwErrors) {
+  var startTime = goog.now();
   if (opt_throwErrors) {
     this.parseInternal(data);
   } else {
@@ -62,6 +71,7 @@ Mpo.prototype.parse = function(data, opt_throwErrors) {
       return false;
     }
   }
+  this.logger_.info('Parsed in ' + (goog.now() - startTime) + 'ms');
   return true;
 };
 

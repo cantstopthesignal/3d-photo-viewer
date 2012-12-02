@@ -8,7 +8,7 @@ goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('pics3.MediaManager');
 goog.require('pics3.Photo');
-goog.require('pics3.loader.BlobPhoto');
+goog.require('pics3.loader.BlobFile');
 goog.require('pics3.source.Tile');
 
 
@@ -105,7 +105,7 @@ pics3.source.UploadTile.prototype.handleUploadClick_ = function(e) {
 pics3.source.UploadTile.prototype.handleUploadFiles_ = function(fileEl, e) {
   if (fileEl.files.length) {
     goog.array.forEach(fileEl.files, function(file) {
-      var photoLoader = new pics3.loader.BlobPhoto(file);
+      var photoLoader = new pics3.loader.BlobFile(file);
       var photo = new pics3.Photo(photoLoader);
       this.photoList_.add(photo);
     }, this);

@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 goog.provide('pics3.parser.base64');
 
 goog.require('goog.asserts');
+goog.require('goog.debug.Logger');
 
 
 /**
@@ -35,6 +36,8 @@ goog.require('goog.asserts');
  */
 pics3.parser.base64.toUint8Array = function(input) {
   var base64 = pics3.parser.base64;
+
+  var startTime = goog.now();
 
   // Get last chars to see if are valid and skip padding chars
   var endKey1 = base64.keyStr_.indexOf(input.charAt(input.length - 1));
@@ -66,7 +69,8 @@ pics3.parser.base64.toUint8Array = function(input) {
     if (enc3 != 64) buffer[i+1] = chr2;
     if (enc4 != 64) buffer[i+2] = chr3;
   }
-
+  pics3.parser.base64.logger_.info('parse time ' + (
+      goog.now() - startTime) + 'ms');
   return buffer;
 };
 
@@ -77,8 +81,8 @@ pics3.parser.base64.toUint8Array = function(input) {
 pics3.parser.base64.fromUint8Array = function(input) {
   var base64 = pics3.parser.base64;
 
+  var startTime = goog.now();
   var output = "";
-
   var i = 0;
   while (i < input.byteLength) {
     var chr1 = input[i++];
@@ -99,8 +103,14 @@ pics3.parser.base64.fromUint8Array = function(input) {
     output += base64.keyStr_.charAt(enc1) + base64.keyStr_.charAt(enc2) +
         base64.keyStr_.charAt(enc3) + base64.keyStr_.charAt(enc4);
   }
+  pics3.parser.base64.logger_.info('generate time ' + (
+      goog.now() - startTime) + 'ms');
   return output;
 };
+
+/** @type {!goog.debug.Logger} */
+pics3.parser.base64.logger_ = goog.debug.Logger.getLogger(
+    'pics3.parser.base64');
 
 /** @type {string} */
 pics3.parser.base64.keyStr_ = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +

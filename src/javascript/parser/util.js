@@ -6,6 +6,10 @@ goog.require('goog.array');
 goog.require('goog.asserts');
 
 
+/**
+ * @param {string} str
+ * @return {!Array.<number>}
+ */
 pics3.parser.util.strToCodeArray = function(str) {
   var array = [];
   for (var i = 0; i < str.length; i++) {

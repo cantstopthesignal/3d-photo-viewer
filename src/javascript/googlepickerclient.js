@@ -14,7 +14,7 @@ goog.require('goog.json');
 goog.require('pics3.Dialog');
 goog.require('pics3.GoogleClient');
 goog.require('pics3.Photo');
-goog.require('pics3.loader.GoogleDrivePhoto');
+goog.require('pics3.loader.GoogleDriveFile');
 goog.require('pics3.util');
 
 
@@ -250,12 +250,13 @@ pics3.GooglePickerClient.PickerResult.prototype.getPhotos = function() {
     var mimeType = goog.asserts.assertString(document[this.documentEnum_[
         'MIME_TYPE']]);
     var name = goog.asserts.assertString(document[this.documentEnum_['NAME']]);
-    if (pics3.Photo.isSupportedMimeType(mimeType)) {
-      var loader = new pics3.loader.GoogleDrivePhoto(this.appContext_, id,
-          mimeType, name);
+    var loader = new pics3.loader.GoogleDriveFile(this.appContext_, id,
+        mimeType, name);
+    if (pics3.Photo.isSupportedMimeType(loader.getOriginalMimeType())) {
       photos.push(new pics3.Photo(loader));
     } else {
-      this.logger_.warning('Unsupported MimeType picked: ' + mimeType);
+      this.logger_.warning('Unsupported MimeType picked: ' +
+          loader.getOriginalMimeType());
     }
   }, this);
   return photos;

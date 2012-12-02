@@ -11,20 +11,23 @@ goog.scope(function() {
 var Exif = pics3.parser.Exif;
 var util = pics3.parser.util;
 
+/** @type {!Array.<number>} */
 Exif.START_OF_IMAGE = [0xff, 0xd8];
 
+/** @type {!Array.<number>} */
 Exif.END_OF_IMAGE = [0xff, 0xd9];
 
+/** @type {!Array.<number>} */
 Exif.EXIF_FORMAT_IDENTIFIER = goog.array.concat(
     util.strToCodeArray('Exif'), [0x00, 0x00]);
 
-/** @enum {Array} */
+/** @enum {!Array.<number>} */
 Exif.AppMarker = {
   APP1: [0xff, 0xe1],
   APP2: [0xff, 0xe2]
 };
 
-/** @enum {Array} */
+/** @enum {!Array.<number>} */
 Exif.EndianTag = {
   BIG: [0x4d, 0x4d, 0x00, 0x2a],
   LITTLE: [0x49, 0x49, 0x2a, 0x00]

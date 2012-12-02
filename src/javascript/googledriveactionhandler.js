@@ -9,7 +9,7 @@ goog.require('pics3.Photo');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.MediaManager');
 goog.require('pics3.Service');
-goog.require('pics3.loader.GoogleDrivePhoto');
+goog.require('pics3.loader.GoogleDriveFile');
 
 
 /**
@@ -69,26 +69,25 @@ pics3.GoogleDriveActionHandler.prototype.handleActions = function() {
     var fileIds = this.state_['ids'] || [];
     this.logger_.info('Open ' + fileIds.length + ' files from Google Drive');
     this.googleDriveApi_.loadAsync().addCallback(function() {
-      this.googleDriveApi_.loadFileMetadatas(fileIds).addCallback(
-          this.openFilesWithMetadata_, this);
+      var loadFiles = this.googleDriveApi_.newLoadFiles(fileIds).
+          setLoadMetadata(true);
+      loadFiles.load().addCallback(this.openFilesWithMetadata_, this);
     }, this);
   }
 };
 
-/** @param {!Array.<!Object>} fileMetadatas */
+/** @param {!pics3.GoogleDriveApi.LoadFiles} loadFiles */
 pics3.GoogleDriveActionHandler.prototype.openFilesWithMetadata_ = function(
-    fileMetadatas) {
+    loadFiles) {
   var photos = [];
-  goog.array.forEach(fileMetadatas, function(fileMetadata) {
-    var id = goog.asserts.assertString(fileMetadata['id']);
-    var mimeType = goog.asserts.assertString(fileMetadata['mimeType']);
-    var name = goog.asserts.assertString(fileMetadata['title']);
-    if (pics3.Photo.isSupportedMimeType(mimeType)) {
-      var loader = new pics3.loader.GoogleDrivePhoto(this.appContext_, id,
-          mimeType, name);
+  goog.array.forEach(loadFiles.getArray(), function(loadFile) {
+    var loader = pics3.loader.GoogleDriveFile.fromMetadata(
+        this.appContext_, loadFile.getMetadata());
+    if (pics3.Photo.isSupportedMimeType(loader.getOriginalMimeType())) {
       photos.push(new pics3.Photo(loader));
     } else {
-      this.logger_.warning('Unsupported MimeType opened: ' + mimeType);
+      this.logger_.warning('Unsupported MimeType opened: ' +
+          loader.getOriginalMimeType());
     }
   }, this);
 

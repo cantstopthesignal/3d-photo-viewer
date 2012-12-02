@@ -10,7 +10,7 @@ goog.require('pics3.parser.Mpo');
 
 
 /**
- * @param {!pics3.loader.Photo} loader
+ * @param {!pics3.loader.File} loader
  * @extends {goog.Disposable}
  * @constructor
  */
@@ -18,7 +18,7 @@ pics3.Photo = function(loader) {
   /** @type {number} */
   this.id_ = pics3.Photo.nextId_++;
 
-  /** @type {!pics3.loader.Photo} */
+  /** @type {!pics3.loader.File} */
   this.loader_ = loader;
   this.registerDisposable(this.loader_);
 
@@ -26,23 +26,6 @@ pics3.Photo = function(loader) {
   this.state_ = pics3.Photo.State.PENDING;
 };
 goog.inherits(pics3.Photo, goog.Disposable);
-
-/**
- * @param {!ArrayBuffer} buffer
- * @param {string=} opt_mimeType
- * @param {string=} opt_name
- * @constructor
- */
-pics3.Photo.LoadResult = function(buffer, opt_mimeType, opt_name) {
-  /** @type {!ArrayBuffer} */
-  this.buffer = buffer;
-
-  /** @type {?string} */
-  this.mimeType = opt_mimeType || null;
-
-  /** @type {?string} */
-  this.name = opt_name || null;
-};
 
 /** @enum {string} */
 pics3.Photo.State = {
@@ -153,7 +136,9 @@ pics3.Photo.prototype.loadAsync = function() {
   if (!this.loadDeferred_) {
     goog.asserts.assert(this.state_ == pics3.Photo.State.PENDING);
     this.state_ = pics3.Photo.State.LOADING;
-    this.loadDeferred_ = this.loader_.loadAsync().addCallback(function(result) {
+    this.loadDeferred_ = this.loader_.loadAsync().addCallback(
+        /** @param {!pics3.loader.FileResult} result */
+        function(result) {
           this.buffer_ = result.buffer;
           this.mimeType_ = result.mimeType;
           this.name_ = result.name;
