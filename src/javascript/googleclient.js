@@ -34,7 +34,8 @@ pics3.GoogleClient.GAPI_API_KEY = 'AIzaSyA7jCmXxuW-fZk1_OZGJ2HRwVY2z1vGDhQ';
 pics3.GoogleClient.GAPI_CLIENT_ID = '416949524888.apps.googleusercontent.com';
 pics3.GoogleClient.GAPI_SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/drive.install'
+    'https://www.googleapis.com/auth/drive.install',
+    'https://picasaweb.google.com/data/'
     ];
 
 /**
@@ -243,8 +244,8 @@ pics3.GoogleClient.ConnectDialog_.prototype.createDom = function() {
   var headerEl = document.createElement('div');
   goog.dom.classes.add(headerEl, 'title');
   headerEl.appendChild(document.createTextNode(
-      '3d picture viewer needs your authorization to access your Google ' +
-      'Drive'));
+      '3d Photo Viewer needs your permission to access your Google ' +
+      'Drive and Google+ Photos'));
   this.el.appendChild(headerEl);
 
   var connectButtonEl = document.createElement('div');

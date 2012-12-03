@@ -137,6 +137,9 @@ Mpo.Image = function(index) {
 };
 goog.inherits(Mpo.Image, pics3.parser.BaseParser);
 
+/** @type {string} */
+Mpo.Image.prototype.dataUrl_;
+
 Mpo.Image.prototype.parse = function(reader) {
   this.reader_ = reader.clone();
 
@@ -165,8 +168,11 @@ Mpo.Image.prototype.setByteLength = function(byteLength) {
 };
 
 Mpo.Image.prototype.toDataUrl = function() {
-  return pics3.parser.DataUrl.fromUint8Array(
-      'image/jpeg', this.reader_.getUint8Array());
+  if (!this.dataUrl_) {
+    this.dataUrl_ = pics3.parser.DataUrl.fromUint8Array(
+        'image/jpeg', this.reader_.getUint8Array());
+  }
+  return this.dataUrl_;
 };
 
 /** @param {pics3.parser.DataReader} reader */

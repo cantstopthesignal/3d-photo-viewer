@@ -1,6 +1,6 @@
 // Copyright cantstopthesignals@gmail.com
 
-goog.provide('pics3.source.GoogleDriveTile');
+goog.provide('pics3.source.PicasaTile');
 
 goog.require('goog.array');
 goog.require('goog.asserts');
@@ -19,10 +19,11 @@ goog.require('pics3.source.Tile');
  * @constructor
  * @extends {pics3.source.ButtonTile}
  */
-pics3.source.GoogleDriveTile = function(appContext) {
-  goog.base(this, appContext, 'google-drive-logo');
+pics3.source.PicasaTile = function(appContext) {
+  goog.base(this, appContext, 'google-plus-logo');
 
-  var mediaManager = pics3.MediaManager.get(this.appContext);
+  /** @type {!pics3.MediaManager} */
+  this.mediaManager_ = pics3.MediaManager.get(this.appContext);
 
   /** @type {!pics3.GoogleClient} */
   this.googleClient_ = pics3.GoogleClient.get(this.appContext);
@@ -30,12 +31,13 @@ pics3.source.GoogleDriveTile = function(appContext) {
   /** @type {!pics3.GooglePickerClient} */
   this.pickerClient_ = pics3.GooglePickerClient.get(this.appContext);
 
-  this.album = mediaManager.getSourceAlbum(
-      pics3.MediaManager.Source.GOOGLE_DRIVE);
+  /** @type {!pics3.Album} */
+  this.album = this.mediaManager_.getSourceAlbum(
+      pics3.MediaManager.Source.PICASA);
 };
-goog.inherits(pics3.source.GoogleDriveTile, pics3.source.ButtonTile);
+goog.inherits(pics3.source.PicasaTile, pics3.source.ButtonTile);
 
-pics3.source.GoogleDriveTile.prototype.createDom = function() {
+pics3.source.PicasaTile.prototype.createDom = function() {
   goog.base(this, 'createDom');
 
   this.eventHandler.
@@ -44,7 +46,7 @@ pics3.source.GoogleDriveTile.prototype.createDom = function() {
 };
 
 /** @param {goog.events.BrowserEvent} e */
-pics3.source.GoogleDriveTile.prototype.handleLoadClick_ = function(e) {
+pics3.source.PicasaTile.prototype.handleLoadClick_ = function(e) {
   e.stopPropagation();
   this.googleClient_.setAuthRequired(true);
   this.googleClient_.getAuthDeferred().branch().addCallback(function() {
@@ -53,9 +55,9 @@ pics3.source.GoogleDriveTile.prototype.handleLoadClick_ = function(e) {
   }, this);
 };
 
-pics3.source.GoogleDriveTile.prototype.displayPicker_ = function() {
+pics3.source.PicasaTile.prototype.displayPicker_ = function() {
   var picker = this.pickerClient_.newPickerBuilder().
-      setMode(pics3.GooglePickerClient.Mode.GOOGLE_DRIVE).
+      setMode(pics3.GooglePickerClient.Mode.PICASA).
       build();
   this.eventHandler.listen(
       picker, pics3.GooglePickerClient.Picker.EventType.PICK,
@@ -64,18 +66,22 @@ pics3.source.GoogleDriveTile.prototype.displayPicker_ = function() {
 };
 
 /** @param {pics3.GooglePickerClient.PickerEvent} e */
-pics3.source.GoogleDriveTile.prototype.handlePickerPick_ = function(e) {
+pics3.source.PicasaTile.prototype.handlePickerPick_ = function(e) {
   var photos = e.result.getPhotos();
   this.album.addAll(photos);
+  var albums = e.result.getAlbums();
+  if (albums.length) {
+    this.mediaManager_.addAllAlbums(albums);
+  }
   if (photos.length) {
     this.select();
   }
 };
 
 /** @override */
-pics3.source.GoogleDriveTile.prototype.getOpenFirstCaptionHtml = function() {
+pics3.source.PicasaTile.prototype.getOpenFirstCaptionHtml = function() {
   /** @desc Load from my computer button caption */
-  var MSG_LOAD_FIRST_DRIVE = goog.getMsg('{$logoHtml} Google Drive',
+  var MSG_LOAD_FIRST_GOOGLEPLUS = goog.getMsg('{$logoHtml} Google+ Photos',
       {logoHtml: this.getLogoHtml_()});
-  return MSG_LOAD_FIRST_DRIVE;
+  return MSG_LOAD_FIRST_GOOGLEPLUS;
 };

@@ -22,4 +22,12 @@
   <servlet-name>SystemServiceServlet</servlet-name>
   <url-pattern>/_ah/spi/*</url-pattern>
  </servlet-mapping>
+ <servlet>
+   <servlet-name>PicasaRelayServlet</servlet-name>
+   <servlet-class>com.cantstopthesignals.PicasaRelayServlet</servlet-class>
+ </servlet>
+ <servlet-mapping>
+  <servlet-name>PicasaRelayServlet</servlet-name>
+  <url-pattern>/picasarelay</url-pattern>
+ </servlet-mapping>
 </web-app>

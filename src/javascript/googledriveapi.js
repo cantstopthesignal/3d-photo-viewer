@@ -269,10 +269,10 @@ pics3.GoogleDriveApi.LoadFile.prototype.load = function() {
 pics3.GoogleDriveApi.LoadFile.prototype.doLoadData_ = function() {
   goog.asserts.assert(this.downloadUrl_ && this.downloadUrl_.length);
 
-  var oAuthToken = this.api_.getGoogleClient().getOAuthToken();
   var xhr = new XMLHttpRequest();
   xhr.open('GET', this.downloadUrl_);
-  xhr.setRequestHeader('Authorization', 'Bearer ' + oAuthToken);
+  xhr.setRequestHeader('Authorization', 'Bearer ' +
+      this.api_.getGoogleClient().getOAuthToken());
   xhr.responseType = 'arraybuffer';
 
   var deferred = new goog.async.Deferred();

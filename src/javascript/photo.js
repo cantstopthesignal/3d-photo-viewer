@@ -54,6 +54,9 @@ pics3.Photo.isSupportedMimeType = function(mimeType) {
   return goog.object.containsValue(pics3.Photo.MimeType, mimeType);
 };
 
+/** @type {goog.debug.Logger} */
+pics3.Photo.prototype.logger_ = goog.debug.Logger.getLogger('pics3.Photo');
+
 /** @type {ArrayBuffer} */
 pics3.Photo.prototype.buffer_;
 
@@ -157,7 +160,7 @@ pics3.Photo.prototype.loadAsync = function() {
 pics3.Photo.prototype.parseMpoAsync_ = function() {
   goog.asserts.assert(!this.mpo_);
   goog.asserts.assert(this.buffer_ instanceof ArrayBuffer);
-  if (this.hasMimeType() && this.getMimeType() != pics3.Photo.MimeType.MPO) {
+  if (!this.isPossible3dPhoto_()) {
     return;
   }
   this.mpo_ = new pics3.parser.Mpo();
@@ -166,7 +169,32 @@ pics3.Photo.prototype.parseMpoAsync_ = function() {
     this.mimeType_ = pics3.Photo.MimeType.MPO;
     deferred.callback(null);
   } else {
-    deferred.errback(this.mpo_.getError());
+    if (!this.hasMimeType() || this.getMimeType() == pics3.Photo.MimeType.MPO) {
+      this.logger_.warning('Could not parse likely mpo file');
+      deferred.errback(this.mpo_.getError());
+    } else {
+      this.logger_.warning('Photo with mimeType ' + this.getMimeType() +
+          ' does not appear to be an mpo file: ' + this.mpo_.getError());
+      deferred.callback(null);
+    }
   }
   return deferred;
+};
+
+/** @return {boolean} */
+pics3.Photo.prototype.isPossible3dPhoto_ = function() {
+  if (!this.hasMimeType()) {
+    return true;
+  }
+  if (this.getMimeType() == pics3.Photo.MimeType.MPO) {
+    return true;
+  }
+  if (this.getMimeType() == pics3.Photo.MimeType.JPG && this.name_) {
+    var nameLower = this.name_.toLowerCase();
+    if (goog.string.endsWith(nameLower, '.mpo') ||
+        nameLower.indexOf('.mpo.') >= 0) {
+      return true;
+    }
+  }
+  return false;
 };

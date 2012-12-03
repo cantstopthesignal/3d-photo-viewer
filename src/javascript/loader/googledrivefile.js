@@ -28,17 +28,10 @@ pics3.loader.GoogleDriveFile = function(appContext, id, mimeType, name) {
   this.id_ = id;
 
   /** @type {string} */
-  this.originalMimeType_ = mimeType;
+  this.mimeType_ = mimeType;
 
   /** @type {string} */
   this.name_ = name;
-
-  /** @type {string} */
-  this.mimeType_ = this.originalMimeType_;
-
-  if (goog.string.endsWith(this.name_.toLowerCase(), '.mpo')) {
-    this.mimeType_ = '';
-  }
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
@@ -70,11 +63,6 @@ pics3.loader.GoogleDriveFile.prototype.setDownloadUrl_ = function(downloadUrl) {
 /** @return {string} */
 pics3.loader.GoogleDriveFile.prototype.getMimeType = function() {
   return this.mimeType_;
-};
-
-/** @return {string} */
-pics3.loader.GoogleDriveFile.prototype.getOriginalMimeType = function() {
-  return this.originalMimeType_;
 };
 
 /** @override */

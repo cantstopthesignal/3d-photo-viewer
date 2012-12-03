@@ -46,16 +46,33 @@ pics3.Spinner.prototype.numBlips_;
 /** @type {Array.<number>} */
 pics3.Spinner.prototype.blipOpacity_;
 
+/** @type {Element} */
+pics3.Spinner.prototype.canvasEl_;
+
 pics3.Spinner.prototype.createDom = function() {
   goog.asserts.assert(!this.el);
-  this.el = document.createElement('canvas');
-  goog.dom.classes.add(this.el, 'spinner');
+  this.el = document.createElement('div');
+  goog.dom.classes.add(this.el, 'spinner-wrapper');
+  this.canvasEl_ = document.createElement('canvas');
+  goog.dom.classes.add(this.canvasEl_, 'spinner');
+  this.el.appendChild(this.canvasEl_);
 
   this.checkVisibility_();
 };
 
+/** @param {boolean} floatingStyle */
+pics3.Spinner.prototype.setFloatingStyle = function(floatingStyle) {
+  goog.dom.classes.enable(this.el, 'float', floatingStyle);
+};
+
+/** @return {number} */
+pics3.Spinner.prototype.getSize = function() {
+  return this.size_ || this.canvasEl_.offsetWidth;
+};
+
 /**
  * @param {number=} opt_delay Optional delay in milliseconds before spinning.
+ * @return {!pics3.Spinner.Entry}
  */
 pics3.Spinner.prototype.spin = function(opt_delay) {
   var entry = new pics3.Spinner.Entry(this,
@@ -94,7 +111,7 @@ pics3.Spinner.prototype.checkVisibility_ = function() {
     this.checkTimeoutId_ = window.setTimeout(
         goog.bind(this.handleCheckTimeout_, this), minTimestamp - now);
   }
-  goog.style.showElement(this.el, triggered);
+  goog.style.setStyle(this.el, 'visibility', triggered ? '' : 'hidden');
 
   if (triggered) {
     this.maybeStartAnimation_();
@@ -109,13 +126,13 @@ pics3.Spinner.prototype.maybeStartAnimation_ = function() {
   }
 
   if (!this.size_ || this.size_ < 16) {
-    this.size_ = Math.max(16, Math.min(this.el.offsetWidth,
-        this.el.offsetHeight));
+    this.size_ = Math.max(16, Math.min(this.canvasEl_.offsetWidth,
+        this.canvasEl_.offsetHeight));
   }
 
-  this.el.setAttribute('width', this.size_ + 'px');
-  this.el.setAttribute('height', this.size_ + 'px');
-  this.ctx_ = this.el.getContext('2d');
+  this.canvasEl_.setAttribute('width', this.size_ + 'px');
+  this.canvasEl_.setAttribute('height', this.size_ + 'px');
+  this.ctx_ = this.canvasEl_.getContext('2d');
 
   if (this.size_ >= 128) {
     this.numBlips_ = 15;

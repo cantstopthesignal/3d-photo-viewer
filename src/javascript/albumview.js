@@ -11,6 +11,7 @@ goog.require('goog.events.KeyCodes');
 goog.require('goog.object');
 goog.require('pics3.Component');
 goog.require('pics3.PhotoView');
+goog.require('pics3.Spinner');
 
 
 /**
@@ -22,11 +23,14 @@ pics3.AlbumView = function() {
 
   /** @type {!Object.<number,!pics3.PhotoView>} */
   this.photoViewsMap_ = {};
+
+  /** @type {!pics3.Spinner} */
+  this.spinner_ = new pics3.Spinner(true, 48);
 };
 goog.inherits(pics3.AlbumView, pics3.Component);
 
-/** @type {pics3.PhotoList} */
-pics3.AlbumView.prototype.photoList_;
+/** @type {pics3.Album} */
+pics3.AlbumView.prototype.album_;
 
 /** @type {number} */
 pics3.AlbumView.prototype.photoIndex_ = 0;
@@ -36,21 +40,31 @@ pics3.AlbumView.prototype.createDom = function() {
   goog.dom.classes.add(this.el, 'album-view');
   this.el.tabIndex = 0;
 
+  this.spinner_.render(this.el);
+  this.spinner_.setFloatingStyle(true);
+
   this.eventHandler.listen(this.el, goog.events.EventType.KEYDOWN,
       this.handleKeyDown_);
 };
 
-/** @param {pics3.PhotoList} photoList */
-pics3.AlbumView.prototype.setPhotoList = function(photoList) {
+/** @param {pics3.Album} album */
+pics3.AlbumView.prototype.setAlbum = function(album) {
   this.focus();
-  if (photoList == this.photoList_) {
+  if (album == this.album_) {
     return;
   }
-  this.photoList_ = photoList;
+  this.album_ = album;
   this.photoIndex_ = 0;
   goog.disposeAll(goog.object.getValues(this.photoViewsMap_));
   this.photoViewsMap_ = {};
-  if (!this.photoList_.getLength()) {
+  var spinEntry = this.spinner_.spin(100);
+  this.album_.loadAsync().addBoth(function() {
+        spinEntry.release();
+      }).addCallback(this.handleAlbumLoad_, this);
+};
+
+pics3.AlbumView.prototype.handleAlbumLoad_ = function() {
+  if (!this.album_.getLength()) {
     return;
   }
   this.displayPhotoByIndex_(0);
@@ -67,12 +81,13 @@ pics3.AlbumView.prototype.displayPhotoByIndex_ = function(index) {
   this.photoIndex_ = index;
   // Note: this could cause reentrance of render: problem?
   photoView.render(this.el);
+  photoView.start();
   this.resizePhotoView_();
 };
 
 /** @return {?pics3.PhotoView} */
 pics3.AlbumView.prototype.getCurrentPhotoView_ = function() {
-  if (this.photoList_ && this.photoList_.getLength()) {
+  if (this.album_ && this.album_.getLength()) {
     return this.getPhotoViewByIndex_(this.photoIndex_);
   }
   return null;
@@ -80,8 +95,8 @@ pics3.AlbumView.prototype.getCurrentPhotoView_ = function() {
 
 /** @param {number} index */
 pics3.AlbumView.prototype.getPhotoViewByIndex_ = function(index) {
-  goog.asserts.assert(index >= 0 && index < this.photoList_.getLength());
-  var photo = this.photoList_.get(index);
+  goog.asserts.assert(index >= 0 && index < this.album_.getLength());
+  var photo = this.album_.get(index);
   var photoView = this.photoViewsMap_[photo.getId()];
   if (!photoView) {
     photoView = new pics3.PhotoView(photo);
@@ -99,6 +114,9 @@ pics3.AlbumView.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
   goog.style.setBorderBoxSize(this.el,
       new goog.math.Size(width, height));
+  goog.style.setPosition(this.spinner_.el,
+      (width - this.spinner_.getSize()) / 2,
+      (height - this.spinner_.getSize()) / 2);
   this.resizePhotoView_();
 };
 
@@ -112,11 +130,11 @@ pics3.AlbumView.prototype.resizePhotoView_ = function() {
 /** @param {goog.events.BrowserEvent} e */
 pics3.AlbumView.prototype.handleKeyDown_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.LEFT) {
-    if (this.photoList_ && this.photoIndex_ > 0) {
+    if (this.album_ && this.photoIndex_ > 0) {
       this.displayPhotoByIndex_(this.photoIndex_ - 1);
     }
   } else if (e.keyCode == goog.events.KeyCodes.RIGHT) {
-    if (this.photoList_ && this.photoIndex_ + 1 < this.photoList_.getLength()) {
+    if (this.album_ && this.photoIndex_ + 1 < this.album_.getLength()) {
       this.displayPhotoByIndex_(this.photoIndex_ + 1);
     }
   }

@@ -120,21 +120,40 @@ a:hover {
 .source-tile {
   cursor: pointer;
   display: inline-block;
-  padding: 4px;
   margin-right: 4px;
+  border-radius: 4px;
+  padding: 4px 0 4px 4px;
 }
-.source-tile:hover {
-  background-color: #78a;
+.source-tile.selectable {
+  background-color: #6080b0;
+  padding: 4px;
+  margin-left: 4px;
 }
-.source-tile.selected {
-  background-color: #7080a0;
-  }
+.source-tile.selectable:hover {
+  background-color: #469;
+}
+.source-tile.selectable.selected {
+  background-color: #247;
+}
 .source-tile > .note {
   display: inline-block;
   color: #f0f8ff;
   padding: 0px 8px;
   font-size: 14px;
   line-height: 32px;
+}
+.source-tile > .spinner-wrapper {
+  width: 0px;
+  height: 20px;
+  vertical-align: middle;
+  display: inline-block;
+}
+.source-tile > .spinner-wrapper > .spinner {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  top: -4px;
+  left: 4px;
 }
 .button {
   background: -moz-linear-gradient(top, #eee, #ccc);
@@ -176,6 +195,16 @@ a:hover {
   display: block;
   margin-top: 5px;
 }
+.spinner-wrapper {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+}
+.spinner-wrapper.float {
+  width: 0px;
+  height: 0px;
+  position: absolute;
+}
 .spinner {
   display: inline-block;
   width: 28px;
@@ -183,6 +212,11 @@ a:hover {
 }
 .album-view {
   outline: 0;
+  position: relative;
+}
+.album-view > .spinner-wrapper > .spinner {
+  width: 48px;
+  height: 48px;
 }
 .photo-display {
   position: relative;
@@ -191,16 +225,28 @@ a:hover {
   display: inline-block;
   position: absolute;
 }
-.google-drive-logo {
-  background-image: url(/images/googledriveicon48.png);
+.photo-view > .spinner-wrapper > .spinner {
+  width: 48px;
+  height: 48px;
+}
+.source-tile-logo {
   background-size: contain;
   display: inline-block;
   width: 20px;
   height: 20px;
 }
-.source-tile > .note > .google-drive-logo {
+.source-tile > .note > .source-tile-logo {
   vertical-align: middle;
 }
-.source-tile > .button .google-drive-logo {
+.source-tile > .button .source-tile-logo {
   vertical-align: top;
+}
+.google-drive-logo {
+  background-image: url(/images/googledriveicon48.png);
+}
+.google-plus-logo {
+  background-image: url(/images/googleplusicon48.png);
+}
+.my-computer-logo {
+  background-image: url(/images/mycomputericon48.png);
 }

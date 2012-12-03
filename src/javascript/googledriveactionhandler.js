@@ -6,6 +6,7 @@ goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
 goog.require('pics3.Photo');
+goog.require('pics3.GoogleClient');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.MediaManager');
 goog.require('pics3.Service');
@@ -22,6 +23,9 @@ pics3.GoogleDriveActionHandler = function(appContext) {
 
   /** @type {!pics3.AppContext} */
   this.appContext_ = appContext;
+
+  /** @type {!pics3.GoogleClient} */
+  this.googleClient_ = pics3.GoogleClient.get(this.appContext_);
 
   /** @type {!pics3.GoogleDriveApi} */
   this.googleDriveApi_ = pics3.GoogleDriveApi.get(this.appContext_);
@@ -68,10 +72,13 @@ pics3.GoogleDriveActionHandler.prototype.handleActions = function() {
   if (this.state_ && this.state_['action'] == 'open') {
     var fileIds = this.state_['ids'] || [];
     this.logger_.info('Open ' + fileIds.length + ' files from Google Drive');
-    this.googleDriveApi_.loadAsync().addCallback(function() {
-      var loadFiles = this.googleDriveApi_.newLoadFiles(fileIds).
-          setLoadMetadata(true);
-      loadFiles.load().addCallback(this.openFilesWithMetadata_, this);
+    this.googleClient_.setAuthRequired(true);
+    this.googleClient_.getAuthDeferred().addCallback(function() {
+      this.googleDriveApi_.loadAsync().addCallback(function() {
+        var loadFiles = this.googleDriveApi_.newLoadFiles(fileIds).
+            setLoadMetadata(true);
+        loadFiles.load().addCallback(this.openFilesWithMetadata_, this);
+      }, this);
     }, this);
   }
 };
@@ -83,17 +90,17 @@ pics3.GoogleDriveActionHandler.prototype.openFilesWithMetadata_ = function(
   goog.array.forEach(loadFiles.getArray(), function(loadFile) {
     var loader = pics3.loader.GoogleDriveFile.fromMetadata(
         this.appContext_, loadFile.getMetadata());
-    if (pics3.Photo.isSupportedMimeType(loader.getOriginalMimeType())) {
+    if (pics3.Photo.isSupportedMimeType(loader.getMimeType())) {
       photos.push(new pics3.Photo(loader));
     } else {
       this.logger_.warning('Unsupported MimeType opened: ' +
-          loader.getOriginalMimeType());
+          loader.getMimeType());
     }
   }, this);
 
   var mediaManager = pics3.MediaManager.get(this.appContext_);
-  var photoList = mediaManager.getPhotoList(
+  var album = mediaManager.getSourceAlbum(
       pics3.MediaManager.Source.GOOGLE_DRIVE);
-  photoList.addAll(photos);
+  album.addAll(photos);
   this.dispatchEvent(pics3.GoogleDriveActionHandler.EventType.OPENED_FILES);
 };
