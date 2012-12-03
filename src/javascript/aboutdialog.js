@@ -27,9 +27,18 @@ goog.inherits(pics3.AboutDialog, pics3.Dialog);
 /** @type {Element} */
 pics3.AboutDialog.prototype.buttonEl_;
 
+/** @type {!pics3.Button} */
+pics3.AboutDialog.prototype.closeButton_;
+
 pics3.AboutDialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   this.el.appendChild(this.contentEl_);
+
+  this.closeButton_ = new pics3.Button('Close');
+  this.registerDisposable(this.closeButton_);
+  this.closeButton_.render(this.contentEl_);
+  this.eventHandler.listen(this.closeButton_.el, goog.events.EventType.CLICK,
+      goog.bind(this.hide, this));
 };
 
 pics3.AboutDialog.prototype.renderButton = function(parentEl) {

@@ -50,8 +50,8 @@
   <body class="main">
     <div class="app"></div>
     <div class="about-content">
-      <h2>3d Photo Viewer</h2>
-      <p>Contact by:
+      <h1>3d Photo Viewer</h1>
+      <p>Contact:
         <ul>
           <li>
             Email: <a href="mailto:cantstopthesignals@gmail.com">cantstopthesignals@gmail.com</a>
@@ -61,6 +61,25 @@
           </li>
         </ul>
       </p>
+      <p>Coming Soon!:
+        <ul>
+          <li>
+            More 3D viewing modes: Nvidia 3D Vision, red/green anaglyph, split
+            screen
+          </li>
+          <li>
+            Album filmstrip and thumbnails
+          </li>
+          <li>
+            Webworker offloading and prefetch
+          </li>
+          <li>
+            Photo load progress indicators
+          </li>
+          <li>
+            Error handling -- oops! ;)
+          </li>
+        </ul>
       <p>
         <a target="_blank" href="https://github.com/cantstopthesignal/3d-photo-viewer">Project source</a>
       </p>
