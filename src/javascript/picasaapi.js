@@ -59,15 +59,23 @@ pics3.PicasaApi.prototype.getGoogleClient = function() {
  * @return {goog.async.Deferred} producing {Object}
  */
 pics3.PicasaApi.prototype.loadAlbum = function(albumId) {
-  var url = 'https://picasaweb.google.com/data/feed/api/user/' +
-      albumId.userId + (albumId.albumId ? '/albumid/' + albumId.albumId :
-        '/album/' + albumId.album) + '?alt=json&v=2';
-  var relayUrl = '/picasarelay?url=' + encodeURIComponent(url) + '&method=get' +
-     '&header=Authorization=' + encodeURIComponent('OAuth ' +
-         this.googleClient_.getOAuthToken());
+  var albumUri = new goog.Uri('https://picasaweb.google.com/data/feed/api/' +
+      'user/' + albumId.userId + (albumId.albumId ? '/albumid/' +
+          albumId.albumId : '/album/' + albumId.album));
+  albumUri.setParameterValue('alt', 'json');
+  albumUri.setParameterValue('v', '2');
+  if (albumId.authKey) {
+    albumUri.setParameterValue('authkey', albumId.authKey);
+  }
+
+  var relayUri = new goog.Uri('/picasarelay');
+  relayUri.setParameterValue('url', albumUri.toString());
+  relayUri.setParameterValue('method', 'get');
+  relayUri.setParameterValue('header', 'Authorization=OAuth ' +
+      this.googleClient_.getOAuthToken());
 
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', relayUrl);
+  xhr.open('GET', relayUri.toString());
 
   var deferred = new goog.async.Deferred();
   var eventHandler = new goog.events.EventHandler(this);
