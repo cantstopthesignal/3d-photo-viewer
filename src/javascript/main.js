@@ -7,16 +7,22 @@ goog.require('goog.debug.Console');
 goog.require('goog.events');
 goog.require('goog.events.EventType');
 goog.require('pics3.App');
+goog.require('pics3.BrowserVersionWarning');
 
 // To appease closure missing types warnings.
 goog.require('goog.debug.ErrorHandler');
 
+
+/** @type {pics3.BrowserVersionWarning} */
+pics3.main.browserWarning_;
 
 /** @type {pics3.App} */
 pics3.main.app_;
 
 pics3.main.start = function() {
   goog.asserts.assert(!pics3.main.app_);
+  pics3.main.browserWarning_ = new pics3.BrowserVersionWarning();
+  pics3.main.browserWarning_.start();
   pics3.main.app_ = new pics3.App();
   pics3.main.app_.start();
 };
