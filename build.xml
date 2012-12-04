@@ -31,6 +31,10 @@
         namespace="pics3.main"
         warningLevel="VERBOSE"
         destfile="${js-output.dir}/maindebug.js" />
+    <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
+        namespace="pics3.worker.main"
+        warningLevel="VERBOSE"
+        destfile="${js-output.dir}/workermaindebug.js" />
   </target>
 
   <target name="compile-optimized">
@@ -38,6 +42,10 @@
         namespace="pics3.main"
         warningLevel="VERBOSE"
         destfile="${js-output.dir}/mainoptimized.js" />
+    <closure-builder-compile compilationLevel="ADVANCED_OPTIMIZATIONS"
+        namespace="pics3.worker.main"
+        warningLevel="VERBOSE"
+        destfile="${js-output.dir}/workermainoptimized.js" />
   </target>
 
   <target name="compile" depends="compile-debug,compile-optimized" />

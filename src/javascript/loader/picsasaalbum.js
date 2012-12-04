@@ -47,7 +47,7 @@ pics3.loader.PicasaAlbum.prototype.loadAsync = function() {
     goog.array.forEach(resp['feed']['entry'], function(entry) {
       var loader = pics3.loader.PicasaPhoto.fromMetadata(this.appContext_,
           entry);
-      var photo = new pics3.Photo(loader);
+      var photo = new pics3.Photo(this.appContext_, loader);
       photos.push(photo);
     }, this);
     this.name_ = resp['feed']['title']['$t'] || this.name_;

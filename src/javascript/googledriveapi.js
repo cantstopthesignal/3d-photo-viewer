@@ -290,8 +290,9 @@ pics3.GoogleDriveApi.LoadFile.prototype.doLoadData_ = function() {
   }
   function handleProgress(e) {
     var browserEvent = e.getBrowserEvent();
-    window.console.log(browserEvent.loaded, browserEvent.lengthComputable,
-        browserEvent.total);
+    this.logger_.info('Load data progress: ' + browserEvent.loaded + '/' +
+        browserEvent.total + (browserEvent.lengthComputable ?
+            ' computable' : ''));
   }
   eventHandler.
       listen(xhr, goog.events.EventType.LOAD, handleLoad).

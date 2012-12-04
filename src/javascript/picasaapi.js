@@ -92,14 +92,8 @@ pics3.PicasaApi.prototype.loadAlbum = function(albumId) {
     deferred.errback(e);
     goog.dispose(eventHandler);
   }
-  function handleProgress(e) {
-    var browserEvent = e.getBrowserEvent();
-    window.console.log(browserEvent.loaded, browserEvent.lengthComputable,
-        browserEvent.total);
-  }
   eventHandler.
       listen(xhr, goog.events.EventType.LOAD, handleLoad).
-      listen(xhr, 'progress', handleProgress).
       listen(xhr, goog.events.EventType.ERROR, handleError);
   xhr.send();
   return deferred;
@@ -132,8 +126,9 @@ pics3.PicasaApi.prototype.loadPhotoData = function(downloadUrl) {
   }
   function handleProgress(e) {
     var browserEvent = e.getBrowserEvent();
-    window.console.log(browserEvent.loaded, browserEvent.lengthComputable,
-        browserEvent.total);
+    this.logger_.info('Load data progress: ' + browserEvent.loaded + '/' +
+        browserEvent.total + (browserEvent.lengthComputable ?
+            ' computable' : ''));
   }
   eventHandler.
       listen(xhr, goog.events.EventType.LOAD, handleLoad).
@@ -174,8 +169,9 @@ pics3.PicasaApi.prototype.loadAlbumDirect = function(albumId) {
   }
   function handleProgress(e) {
     var browserEvent = e.getBrowserEvent();
-    window.console.log(browserEvent.loaded, browserEvent.lengthComputable,
-        browserEvent.total);
+    this.logger_.info('Load data progress: ' + browserEvent.loaded + '/' +
+        browserEvent.total + (browserEvent.lengthComputable ?
+            ' computable' : ''));
   }
   eventHandler.
       listen(xhr, goog.events.EventType.LOAD, handleLoad).

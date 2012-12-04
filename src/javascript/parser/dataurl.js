@@ -48,8 +48,19 @@ pics3.parser.DataUrl = function(url) {
 };
 
 /**
+ * @param {!Object} object
+ * @return {!pics3.parser.DataUrl}
+ */
+pics3.parser.DataUrl.fromObject = function(object) {
+  var url = object['url'];
+  goog.asserts.assert(url);
+  return new pics3.parser.DataUrl(url);
+};
+
+/**
  * @param {string} mimeType
  * @param {!Uint8Array} array
+ * @return {!pics3.parser.DataUrl}
  */
 pics3.parser.DataUrl.fromUint8Array = function(mimeType, array) {
   return new pics3.parser.DataUrl('data:' + mimeType + ';base64,' +
@@ -65,6 +76,12 @@ pics3.parser.DataUrl.prototype.getMimeType = function() {
 
 pics3.parser.DataUrl.prototype.toString = function() {
   return this.url_;
+};
+
+pics3.parser.DataUrl.prototype.toObject = function() {
+  return {
+    'url': this.url_
+  };
 };
 
 pics3.parser.DataUrl.prototype.toUint8Array = function() {

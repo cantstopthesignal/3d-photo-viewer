@@ -18,11 +18,13 @@ goog.require('pics3.GoogleClient');
 goog.require('pics3.GoogleDriveActionHandler');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.GooglePickerClient');
+goog.require('pics3.ImageProcessor');
 goog.require('pics3.MediaManager');
 goog.require('pics3.PicasaActionHandler');
 goog.require('pics3.PicasaApi');
 goog.require('pics3.source.Picker');
 goog.require('pics3.source.Tile');
+goog.require('pics3.worker.Client');
 
 
 /**
@@ -36,6 +38,11 @@ pics3.App = function() {
 
   /** @type {!goog.Uri} */
   this.uri_ = new goog.Uri(window.location.href);
+
+  /** @type {!pics3.worker.Client} */
+  this.workerClient_ = new pics3.worker.Client();
+  this.workerClient_.register(this.appContext_);
+  this.registerDisposable(this.workerClient_);
 
   /** @type {!pics3.GoogleClient} */
   this.googleClient_ = new pics3.GoogleClient();
@@ -56,6 +63,11 @@ pics3.App = function() {
   this.picasaApi_ = new pics3.PicasaApi(this.googleClient_);
   this.picasaApi_.register(this.appContext_);
   this.registerDisposable(this.picasaApi_);
+
+  /** @type {!pics3.ImageProcessor} */
+  this.imageProcessor_ = new pics3.ImageProcessor(this.appContext_);
+  this.imageProcessor_.register(this.appContext_);
+  this.registerDisposable(this.imageProcessor_);
 
   /** @type {pics3.MediaManager} */
   this.mediaManager_ = new pics3.MediaManager();
@@ -99,6 +111,8 @@ pics3.App.prototype.albumView_;
 pics3.App.prototype.appEl_;
 
 pics3.App.prototype.start = function() {
+  this.workerClient_.start();
+
   this.appEl_ = goog.dom.getElementByClass('app');
   goog.asserts.assert(this.appEl_);
 

@@ -187,7 +187,7 @@ pics3.GooglePickerClient.PickerBuilder.prototype.build = function() {
   this.builder_['setTitle'](pics3.GooglePickerClient.MSG_PICKER_TITLE);
   this.builder_['setCallback'](goog.bind(this.handleCallback_, this));
 
-  var mimeTypes = goog.object.getValues(pics3.Photo.MimeType).join(',');
+  var mimeTypes = goog.object.getValues(pics3.PhotoMimeType).join(',');
 
   if (this.mode_ == Mode.ALL || this.mode_ == Mode.GOOGLE_DRIVE) {
     var docsView = pics3.util.createNamedObject('google.picker.DocsView');
@@ -299,8 +299,8 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
     if (serviceId == 'docs') {
       var loader = new pics3.loader.GoogleDriveFile(this.appContext_, id,
           mimeType, name);
-      if (pics3.Photo.isSupportedMimeType(mimeType)) {
-        this.photos_.push(new pics3.Photo(loader));
+      if (pics3.photoMimeType.isSupported(mimeType)) {
+        this.photos_.push(new pics3.Photo(this.appContext_, loader));
       } else {
         this.logger_.warning('Unsupported docs MimeType picked: ' + mimeType);
       }
@@ -318,7 +318,7 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
       } else if (mimeType == 'application/vnd.google-apps.photo') {
         var loader = new pics3.loader.PicasaPhoto(this.appContext_, id,
             url, name);
-        this.photos_.push(new pics3.Photo(loader));
+        this.photos_.push(new pics3.Photo(this.appContext_, loader));
       } else {
         this.logger_.warning('Unsupported picasa MimeType picked: ' +
             mimeType);

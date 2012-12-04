@@ -25,6 +25,10 @@ pics3.loader.BlobFile = function(blob) {
 };
 goog.inherits(pics3.loader.BlobFile, pics3.loader.File);
 
+/** @type {goog.debug.Logger} */
+pics3.loader.BlobFile.prototype.logger_ = goog.debug.Logger.getLogger(
+    'pics3.loader.BlobFile');
+
 /** @override */
 pics3.loader.BlobFile.prototype.loadAsync = function() {
   var fileReader = new FileReader();
@@ -40,8 +44,9 @@ pics3.loader.BlobFile.prototype.loadAsync = function() {
   }
   function handleProgress(e) {
     var browserEvent = e.getBrowserEvent();
-    window.console.log(browserEvent.loaded, browserEvent.lengthComputable,
-        browserEvent.total);
+    this.logger_.info('Load progress: ' + browserEvent.loaded + '/' +
+        browserEvent.total + (browserEvent.lengthComputable ?
+            ' computable' : ''));
   }
   this.eventHandler.
       listen(fileReader, goog.events.EventType.LOAD, handleLoad).

@@ -9,7 +9,7 @@ goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
 goog.require('pics3.Component');
 goog.require('pics3.Photo');
-goog.require('pics3.Photo');
+goog.require('pics3.PhotoMimeType');
 goog.require('pics3.display.ThreeDCross');
 goog.require('pics3.display.TwoD');
 
@@ -58,7 +58,7 @@ pics3.PhotoView.prototype.updateDisplay_ = function() {
     return;
   } else if (this.photo_.getState() == pics3.Photo.State.LOADED) {
     goog.dispose(this.display_);
-    if (this.photo_.getMimeType() == pics3.Photo.MimeType.MPO) {
+    if (this.photo_.getMimeType() == pics3.PhotoMimeType.MPO) {
       this.display_ = new pics3.display.ThreeDCross(this.photo_);
       this.display_.render(this.el);
     } else {

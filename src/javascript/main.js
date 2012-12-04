@@ -13,33 +13,40 @@ goog.require('pics3.BrowserVersionWarning');
 goog.require('goog.debug.ErrorHandler');
 
 
+goog.scope(function() {
+
+var main = pics3.main;
+
 /** @type {pics3.BrowserVersionWarning} */
-pics3.main.browserWarning_;
+main.browserWarning_;
 
 /** @type {pics3.App} */
-pics3.main.app_;
+main.app_;
 
-pics3.main.start = function() {
-  goog.asserts.assert(!pics3.main.app_);
-  pics3.main.browserWarning_ = new pics3.BrowserVersionWarning();
-  pics3.main.browserWarning_.start();
-  pics3.main.app_ = new pics3.App();
-  pics3.main.app_.start();
+main.start = function() {
+  goog.asserts.assert(!main.app_);
+  main.browserWarning_ = new pics3.BrowserVersionWarning();
+  main.browserWarning_.start();
+  main.app_ = new pics3.App();
+  main.app_.start();
 };
 
-pics3.main.dispose = function() {
-  goog.dispose(pics3.main.app_);
-  goog.events.unlistenByKey(pics3.main.windowLoadListenerKey_);
+main.dispose = function() {
+  goog.dispose(main.browserWarning_);
+  goog.dispose(main.app_);
+  goog.events.unlistenByKey(main.windowLoadListenerKey_);
 };
 
-pics3.main.loadInline = function() {
+main.loadInline = function() {
 };
 
-pics3.main.handleWindowLoad = function() {
+main.handleWindowLoad = function() {
   goog.debug.Console.autoInstall();
-  pics3.main.start();
+  main.start();
 };
 
-pics3.main.windowLoadListenerKey_ = goog.events.listen(window,
-    goog.events.EventType.LOAD, pics3.main.handleWindowLoad);
-pics3.main.loadInline();
+main.windowLoadListenerKey_ = goog.events.listen(window,
+    goog.events.EventType.LOAD, main.handleWindowLoad);
+main.loadInline();
+
+});

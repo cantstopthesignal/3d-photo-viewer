@@ -9,6 +9,7 @@ goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
 goog.require('pics3.Component');
 goog.require('pics3.Photo');
+goog.require('pics3.PhotoMimeType');
 goog.require('pics3.display.Base');
 
 
@@ -20,7 +21,7 @@ goog.require('pics3.display.Base');
 pics3.display.ThreeDCross = function(photo) {
   goog.base(this, photo);
   goog.asserts.assert(photo.getState() == pics3.Photo.State.LOADED);
-  goog.asserts.assert(photo.getMimeType() == pics3.Photo.MimeType.MPO);
+  goog.asserts.assert(photo.getMimeType() == pics3.PhotoMimeType.MPO);
   goog.asserts.assert(photo.getImageCount() == 2);
 
   /** @type {!Array.<!Element>} */

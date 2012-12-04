@@ -2,6 +2,7 @@
 
 goog.provide('pics3.BrowserVersionWarning');
 
+goog.require('goog.Disposable');
 goog.require('goog.asserts');
 goog.require('goog.dom');
 goog.require('goog.userAgent');
@@ -10,9 +11,12 @@ goog.require('pics3.Dialog');
 
 /**
  * @constructor
+ * @extends {goog.Disposable}
  */
 pics3.BrowserVersionWarning = function() {
+  goog.base(this);
 };
+goog.inherits(pics3.BrowserVersionWarning, goog.Disposable);
 
 /** @type {pics3.BrowserVersionWarning.Dialog} */
 pics3.BrowserVersionWarning.prototype.dialog_;
@@ -22,6 +26,7 @@ pics3.BrowserVersionWarning.prototype.start = function() {
     return;
   }
   this.dialog_ = new pics3.BrowserVersionWarning.Dialog();
+  this.registerDisposable(this.dialog_);
   this.dialog_.show();
 };
 

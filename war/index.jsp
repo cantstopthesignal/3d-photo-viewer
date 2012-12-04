@@ -31,6 +31,10 @@
         <%
       }
     %>
+    <script type="text/javascript">
+      var pics3 = pics3 || {};
+      pics3.jsMode = '<%= jsMode.getName() %>';
+    </script>
     <link rel="stylesheet" type="text/css" href="/css/main.css" />
     <script type="text/javascript">
       var _gaq = _gaq || [];

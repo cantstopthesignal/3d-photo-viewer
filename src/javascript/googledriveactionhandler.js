@@ -5,10 +5,11 @@ goog.provide('pics3.GoogleDriveActionHandler');
 goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
-goog.require('pics3.Photo');
 goog.require('pics3.GoogleClient');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.MediaManager');
+goog.require('pics3.Photo');
+goog.require('pics3.PhotoMimeType');
 goog.require('pics3.Service');
 goog.require('pics3.loader.GoogleDriveFile');
 
@@ -90,8 +91,8 @@ pics3.GoogleDriveActionHandler.prototype.openFilesWithMetadata_ = function(
   goog.array.forEach(loadFiles.getArray(), function(loadFile) {
     var loader = pics3.loader.GoogleDriveFile.fromMetadata(
         this.appContext_, loadFile.getMetadata());
-    if (pics3.Photo.isSupportedMimeType(loader.getMimeType())) {
-      photos.push(new pics3.Photo(loader));
+    if (pics3.photoMimeType.isSupported(loader.getMimeType())) {
+      photos.push(new pics3.Photo(this.appContext_, loader));
     } else {
       this.logger_.warning('Unsupported MimeType opened: ' +
           loader.getMimeType());

@@ -29,11 +29,21 @@ pics3.AlbumView = function() {
 };
 goog.inherits(pics3.AlbumView, pics3.Component);
 
+/** @type {number} */
+pics3.AlbumView.MAX_PREFETCH_COUNT = 4;
+
+/** @type {goog.debug.Logger} */
+pics3.AlbumView.prototype.logger_ = goog.debug.Logger.getLogger(
+    'pics3.AlbumView');
+
 /** @type {pics3.Album} */
 pics3.AlbumView.prototype.album_;
 
 /** @type {number} */
 pics3.AlbumView.prototype.photoIndex_ = 0;
+
+/** @type {number} */
+pics3.AlbumView.prototype.photoPrefechIntervalId_;
 
 pics3.AlbumView.prototype.createDom = function() {
   goog.base(this, 'createDom');
@@ -57,6 +67,7 @@ pics3.AlbumView.prototype.setAlbum = function(album) {
   this.photoIndex_ = 0;
   goog.disposeAll(goog.object.getValues(this.photoViewsMap_));
   this.photoViewsMap_ = {};
+  this.cancelPhotoPrefetch_();
   var spinEntry = this.spinner_.spin(100);
   this.album_.loadAsync().addBoth(function() {
         spinEntry.release();
@@ -68,6 +79,44 @@ pics3.AlbumView.prototype.handleAlbumLoad_ = function() {
     return;
   }
   this.displayPhotoByIndex_(0);
+  this.startPhotoPrefetch_();
+};
+
+pics3.AlbumView.prototype.startPhotoPrefetch_ = function() {
+  this.prefetchPhotoIndex_ = this.photoIndex_;
+  if (!this.photoPrefechIntervalId_) {
+    this.photoPrefechIntervalId_ = window.setInterval(
+        goog.bind(this.maybePrefetchPhoto_, this), 100);
+  }
+};
+
+pics3.AlbumView.prototype.cancelPhotoPrefetch_ = function() {
+  if (this.photoPrefechIntervalId_) {
+    window.clearInterval(this.photoPrefechIntervalId_);
+    delete this.photoPrefechIntervalId_;
+  }
+};
+
+pics3.AlbumView.prototype.maybePrefetchPhoto_ = function() {
+  if (!this.album_.stateIn(pics3.Album.State.LOADED) ||
+      !this.album_.getLength()) {
+    return;
+  }
+  var iter = 0;
+  var index = this.photoIndex_;
+  index = (index < this.album_.getLength() ? index : 0);
+  while (iter < pics3.AlbumView.MAX_PREFETCH_COUNT) {
+    var photo = this.album_.get(index);
+    if (photo.getState() == pics3.Photo.State.PENDING) {
+      this.logger_.info('Prefetch photo ' + index);
+      photo.loadAsync();
+      return;
+    } else if (photo.getState() == pics3.Photo.State.LOADING) {
+      return;
+    }
+    index = (index + 1) % this.album_.getLength();
+    iter++;
+  }
 };
 
 /** @param {number} index */
@@ -144,5 +193,6 @@ pics3.AlbumView.prototype.handleKeyDown_ = function(e) {
 pics3.AlbumView.prototype.disposeInternal = function() {
   goog.disposeAll(goog.object.getValues(this.photoViewsMap_));
   this.photoViewsMap_ = {};
+  this.cancelPhotoPrefetch_();
   goog.base(this, 'disposeInternal');
 };

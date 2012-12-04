@@ -137,7 +137,7 @@ Mpo.Image = function(index) {
 };
 goog.inherits(Mpo.Image, pics3.parser.BaseParser);
 
-/** @type {string} */
+/** @type {pics3.parser.DataUrl} */
 Mpo.Image.prototype.dataUrl_;
 
 Mpo.Image.prototype.parse = function(reader) {
@@ -167,6 +167,7 @@ Mpo.Image.prototype.setByteLength = function(byteLength) {
   this.reader_ = this.reader_.subReader(0, byteLength);
 };
 
+/** @return {!pics3.parser.DataUrl} */
 Mpo.Image.prototype.toDataUrl = function() {
   if (!this.dataUrl_) {
     this.dataUrl_ = pics3.parser.DataUrl.fromUint8Array(
