@@ -217,6 +217,7 @@ a:hover {
   width: 200px;
   background-color: #707070;
   box-sizing: border-box;
+  -moz-box-sizing: border-box;
   padding: 3px;
 }
 .progress > .fill {
@@ -237,6 +238,7 @@ a:hover {
   position: absolute;
   z-index: 2;
   box-sizing: border-box;
+  -moz-box-sizing: border-box;
   padding: 16px;
   cursor: pointer;
 }
