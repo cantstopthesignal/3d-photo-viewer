@@ -29,6 +29,10 @@ pics3.AlbumView = function() {
 
   /** @type {!Array.<!Element>} */
   this.navArrowEls_ = [];
+
+  /** @type {!goog.events.EventHandler} */
+  this.albumEventHandler_ = new goog.events.EventHandler(this);
+  this.registerDisposable(this.albumEventHandler_);
 };
 goog.inherits(pics3.AlbumView, pics3.Component);
 
@@ -79,6 +83,7 @@ pics3.AlbumView.prototype.setAlbum = function(album) {
   if (album == this.album_) {
     return;
   }
+  this.albumEventHandler_.removeAll();
   this.album_ = album;
   this.photoIndex_ = 0;
   goog.disposeAll(goog.object.getValues(this.photoViewsMap_));
@@ -88,6 +93,8 @@ pics3.AlbumView.prototype.setAlbum = function(album) {
   this.album_.loadAsync().addBoth(function() {
         spinEntry.release();
       }).addCallback(this.handleAlbumLoad_, this);
+  this.albumEventHandler_.listen(album, pics3.Album.EventType.CHANGED,
+      this.handleAlbumChanged_);
 };
 
 pics3.AlbumView.prototype.handleAlbumLoad_ = function() {
@@ -96,6 +103,10 @@ pics3.AlbumView.prototype.handleAlbumLoad_ = function() {
   }
   this.displayPhotoByIndex_(0);
   this.startPhotoPrefetch_();
+};
+
+pics3.AlbumView.prototype.handleAlbumChanged_ = function() {
+  this.updateNav_();
 };
 
 pics3.AlbumView.prototype.startPhotoPrefetch_ = function() {

@@ -73,9 +73,16 @@ pics3.loader.PicasaPhoto.prototype.setDownloadUrl_ = function(downloadUrl) {
 
 /** @override */
 pics3.loader.PicasaPhoto.prototype.loadAsync = function() {
-  return this.picasaApi_.loadPhotoData(this.downloadUrl_).addCallback(
-      function(buffer) {
-    return new pics3.loader.FileResult(
-        buffer, this.mimeType_, this.name_);
+  var loadPhoto = this.picasaApi_.newLoadPhoto(this.downloadUrl_);
+  this.eventHandler.listen(loadPhoto, pics3.loader.EventType.PROGRESS,
+      this.handleProgress_);
+  return loadPhoto.load().addCallback(function(loadPhoto) {
+      return new pics3.loader.FileResult(
+          loadPhoto.getDataBuffer(), this.mimeType_, this.name_);
   }, this);
+};
+
+/** @param {pics3.loader.ProgressEvent} e */
+pics3.loader.PicasaPhoto.prototype.handleProgress_ = function(e) {
+  this.dispatchEvent(e);
 };

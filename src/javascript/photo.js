@@ -2,11 +2,12 @@
 
 goog.provide('pics3.Photo');
 
-goog.require('goog.Disposable');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
+goog.require('goog.events.EventTarget');
 goog.require('pics3.ImageProcessor');
 goog.require('pics3.PhotoMimeType');
+goog.require('pics3.loader.EventType');
 goog.require('pics3.parser.DataUrl');
 goog.require('pics3.parser.Mpo');
 
@@ -14,10 +15,12 @@ goog.require('pics3.parser.Mpo');
 /**
  * @param {!pics3.AppContext} appContext
  * @param {!pics3.loader.File} loader
- * @extends {goog.Disposable}
+ * @extends {goog.events.EventTarget}
  * @constructor
  */
 pics3.Photo = function(appContext, loader) {
+  goog.base(this);
+
   /** @type {number} */
   this.id_ = pics3.Photo.nextId_++;
 
@@ -30,8 +33,15 @@ pics3.Photo = function(appContext, loader) {
 
   /** @type {pics3.Photo.State} */
   this.state_ = pics3.Photo.State.PENDING;
+
+  /** @type {goog.events.EventHandler} */
+  this.eventHandler = new goog.events.EventHandler(this);
+  this.registerDisposable(this.eventHandler);
+
+  this.eventHandler.listen(this.loader_,
+      pics3.loader.EventType.PROGRESS, this.handleLoadProgress_);
 };
-goog.inherits(pics3.Photo, goog.Disposable);
+goog.inherits(pics3.Photo, goog.events.EventTarget);
 
 /** @enum {string} */
 pics3.Photo.State = {
@@ -153,4 +163,9 @@ pics3.Photo.prototype.parseImageAsync_ = function() {
         this.mimeType_ = result.mimeType;
         this.imageDataUrls_ = result.imageDataUrls;
       }, this);
+};
+
+/** @param {pics3.loader.ProgressEvent} e */
+pics3.Photo.prototype.handleLoadProgress_ = function(e) {
+  this.dispatchEvent(e);
 };

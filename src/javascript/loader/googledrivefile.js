@@ -8,6 +8,7 @@ goog.require('goog.string');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.loader.File');
 goog.require('pics3.loader.FileResult');
+goog.require('pics3.loader.ProgressEvent');
 
 
 /**
@@ -70,8 +71,15 @@ pics3.loader.GoogleDriveFile.prototype.loadAsync = function() {
   var loadFile = this.driveApi_.newLoadFile(this.id_).
       setDownloadUrl(this.downloadUrl_).
       setLoadData(true);
+  this.eventHandler.listen(loadFile, pics3.loader.EventType.PROGRESS,
+      this.handleProgress_);
   return loadFile.load().addCallback(function(loadFile) {
     return new pics3.loader.FileResult(
         loadFile.getDataBuffer(), this.mimeType_, this.name_);
   }, this);
+};
+
+/** @param {pics3.loader.ProgressEvent} e */
+pics3.loader.GoogleDriveFile.prototype.handleProgress_ = function(e) {
+  this.dispatchEvent(e);
 };

@@ -210,6 +210,21 @@ a:hover {
   width: 28px;
   height: 28px;
 }
+.progress {
+  position: absolute;
+  border-radius: 20px;
+  height: 20px;
+  width: 200px;
+  background-color: #707070;
+  box-sizing: border-box;
+  padding: 3px;
+}
+.progress > .fill {
+  width: 30px;
+  background-color: #ccc;
+  height: 14px;
+  border-radius: 10px;
+}
 .album-view {
   outline: 0;
   position: relative;

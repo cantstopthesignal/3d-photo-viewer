@@ -75,9 +75,6 @@
             Album filmstrip and thumbnails
           </li>
           <li>
-            Photo load progress indicators
-          </li>
-          <li>
             Error handling -- oops! ;)
           </li>
         </ul>

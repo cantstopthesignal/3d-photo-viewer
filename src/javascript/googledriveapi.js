@@ -8,6 +8,7 @@ goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
 goog.require('pics3.Service');
+goog.require('pics3.loader.ProgressEvent');
 
 
 /**
@@ -191,14 +192,18 @@ pics3.GoogleDriveApi.LoadFiles.prototype.load = function() {
  * @param {!pics3.GoogleDriveApi} api
  * @param {string} id
  * @constructor
+ * @extends {goog.events.EventTarget}
  */
 pics3.GoogleDriveApi.LoadFile = function(api, id) {
+  goog.base(this);
+
   /** @type {!pics3.GoogleDriveApi} */
   this.api_ = api;
 
   /** @type {string} */
   this.id = id;
 };
+goog.inherits(pics3.GoogleDriveApi.LoadFile, goog.events.EventTarget);
 
 /** @type {goog.debug.Logger} */
 pics3.GoogleDriveApi.LoadFile.prototype.logger_ = goog.debug.Logger.getLogger(
@@ -291,9 +296,10 @@ pics3.GoogleDriveApi.LoadFile.prototype.doLoadData_ = function() {
   }
   function handleProgress(e) {
     var browserEvent = e.getBrowserEvent();
-    this.logger_.info('Load data progress: ' + browserEvent.loaded + '/' +
-        browserEvent.total + (browserEvent.lengthComputable ?
-            ' computable' : ''));
+    if (browserEvent.lengthComputable) {
+      this.dispatchEvent(new pics3.loader.ProgressEvent(
+          browserEvent.loaded, browserEvent.total));
+    }
   }
   eventHandler.
       listen(xhr, goog.events.EventType.LOAD, handleLoad).

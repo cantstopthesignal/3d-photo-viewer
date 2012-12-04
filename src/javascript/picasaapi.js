@@ -55,6 +55,14 @@ pics3.PicasaApi.prototype.getGoogleClient = function() {
 };
 
 /**
+ * @param {string} downloadUrl
+ * @return {!pics3.PicasaApi.LoadPhoto}
+ */
+pics3.PicasaApi.prototype.newLoadPhoto = function(downloadUrl) {
+  return new pics3.PicasaApi.LoadPhoto(this, downloadUrl);
+}
+
+/**
  * @param {pics3.PicasaAlbumId} albumId
  * @return {goog.async.Deferred} producing {Object}
  */
@@ -100,13 +108,40 @@ pics3.PicasaApi.prototype.loadAlbum = function(albumId) {
 };
 
 /**
+ * @param {!pics3.PicasaApi} api
  * @param {string} downloadUrl
- * @return {goog.async.Deferred} producing {ArrayBuffer}
+ * @constructor
+ * @extends {goog.events.EventTarget}
  */
-pics3.PicasaApi.prototype.loadPhotoData = function(downloadUrl) {
-  var relayUrl = '/picasarelay?url=' + encodeURIComponent(downloadUrl) +
-     '&method=get';
+pics3.PicasaApi.LoadPhoto = function(api, downloadUrl) {
+  goog.base(this);
 
+  /** @type {!pics3.PicasaApi} */
+  this.api_ = api;
+
+  /** @type {string} */
+  this.downloadUrl_ = downloadUrl;
+};
+goog.inherits(pics3.PicasaApi.LoadPhoto, goog.events.EventTarget);
+
+/** @type {goog.debug.Logger} */
+pics3.PicasaApi.LoadPhoto.prototype.logger_ = goog.debug.Logger.getLogger(
+    'pics3.PicasaApi.LoadPhoto');
+
+/** @type {ArrayBuffer} */
+pics3.PicasaApi.LoadPhoto.prototype.dataBuffer_;
+
+/** @return {ArrayBuffer} */
+pics3.PicasaApi.LoadPhoto.prototype.getDataBuffer = function() {
+  return this.dataBuffer_;
+};
+
+/** @return {!goog.async.Deferred} producing this */
+pics3.PicasaApi.LoadPhoto.prototype.load = function() {
+  goog.asserts.assert(this.downloadUrl_ && this.downloadUrl_.length);
+
+  var relayUrl = '/picasarelay?url=' + encodeURIComponent(this.downloadUrl_) +
+      '&method=get';
   var xhr = new XMLHttpRequest();
   xhr.open('GET', relayUrl);
   xhr.responseType = 'arraybuffer';
@@ -116,7 +151,8 @@ pics3.PicasaApi.prototype.loadPhotoData = function(downloadUrl) {
   function handleLoad() {
     goog.asserts.assert(xhr.response instanceof ArrayBuffer);
     this.logger_.info('Photo data loaded');
-    deferred.callback(xhr.response);
+    this.dataBuffer_ = xhr.response;
+    deferred.callback(this);
     goog.dispose(eventHandler);
   }
   function handleError(e) {
@@ -126,14 +162,15 @@ pics3.PicasaApi.prototype.loadPhotoData = function(downloadUrl) {
   }
   function handleProgress(e) {
     var browserEvent = e.getBrowserEvent();
-    this.logger_.info('Load data progress: ' + browserEvent.loaded + '/' +
-        browserEvent.total + (browserEvent.lengthComputable ?
-            ' computable' : ''));
+    if (browserEvent.lengthComputable) {
+      this.dispatchEvent(new pics3.loader.ProgressEvent(
+          browserEvent.loaded, browserEvent.total));
+    }
   }
   eventHandler.
-      listen(xhr, goog.events.EventType.LOAD, handleLoad).
-      listen(xhr, 'progress', handleProgress).
-      listen(xhr, goog.events.EventType.ERROR, handleError);
+     listen(xhr, goog.events.EventType.LOAD, handleLoad).
+     listen(xhr, 'progress', handleProgress).
+     listen(xhr, goog.events.EventType.ERROR, handleError);
   xhr.send();
   return deferred;
 };
@@ -167,15 +204,8 @@ pics3.PicasaApi.prototype.loadAlbumDirect = function(albumId) {
     deferred.errback(e);
     goog.dispose(eventHandler);
   }
-  function handleProgress(e) {
-    var browserEvent = e.getBrowserEvent();
-    this.logger_.info('Load data progress: ' + browserEvent.loaded + '/' +
-        browserEvent.total + (browserEvent.lengthComputable ?
-            ' computable' : ''));
-  }
   eventHandler.
       listen(xhr, goog.events.EventType.LOAD, handleLoad).
-      listen(xhr, 'progress', handleProgress).
       listen(xhr, goog.events.EventType.ERROR, handleError);
   xhr.send();
   return deferred;

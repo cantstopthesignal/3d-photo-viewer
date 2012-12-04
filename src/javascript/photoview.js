@@ -10,6 +10,7 @@ goog.require('goog.events.EventType');
 goog.require('pics3.Component');
 goog.require('pics3.Photo');
 goog.require('pics3.PhotoMimeType');
+goog.require('pics3.ProgressIndicator');
 goog.require('pics3.display.ThreeDCross');
 goog.require('pics3.display.TwoD');
 
@@ -30,6 +31,11 @@ pics3.PhotoView = function(photo) {
 
   /** @type {!pics3.Spinner} */
   this.spinner_ = new pics3.Spinner(true);
+  this.registerDisposable(this.spinner_);
+
+  /** @type {pics3.ProgressIndicator} */
+  this.progress_ = new pics3.ProgressIndicator();
+  this.registerDisposable(this.progress_);
 };
 goog.inherits(pics3.PhotoView, pics3.Component);
 
@@ -43,13 +49,25 @@ pics3.PhotoView.prototype.createDom = function() {
 
   this.spinner_.render(this.el);
   this.spinner_.setFloatingStyle(true);
+
+  this.progress_.render(this.el);
+  goog.style.setStyle(this.progress_.el, 'visibility', 'hidden');
+
+  this.eventHandler.listen(this.photo_, pics3.loader.EventType.PROGRESS,
+      this.handlePhotoLoadProgress_);
 };
 
 pics3.PhotoView.prototype.start = function() {
   var spinEntry = this.spinner_.spin(100);
   this.photo_.loadAsync().addBoth(function() {
         spinEntry.release();
-      }).addBoth(this.updateDisplay_, this);
+      }, this).addBoth(this.updateDisplay_, this);
+};
+
+/** @param {pics3.loader.ProgressEvent} e */
+pics3.PhotoView.prototype.handlePhotoLoadProgress_ = function(e) {
+  goog.style.setStyle(this.progress_.el, 'visibility', '');
+  this.progress_.setState(e.loaded, e.total);
 };
 
 pics3.PhotoView.prototype.updateDisplay_ = function() {
@@ -57,6 +75,7 @@ pics3.PhotoView.prototype.updateDisplay_ = function() {
     this.logger_.severe('Update photo: error' + this.photo_.getError());
     return;
   } else if (this.photo_.getState() == pics3.Photo.State.LOADED) {
+    goog.style.setStyle(this.progress_.el, 'display', 'none');
     goog.dispose(this.display_);
     if (this.photo_.getMimeType() == pics3.PhotoMimeType.MPO) {
       this.display_ = new pics3.display.ThreeDCross(this.photo_);
@@ -76,9 +95,16 @@ pics3.PhotoView.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
   goog.style.setBorderBoxSize(this.el,
       new goog.math.Size(width, height));
+
+  var spinnerSize = this.spinner_.getSize();
+  var spinnerY = (height - spinnerSize) / 2;
   goog.style.setPosition(this.spinner_.el,
-      (width - this.spinner_.getSize()) / 2,
-      (height - this.spinner_.getSize()) / 2);
+      (width - spinnerSize) / 2, spinnerY);
+
+  goog.style.setPosition(this.progress_.el,
+      (width - this.progress_.el.offsetWidth) / 2,
+      spinnerY + spinnerSize + 20);
+
   this.resizeDisplay_();
 };
 
