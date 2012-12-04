@@ -75,9 +75,6 @@
             Album filmstrip and thumbnails
           </li>
           <li>
-            Webworker offloading and prefetch
-          </li>
-          <li>
             Photo load progress indicators
           </li>
           <li>

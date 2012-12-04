@@ -218,6 +218,32 @@ a:hover {
   width: 48px;
   height: 48px;
 }
+.album-nav-arrow {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: 16px;
+  cursor: pointer;
+}
+.album-nav-arrow:hover > .left {
+  border-right-color: #aaa !important;
+}
+.album-nav-arrow:hover > .right {
+  border-left-color: #aaa !important;
+}
+.album-nav-arrow > div {
+  border: 24px solid transparent;
+  width: 0px;
+  height: 0px;
+}
+.album-nav-arrow > .left {
+  border-right-color: #707070 !important;
+  border-left-width: 0 !important;
+}
+.album-nav-arrow > .right {
+  border-left-color: #707070 !important;
+  border-right-width: 0 !important;
+}
 .photo-display {
   position: relative;
 }

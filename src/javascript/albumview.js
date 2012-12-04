@@ -26,6 +26,9 @@ pics3.AlbumView = function() {
 
   /** @type {!pics3.Spinner} */
   this.spinner_ = new pics3.Spinner(true, 48);
+
+  /** @type {!Array.<!Element>} */
+  this.navArrowEls_ = [];
 };
 goog.inherits(pics3.AlbumView, pics3.Component);
 
@@ -53,8 +56,21 @@ pics3.AlbumView.prototype.createDom = function() {
   this.spinner_.render(this.el);
   this.spinner_.setFloatingStyle(true);
 
-  this.eventHandler.listen(this.el, goog.events.EventType.KEYDOWN,
-      this.handleKeyDown_);
+  for (var i = 0; i < 2; i++) {
+    var navArrowEl = document.createElement('div');
+    goog.dom.classes.add(navArrowEl, 'album-nav-arrow');
+    var innerEl = document.createElement('div');
+    goog.dom.classes.add(innerEl, i == 0 ? 'left' : 'right');
+    navArrowEl.appendChild(innerEl);
+    goog.style.setStyle(navArrowEl, 'visibility', 'hidden');
+    this.navArrowEls_.push(navArrowEl);
+    this.el.appendChild(navArrowEl);
+  }
+
+  this.eventHandler.
+      listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
+      listen(this.navArrowEls_[0], goog.events.EventType.CLICK, this.navLeft_).
+      listen(this.navArrowEls_[1], goog.events.EventType.CLICK, this.navRight_);
 };
 
 /** @param {pics3.Album} album */
@@ -132,6 +148,7 @@ pics3.AlbumView.prototype.displayPhotoByIndex_ = function(index) {
   photoView.render(this.el);
   photoView.start();
   this.resizePhotoView_();
+  this.updateNav_();
 };
 
 /** @return {?pics3.PhotoView} */
@@ -167,6 +184,13 @@ pics3.AlbumView.prototype.resize = function(opt_width, opt_height) {
       (width - this.spinner_.getSize()) / 2,
       (height - this.spinner_.getSize()) / 2);
   this.resizePhotoView_();
+
+  for (var i = 0; i < 2; i++) {
+    var navArrowEl = this.navArrowEls_[i];
+    goog.style.setPosition(navArrowEl,
+        i == 0 ? 0 : width - navArrowEl.offsetWidth,
+        (height - navArrowEl.offsetHeight) / 2);
+  }
 };
 
 pics3.AlbumView.prototype.resizePhotoView_ = function() {
@@ -176,16 +200,32 @@ pics3.AlbumView.prototype.resizePhotoView_ = function() {
   }
 };
 
+pics3.AlbumView.prototype.updateNav_ = function() {
+  goog.style.setStyle(this.navArrowEls_[0], 'visibility',
+      this.photoIndex_ > 0 ? '' : 'hidden');
+  var albumLength = this.album_ ? this.album_.getLength() : 0;
+  goog.style.setStyle(this.navArrowEls_[1], 'visibility',
+      this.photoIndex_ < albumLength - 1 ? '' : 'hidden');
+};
+
 /** @param {goog.events.BrowserEvent} e */
 pics3.AlbumView.prototype.handleKeyDown_ = function(e) {
   if (e.keyCode == goog.events.KeyCodes.LEFT) {
-    if (this.album_ && this.photoIndex_ > 0) {
-      this.displayPhotoByIndex_(this.photoIndex_ - 1);
-    }
+    this.navLeft_();
   } else if (e.keyCode == goog.events.KeyCodes.RIGHT) {
-    if (this.album_ && this.photoIndex_ + 1 < this.album_.getLength()) {
-      this.displayPhotoByIndex_(this.photoIndex_ + 1);
-    }
+    this.navRight_();
+  }
+};
+
+pics3.AlbumView.prototype.navLeft_ = function() {
+  if (this.album_ && this.photoIndex_ > 0) {
+    this.displayPhotoByIndex_(this.photoIndex_ - 1);
+  }
+};
+
+pics3.AlbumView.prototype.navRight_ = function() {
+  if (this.album_ && this.photoIndex_ + 1 < this.album_.getLength()) {
+    this.displayPhotoByIndex_(this.photoIndex_ + 1);
   }
 };
 

@@ -65,13 +65,14 @@ pics3.display.ThreeDCross.prototype.createDom = function() {
     this.eventHandler.listen(imageEl, goog.events.EventType.LOAD,
         imageLoadBarrier);
     imageEl.src = this.photo.getImageDataUrl(i);
-    imageEl.style.visibility = 'hidden';
+    goog.style.setStyle(imageEl, 'visibility', 'hidden');
     this.imageEls_.push(imageEl);
     this.el.appendChild(imageEl);
   }
   for (var i = 0; i < 2; i++) {
     var crossEyeDotEl = document.createElement('div');
     goog.dom.classes.add(crossEyeDotEl, 'cross-eye-dot');
+    goog.style.setStyle(crossEyeDotEl, 'visibility', 'hidden');
     this.crossEyeDotEls_.push(crossEyeDotEl);
     this.el.appendChild(crossEyeDotEl);
   }
@@ -80,7 +81,8 @@ pics3.display.ThreeDCross.prototype.createDom = function() {
 pics3.display.ThreeDCross.prototype.handleImagesLoaded_ = function() {
   this.layout_();
   for (var i = 0; i < 2; i++) {
-    this.imageEls_[i].style.visibility = '';
+    goog.style.setStyle(this.imageEls_[i], 'visibility', '');
+    goog.style.setStyle(this.crossEyeDotEls_[i], 'visibility', '');
   }
 };
 
