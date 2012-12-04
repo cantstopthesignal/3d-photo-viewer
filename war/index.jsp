@@ -12,7 +12,7 @@
 
 <!DOCTYPE html>
 <!-- Copyright 2012 cantstopthesignals@gmail.com -->
-<html>
+<html itemscope itemtype="http://schema.org/Product">
   <head>
     <title>3D Photo Viewer</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -54,8 +54,11 @@
   <body class="main">
     <div class="app"></div>
     <div class="about-content">
-      <h1><img src="/images/logo64.png" class="logo">3D Photo Viewer</h1>
-      <p>
+      <h1>
+        <img itemprop="image" src="/images/logo64.png" class="logo">
+        <span itemprop="name">3D Photo Viewer</span>
+      </h1>
+      <p itemprop="description">
         View 3D photos stored in Google Drive, Google+ Photos, or on your
         computer.
       </p>
