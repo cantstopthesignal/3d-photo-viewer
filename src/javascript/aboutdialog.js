@@ -33,6 +33,7 @@ pics3.AboutDialog.prototype.closeButton_;
 pics3.AboutDialog.prototype.createDom = function() {
   goog.base(this, 'createDom');
   this.el.appendChild(this.contentEl_);
+  goog.style.setWidth(this.el, 500);
 
   this.closeButton_ = new pics3.Button('Close');
   this.registerDisposable(this.closeButton_);

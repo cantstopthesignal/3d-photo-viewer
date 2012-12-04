@@ -80,6 +80,10 @@ a:hover {
   font-size: 13px;
   padding: 10px;
 }
+.about-content .logo {
+  vertical-align: middle;
+  margin-right: 10px;
+}
 .about-content a {
   color: #99f;
 }

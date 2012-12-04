@@ -54,7 +54,11 @@
   <body class="main">
     <div class="app"></div>
     <div class="about-content">
-      <h1>3d Photo Viewer</h1>
+      <h1><img src="/images/logo64.png" class="logo">3D Photo Viewer</h1>
+      <p>
+        View 3D photos stored in Google Drive, Google+ Photos, or on your
+        computer.
+      </p>
       <p>Contact:
         <ul>
           <li>

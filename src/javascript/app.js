@@ -89,7 +89,7 @@ pics3.App = function() {
 };
 goog.inherits(pics3.App, goog.events.EventTarget);
 
-pics3.App.APP_NAME = '3d Photo Viewer';
+pics3.App.APP_NAME = '3D Photo Viewer';
 
 /** @type {goog.debug.Logger} */
 pics3.App.prototype.logger_ = goog.debug.Logger.getLogger(
