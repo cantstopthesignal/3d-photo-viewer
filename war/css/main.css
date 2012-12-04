@@ -225,6 +225,36 @@ a:hover {
   display: inline-block;
   position: absolute;
 }
+.threedcross-photo-display > .help-container {
+  color: #707070;
+  font-size: 24px;
+  text-align: center;
+  position: absolute;
+  width: 100%;
+  padding-top: 10px;
+  line-height: 32px;
+}
+.threedcross-photo-display > .cross-eye-dot {
+  background-color: #707070;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  border-radius: 12px;
+}
+.help-flyout {
+  color: #333;
+  background-color: #707070;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-left: 10px;
+  line-height: 18px;
+  font-weight: bold;
+  position: relative;
+  top: -1px;
+}
 .photo-view > .spinner-wrapper > .spinner {
   width: 48px;
   height: 48px;
