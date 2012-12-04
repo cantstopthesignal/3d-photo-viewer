@@ -46,7 +46,8 @@ pics3.source.GoogleDriveTile.prototype.createDom = function() {
 /** @param {goog.events.BrowserEvent} e */
 pics3.source.GoogleDriveTile.prototype.handleLoadClick_ = function(e) {
   e.stopPropagation();
-  this.googleClient_.setAuthRequired(true);
+  this.googleClient_.addRequiredScopes(
+      pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
   this.googleClient_.getAuthDeferred().branch().addCallback(function() {
     this.pickerClient_.loadAsync().addCallback(
         this.displayPicker_, this);

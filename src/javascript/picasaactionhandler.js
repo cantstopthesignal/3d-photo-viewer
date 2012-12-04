@@ -77,7 +77,7 @@ pics3.PicasaActionHandler.prototype.processUri = function(uri) {
 pics3.PicasaActionHandler.prototype.handleActions = function() {
   if (this.albumIds_.length) {
     this.logger_.info('Open ' + this.albumIds_.length + ' albums from Picasa');
-    this.googleClient_.setAuthRequired(true);
+    this.googleClient_.addRequiredScopes(pics3.GoogleClient.PICASA_SCOPES);
     this.googleClient_.getAuthDeferred().addCallback(function() {
       this.picasaApi_.loadAsync().addCallback(function() {
         var albums = goog.array.map(this.albumIds_, function(albumId) {

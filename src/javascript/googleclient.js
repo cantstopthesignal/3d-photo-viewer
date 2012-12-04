@@ -9,6 +9,7 @@ goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventTarget');
 goog.require('goog.events.EventType');
 goog.require('pics3.Dialog');
+goog.require('pics3.GoogleClientScopes');
 
 
 /**
@@ -25,18 +26,34 @@ pics3.GoogleClient = function() {
 
   /** @type {goog.async.Deferred} */
   this.authDeferred_ = new goog.async.Deferred();
+
+  /** @type {!pics3.GoogleClientScopes} */
+  this.requiredScopes_ = new pics3.GoogleClientScopes();
 };
 goog.inherits(pics3.GoogleClient, goog.events.EventTarget);
 
 pics3.GoogleClient.SERVICE_ID = 's' + goog.getUid(pics3.GoogleClient);
 
 pics3.GoogleClient.GAPI_API_KEY = 'AIzaSyA7jCmXxuW-fZk1_OZGJ2HRwVY2z1vGDhQ';
+
 pics3.GoogleClient.GAPI_CLIENT_ID = '416949524888.apps.googleusercontent.com';
-pics3.GoogleClient.GAPI_SCOPES = [
+
+/** @type {!pics3.GoogleClientScopes} */
+pics3.GoogleClient.GOOGLE_DRIVE_SCOPES = new pics3.GoogleClientScopes([
     'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/drive.install',
+    'https://www.googleapis.com/auth/drive.install'
+    ]);
+
+/** @type {!pics3.GoogleClientScopes} */
+pics3.GoogleClient.PICASA_SCOPES = new pics3.GoogleClientScopes([
     'https://picasaweb.google.com/data/'
-    ];
+    ]);
+
+/** @type {!pics3.GoogleClientScopes} */
+pics3.GoogleClient.ALL_SCOPES = new pics3.GoogleClientScopes(
+    goog.array.concat(
+        pics3.GoogleClient.GOOGLE_DRIVE_SCOPES.getValues(),
+        pics3.GoogleClient.PICASA_SCOPES.getValues()));
 
 /**
  * @param {!pics3.AppContext} appContext
@@ -53,9 +70,6 @@ pics3.GoogleClient.prototype.logger_ = goog.debug.Logger.getLogger(
 
 /** @type {boolean} */
 pics3.GoogleClient.prototype.loadStarted_ = false;
-
-/** @type {boolean} */
-pics3.GoogleClient.prototype.authRequired_ = false;
 
 /** @type {pics3.GoogleClient.ConnectDialog_} */
 pics3.GoogleClient.prototype.connectDialog_;
@@ -81,12 +95,12 @@ pics3.GoogleClient.prototype.restart = function() {
   goog.asserts.assert(!this.authDeferred_.hasFired());
 };
 
-/** @param {boolean} authRequired */
-pics3.GoogleClient.prototype.setAuthRequired = function(authRequired) {
-  goog.asserts.assert(authRequired);
-  if (!this.authRequired_) {
-    this.authRequired_ = true;
-    if (this.loadDeferred_.hasFired() && !this.isAuthorized_()) {
+/** @param {!pics3.GoogleClientScopes} requiredScopes */
+pics3.GoogleClient.prototype.addRequiredScopes = function(requiredScopes) {
+  var scopesAdded = this.requiredScopes_.merge(requiredScopes);
+  if (scopesAdded) {
+    if (this.loadDeferred_.hasFired()) {
+      this.authDeferred_ = new goog.async.Deferred();
       this.checkAuth_();
     }
   }
@@ -153,25 +167,34 @@ pics3.GoogleClient.prototype.handleGapiAuthInit_ = function() {
 };
 
 pics3.GoogleClient.prototype.checkAuth_ = function() {
-  this.logger_.info('checkAuth_');
+  var checkScopes = new pics3.GoogleClientScopes();
+  if (!this.requiredScopes_.isEmpty()) {
+    checkScopes.merge(this.requiredScopes_);
+  } else {
+    checkScopes.merge(pics3.GoogleClient.ALL_SCOPES);
+  }
+  this.logger_.info('checkAuth_ ' + checkScopes.getValues());
   goog.getObjectByName('gapi.auth.authorize')({
     'client_id': pics3.GoogleClient.GAPI_CLIENT_ID,
-    'scope': pics3.GoogleClient.GAPI_SCOPES,
+    'scope': checkScopes.getValues(),
     'immediate': true
-  }, goog.bind(this.handleAuthResult_, this));
+  }, goog.bind(this.handleAuthResult_, this, checkScopes));
 };
 
 pics3.GoogleClient.prototype.fullAuth_ = function() {
-  this.logger_.info('fullAuth_');
-  if (!this.connectDialog_) {
-    this.connectDialog_ = new pics3.GoogleClient.ConnectDialog_(
-        goog.bind(this.handleAuthResult_, this));
-    this.registerDisposable(this.connectDialog_);
+  this.logger_.info('fullAuth_ ' + this.requiredScopes_.getValues());
+  if (this.connectDialog_) {
+    goog.dispose(this.connectDialog_);
   }
+  this.connectDialog_ = new pics3.GoogleClient.ConnectDialog_(
+      this.requiredScopes_, goog.bind(this.handleAuthResult_, this,
+          this.requiredScopes_));
+  this.registerDisposable(this.connectDialog_);
   this.connectDialog_.show();
 };
 
-pics3.GoogleClient.prototype.handleAuthResult_ = function(authResult) {
+pics3.GoogleClient.prototype.handleAuthResult_ = function(checkedScopes,
+    authResult) {
   if (authResult) {
     this.logger_.info('handleAuthResult_: authorized');
     this.setAuthRefreshTimer_(parseInt(authResult['expires_in'], 10));
@@ -185,11 +208,17 @@ pics3.GoogleClient.prototype.handleAuthResult_ = function(authResult) {
     return;
   }
   if (!authResult) {
-    if (this.authRequired_) {
-      // An empty auth result can happen if the user previously authorized
-      // this service but then de-authorized.  Go immediately to full auth
-      // in this case.
-      this.fullAuth_();
+    if (!this.requiredScopes_.isEmpty()) {
+      if (!this.requiredScopes_.equals(checkedScopes)) {
+        // It's possible that checked scopes was too broad, try again
+        // now that required scopes has changed.
+        this.checkAuth_();
+      } else {
+        // An empty auth result can happen if the user previously authorized
+        // this service but then de-authorized.  Go immediately to full auth
+        // in this case.
+        this.fullAuth_();
+      }
     }
     return;
   }
@@ -228,11 +257,16 @@ pics3.GoogleClient.prototype.invalidateToken_ = function() {
 };
 
 /**
+ * @param {!pics3.GoogleClientScopes} requiredScopes
  * @constructor
  * @extends {pics3.Dialog}
  */
-pics3.GoogleClient.ConnectDialog_ = function(authResultCallback) {
+pics3.GoogleClient.ConnectDialog_ = function(requiredScopes,
+    authResultCallback) {
   goog.base(this);
+
+  /** @type {pics3.GoogleClientScopes} */
+  this.requiredScopes_ = requiredScopes;
 
   this.authResultCallback_ = authResultCallback;
 };
@@ -243,9 +277,7 @@ pics3.GoogleClient.ConnectDialog_.prototype.createDom = function() {
 
   var headerEl = document.createElement('div');
   goog.dom.classes.add(headerEl, 'title');
-  headerEl.appendChild(document.createTextNode(
-      '3d Photo Viewer needs your permission to access your Google ' +
-      'Drive and Google+ Photos'));
+  headerEl.appendChild(document.createTextNode(this.getMessage_()));
   this.el.appendChild(headerEl);
 
   var connectButtonEl = document.createElement('div');
@@ -256,10 +288,30 @@ pics3.GoogleClient.ConnectDialog_.prototype.createDom = function() {
   this.el.appendChild(connectButtonEl);
 };
 
+pics3.GoogleClient.ConnectDialog_.prototype.getMessage_ = function() {
+  var hasDriveScopes = this.requiredScopes_.contains(
+      pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
+  var hasPicasaScopes = this.requiredScopes_.contains(
+      pics3.GoogleClient.PICASA_SCOPES);
+  goog.asserts.assert(hasDriveScopes || hasPicasaScopes);
+  if (hasDriveScopes) {
+    if (hasPicasaScopes) {
+      return '3d Photo Viewer needs your permission to access your Google ' +
+          'Drive and Google+ Photos';
+    } else {
+      return '3d Photo Viewer needs your permission to access your Google ' +
+          'Drive';
+    }
+  } else {
+    return '3d Photo Viewer needs your permission to access your Google+ ' +
+        'Photos';
+  }
+};
+
 pics3.GoogleClient.ConnectDialog_.prototype.handleConnectClick_ = function() {
   goog.getObjectByName('gapi.auth.authorize')({
     'client_id': pics3.GoogleClient.GAPI_CLIENT_ID,
-    'scope': pics3.GoogleClient.GAPI_SCOPES,
+    'scope': this.requiredScopes_.getValues(),
     'immediate': false
   }, this.authResultCallback_);
 };

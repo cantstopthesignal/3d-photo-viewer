@@ -48,7 +48,7 @@ pics3.source.PicasaTile.prototype.createDom = function() {
 /** @param {goog.events.BrowserEvent} e */
 pics3.source.PicasaTile.prototype.handleLoadClick_ = function(e) {
   e.stopPropagation();
-  this.googleClient_.setAuthRequired(true);
+  this.googleClient_.addRequiredScopes(pics3.GoogleClient.PICASA_SCOPES);
   this.googleClient_.getAuthDeferred().branch().addCallback(function() {
     this.pickerClient_.loadAsync().addCallback(
         this.displayPicker_, this);

@@ -73,7 +73,8 @@ pics3.GoogleDriveActionHandler.prototype.handleActions = function() {
   if (this.state_ && this.state_['action'] == 'open') {
     var fileIds = this.state_['ids'] || [];
     this.logger_.info('Open ' + fileIds.length + ' files from Google Drive');
-    this.googleClient_.setAuthRequired(true);
+    this.googleClient_.addRequiredScopes(
+        pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
     this.googleClient_.getAuthDeferred().addCallback(function() {
       this.googleDriveApi_.loadAsync().addCallback(function() {
         var loadFiles = this.googleDriveApi_.newLoadFiles(fileIds).

@@ -121,7 +121,8 @@ pics3.GoogleDriveApi.prototype.callApi_ = function(name, version, params,
           }
           retryOnAuthFailure = false;
           this.googleClient_.restart();
-          this.googleClient_.setAuthRequired(true);
+          this.googleClient_.addRequiredScopes(
+              pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
           this.googleClient_.getAuthDeferred().branch().addCallbacks(doRequest,
               goog.bind(d.errback, d));
         } else {
