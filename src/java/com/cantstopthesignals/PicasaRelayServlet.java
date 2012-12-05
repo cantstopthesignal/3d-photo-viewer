@@ -39,6 +39,7 @@ public class PicasaRelayServlet extends HttpServlet {
     connection.setReadTimeout(60000);
 
     resp.setContentType(connection.getContentType());
+    resp.setStatus(connection.getResponseCode());
 
     InputStream inputStream = connection.getInputStream();
 

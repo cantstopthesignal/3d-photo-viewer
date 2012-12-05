@@ -81,9 +81,6 @@
           <li>
             Album filmstrip and thumbnails
           </li>
-          <li>
-            Error handling -- oops! ;)
-          </li>
         </ul>
       <p>
         <a target="_blank" href="https://github.com/cantstopthesignal/3d-photo-viewer">Project source</a>

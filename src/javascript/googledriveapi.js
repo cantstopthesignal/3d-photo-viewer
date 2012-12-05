@@ -7,25 +7,55 @@ goog.require('goog.async.DeferredList');
 goog.require('goog.debug.Logger');
 goog.require('goog.events.EventTarget');
 goog.require('goog.json');
+goog.require('pics3.ErrorCode');
+goog.require('pics3.ErrorMessage');
+goog.require('pics3.NotificationManager');
 goog.require('pics3.Service');
 goog.require('pics3.loader.ProgressEvent');
 
 
 /**
  * @constructor
- * @param {!pics3.GoogleClient} googleClient
+ * @param {!pics3.AppContext} appContext
  * @extends {goog.events.EventTarget}
  * @implements {pics3.Service}
  */
-pics3.GoogleDriveApi = function(googleClient) {
+pics3.GoogleDriveApi = function(appContext) {
   goog.base(this);
 
+  /** @type {!pics3.AppContext} */
+  this.appContext_ = appContext;
+
   /** @type {!pics3.GoogleClient} */
-  this.googleClient_ = googleClient;
+  this.googleClient_ = pics3.GoogleClient.get(this.appContext_);
 };
 goog.inherits(pics3.GoogleDriveApi, goog.events.EventTarget);
 
 pics3.GoogleDriveApi.SERVICE_ID = 's' + goog.getUid(pics3.GoogleDriveApi);
+
+/** @desc Message to show for unexpected google drive api issues */
+pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_UNEXPECTED_ERROR = goog.getMsg(
+    'Unexpected error in GoogleDrive api.');
+
+/** @desc Message to show when a file's metadata could not load */
+pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_METADATA_LOAD_ERROR = goog.getMsg(
+    'Error loading file metadata.');
+
+/** @desc Message to show when a file's data could not load */
+pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_DATA_LOAD_ERROR = goog.getMsg(
+    'Error loading file data.');
+
+/** @desc Message to show when a file could not be found */
+pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_NOT_FOUND_ERROR = goog.getMsg(
+    'Google Drive file not found.');
+
+/** @enum {string} */
+pics3.GoogleDriveApi.ErrorMessage = {
+  UNEXPECTED: pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_UNEXPECTED_ERROR,
+  METADATA_LOAD: pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_METADATA_LOAD_ERROR,
+  DATA_LOAD: pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_DATA_LOAD_ERROR,
+  FILE_NOT_FOUND: pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_NOT_FOUND_ERROR
+};
 
 /**
  * @param {!pics3.AppContext} appContext
@@ -75,7 +105,7 @@ pics3.GoogleDriveApi.prototype.newLoadFiles = function(fileIds) {
  * @param {string} fileId
  * @return {goog.async.Deferred} producing {Object}
  */
-pics3.GoogleDriveApi.prototype.loadFileMetadata = function(fileId) {
+pics3.GoogleDriveApi.prototype.loadFileMetadataInternal = function(fileId) {
   var params = {
     'fileId': fileId
   };
@@ -84,11 +114,8 @@ pics3.GoogleDriveApi.prototype.loadFileMetadata = function(fileId) {
     this.logger_.info('File metadata loaded: ' + resp['result']['title'] +
         ', ' + parseInt(resp['fileSize'], 10) + ' bytes');
   };
-  var errback = function(error) {
-    this.logger_.severe('Error loading file: ' + error, error);
-  };
   return this.callApi_('drive.files.get', 'v2', params).
-      addCallbacks(callback, errback, this);
+      addCallback(callback, this);
 };
 
 /**
@@ -110,11 +137,13 @@ pics3.GoogleDriveApi.prototype.callApi_ = function(name, version, params,
         if (opt_expectEmptyResponse) {
           d.callback(null);
         } else {
-          d.errback('Empty response');
+          var error = Error('Empty response');
+          error.code = pics3.ErrorCode.UNEXPECTED;
+          d.errback(error);
         }
       } else if (resp['error']) {
-        var error = resp ? resp['error'] : null;
-        if (error && error['code'] == 401) {
+        var errorObject = resp ? resp['error'] : null;
+        if (errorObject && errorObject['code'] == 401) {
           // Authorization failure.
           if (!retryOnAuthFailure) {
             d.errback('Authorization failed');
@@ -126,8 +155,21 @@ pics3.GoogleDriveApi.prototype.callApi_ = function(name, version, params,
               pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
           this.googleClient_.getAuthDeferred().branch().addCallbacks(doRequest,
               goog.bind(d.errback, d));
+        } else if (errorObject && errorObject['code'] == 404) {
+          var error = Error('Not found error: ' + goog.json.serialize(
+              errorObject));
+          error.code = pics3.ErrorCode.NOT_FOUND;
+          d.errback(error);
+        } else if (errorObject && errorObject['code'] == -1 &&
+            (errorObject['message'] || '').indexOf('network') >= 0) {
+          var error = Error(errorObject['message']);
+          error.code = pics3.ErrorCode.NETWORK;
+          d.errback(error);
         } else {
-          d.errback('Request error: ' + goog.json.serialize(error));
+          var error = Error('Request error: ' + goog.json.serialize(
+              errorObject));
+          error.code = pics3.ErrorCode.UNEXPECTED;
+          d.errback(error);
         }
       } else {
         d.callback(resp);
@@ -136,6 +178,24 @@ pics3.GoogleDriveApi.prototype.callApi_ = function(name, version, params,
   }, this);
   doRequest();
   return d;
+};
+
+/**
+ * @param {Error} error
+ * @param {string=} opt_message
+ */
+pics3.GoogleDriveApi.prototype.reportError = function(error, opt_message) {
+  var errorMessage = opt_message;
+  if (!errorMessage) {
+    if (error.code == pics3.ErrorCode.NETWORK) {
+      errorMessage = pics3.ErrorMessage.NETWORK;
+    } else {
+      errorMessage = pics3.GoogleDriveApi.ErrorMessage.UNEXPECTED;
+    }
+  }
+  this.logger_.severe(error.toString(), error);
+  var notificationManager = pics3.NotificationManager.get(this.appContext_);
+  notificationManager.show(errorMessage);
 };
 
 /**
@@ -175,16 +235,12 @@ pics3.GoogleDriveApi.LoadFiles.prototype.load = function() {
   var deferreds = goog.array.map(this.array_, function(loadFile) {
     return loadFile.load();
   });
-  return new goog.async.DeferredList(deferreds, false, true).addBoth(
+  return new goog.async.DeferredList(deferreds, false, true).addCallback(
       function(responses) {
-        var error;
-        goog.array.some(responses, function(resp) {
-          if (!resp[0]) {
-            error = resp[1];
-            return true;
-          }
-        });
-        return error || this;
+        goog.asserts.assert(goog.array.every(responses, function(resp) {
+          return resp[0];
+        }));
+        return this;
       }, this);
 };
 
@@ -255,13 +311,20 @@ pics3.GoogleDriveApi.LoadFile.prototype.setDownloadUrl = function(downloadUrl) {
 /** @return {!goog.async.Deferred} */
 pics3.GoogleDriveApi.LoadFile.prototype.load = function() {
   if (this.loadMetadata_ || (this.loadData_ && !this.downloadUrl_)) {
-    return this.api_.loadFileMetadata(this.id).addCallback(function(metadata) {
+    return this.api_.loadFileMetadataInternal(this.id).addCallbacks(
+        function(metadata) {
           this.metadata_ = metadata;
           this.downloadUrl_ = metadata['downloadUrl'];
           if (this.loadData_) {
             return this.doLoadData_();
           }
           return this;
+        }, function(error) {
+          var errorMessage;
+          if (error.code == pics3.ErrorCode.NOT_FOUND) {
+            errorMessage = pics3.GoogleDriveApi.ErrorMessage.FILE_NOT_FOUND;
+          }
+          this.api_.reportError(error, errorMessage);
         }, this);
   } else if (this.loadData_) {
     return this.doLoadData_().addCallback(function() {
@@ -281,17 +344,34 @@ pics3.GoogleDriveApi.LoadFile.prototype.doLoadData_ = function() {
       this.api_.getGoogleClient().getOAuthToken());
   xhr.responseType = 'arraybuffer';
 
-  var deferred = new goog.async.Deferred();
+  var d = new goog.async.Deferred();
   var eventHandler = new goog.events.EventHandler(this);
   function handleLoad() {
-    goog.asserts.assert(xhr.response instanceof ArrayBuffer);
-    this.logger_.info('File data loaded');
-    this.dataBuffer_ = xhr.response;
-    deferred.callback(this);
+    if (xhr.status == 200) {
+      goog.asserts.assert(xhr.response instanceof ArrayBuffer);
+      this.logger_.info('File data loaded');
+      this.dataBuffer_ = xhr.response;
+      d.callback(this);
+    } else {
+      var error = Error('Error loading file data: Xhr response error: ' +
+          xhr.status + ': ' + xhr.statusText);
+      var errorMessage;
+      if (xhr.status == 403) {
+        error.code = pics3.ErrorCode.NOT_FOUND;
+        errorMessage = pics3.GoogleDriveApi.ErrorMessage.DATA_LOAD;
+      } else {
+        error.code = pics3.ErrorCode.UNEXPECTED;
+      }
+      this.api_.reportError(error, errorMessage);
+      d.errback(error);
+    }
     goog.dispose(eventHandler);
   }
   function handleError(e) {
-    deferred.errback(e);
+    var error = Error('Error loading file data: Xhr network error');
+    error.code = pics3.ErrorCode.NETWORK;
+    this.api_.reportError(error);
+    d.errback(error);
     goog.dispose(eventHandler);
   }
   function handleProgress(e) {
@@ -306,7 +386,7 @@ pics3.GoogleDriveApi.LoadFile.prototype.doLoadData_ = function() {
       listen(xhr, 'progress', handleProgress).
       listen(xhr, goog.events.EventType.ERROR, handleError);
   xhr.send();
-  return deferred;
+  return d;
 };
 
 /** @return {Object} */

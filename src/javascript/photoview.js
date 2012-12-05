@@ -72,7 +72,7 @@ pics3.PhotoView.prototype.handlePhotoLoadProgress_ = function(e) {
 
 pics3.PhotoView.prototype.updateDisplay_ = function() {
   if (this.photo_.getState() == pics3.Photo.State.ERROR) {
-    this.logger_.severe('Update photo: error' + this.photo_.getError());
+    this.logger_.severe('Update photo: ' + this.photo_.getError());
     return;
   } else if (this.photo_.getState() == pics3.Photo.State.LOADED) {
     goog.style.setStyle(this.progress_.el, 'display', 'none');

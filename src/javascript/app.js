@@ -20,6 +20,7 @@ goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.GooglePickerClient');
 goog.require('pics3.ImageProcessor');
 goog.require('pics3.MediaManager');
+goog.require('pics3.NotificationManager');
 goog.require('pics3.PicasaActionHandler');
 goog.require('pics3.PicasaApi');
 goog.require('pics3.source.Picker');
@@ -42,37 +43,30 @@ pics3.App = function() {
   /** @type {!pics3.worker.Client} */
   this.workerClient_ = new pics3.worker.Client();
   this.workerClient_.register(this.appContext_);
-  this.registerDisposable(this.workerClient_);
 
   /** @type {!pics3.GoogleClient} */
   this.googleClient_ = new pics3.GoogleClient();
   this.googleClient_.register(this.appContext_);
-  this.registerDisposable(this.googleClient_);
 
   /** @type {!pics3.GooglePickerClient} */
   this.googlePickerClient_ = new pics3.GooglePickerClient(this.appContext_);
   this.googlePickerClient_.register(this.appContext_);
-  this.registerDisposable(this.googlePickerClient_);
 
   /** @type {!pics3.GoogleDriveApi} */
-  this.googleDriveApi_ = new pics3.GoogleDriveApi(this.googleClient_);
+  this.googleDriveApi_ = new pics3.GoogleDriveApi(this.appContext_);
   this.googleDriveApi_.register(this.appContext_);
-  this.registerDisposable(this.googleDriveApi_);
 
   /** @type {!pics3.PicasaApi} */
-  this.picasaApi_ = new pics3.PicasaApi(this.googleClient_);
+  this.picasaApi_ = new pics3.PicasaApi(this.appContext_);
   this.picasaApi_.register(this.appContext_);
-  this.registerDisposable(this.picasaApi_);
 
   /** @type {!pics3.ImageProcessor} */
   this.imageProcessor_ = new pics3.ImageProcessor(this.appContext_);
   this.imageProcessor_.register(this.appContext_);
-  this.registerDisposable(this.imageProcessor_);
 
   /** @type {pics3.MediaManager} */
   this.mediaManager_ = new pics3.MediaManager();
   this.mediaManager_.register(this.appContext_);
-  this.registerDisposable(this.mediaManager_);
 
   /** @type {!pics3.GoogleDriveActionHandler} */
   this.googleDriveActionHandler_ = new pics3.GoogleDriveActionHandler(
@@ -120,6 +114,9 @@ pics3.App.prototype.start = function() {
   this.registerDisposable(this.appBar_);
   this.appBar_.render(this.appEl_);
   this.appBar_.getMainMenu().setTitle(pics3.App.APP_NAME);
+
+  var notificationManager = new pics3.NotificationManager(this.appBar_);
+  notificationManager.register(this.appContext_);
 
   this.sourcePicker_ = new pics3.source.Picker(this.appContext_);
   this.registerDisposable(this.sourcePicker_);

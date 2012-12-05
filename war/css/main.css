@@ -75,6 +75,16 @@ a:hover {
   float: right;
   margin: 2px 5px 2px 0;
 }
+.notification {
+  border: 1px solid #a00;
+  background-color: #a00;
+  color: white;
+  white-space: nowrap;
+  position: absolute;
+  border-radius: 4px;
+  padding: 3px 8px;
+  margin-top: 3px;
+}
 .about-content {
   color: #ddd;
   font-size: 13px;
