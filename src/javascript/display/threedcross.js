@@ -38,6 +38,9 @@ pics3.display.ThreeDCross.IMAGE_SPACER_PIXELS = 4;
 /** @type {number} */
 pics3.display.ThreeDCross.DEFAULT_MAX_IMAGE_WIDTH_PIXELS = 350;
 
+/** @type {number} */
+pics3.display.ThreeDCross.CROSS_EYE_DOT_MARGIN = 16;
+
 /** @type {Element} */
 pics3.display.ThreeDCross.prototype.helpContainerEl_;
 
@@ -49,7 +52,8 @@ pics3.display.ThreeDCross.prototype.createDom = function() {
   goog.dom.classes.add(this.helpContainerEl_, 'help-container');
   this.el.appendChild(this.helpContainerEl_);
   this.helpContainerEl_.appendChild(document.createTextNode(
-      'View 3d by crossing your eyes: line up the two dots'));
+      'View 3D by relaxing your eyes: look through the screen until the ' +
+      'two dots line up.'));
 
   var imagesLoaded = 0;
   function imageLoadBarrier() {
@@ -99,34 +103,43 @@ pics3.display.ThreeDCross.prototype.resize = function(opt_width, opt_height) {
 };
 
 pics3.display.ThreeDCross.prototype.layout_ = function() {
-  var width = Math.ceil(this.el.offsetWidth / 2);
-  var height = this.el.offsetHeight;
-  var halfSpacer = Math.floor(pics3.display.ThreeDCross.IMAGE_SPACER_PIXELS /
+  var ThreeDCross = pics3.display.ThreeDCross;
+
+  var displayBounds = goog.style.getBounds(this.el);
+  var halfWidth = Math.ceil(displayBounds.width / 2);
+  var halfSpacer = Math.floor(ThreeDCross.IMAGE_SPACER_PIXELS /
       2);
+  var helpBounds = goog.style.getBounds(this.helpContainerEl_);
+  var helpBottom = helpBounds.top + helpBounds.height - displayBounds.top;
+  var crossEyeDotSize = this.crossEyeDotEls_[0].offsetWidth;
+  var headerHeight = crossEyeDotSize +
+      2 * ThreeDCross.CROSS_EYE_DOT_MARGIN + helpBottom;
+  var maxImageHeight = Math.max(50, displayBounds.height - headerHeight);
   for (var i = 0; i < 2; i++) {
     var naturalImageWidth = this.imageEls_[i].naturalWidth;
     var naturalImageHeight = this.imageEls_[i].naturalHeight;
     if (!naturalImageWidth || !naturalImageHeight) {
       continue;
     }
-    var imageWidth = Math.min(width - halfSpacer, pics3.display.ThreeDCross.
+    var imageWidth = Math.min(halfWidth - halfSpacer, ThreeDCross.
         DEFAULT_MAX_IMAGE_WIDTH_PIXELS);
     var imageHeight = Math.ceil(imageWidth * naturalImageHeight /
         naturalImageWidth);
-    if (imageHeight > height) {
-      imageHeight = height;
+    if (imageHeight > maxImageHeight) {
+      imageHeight = maxImageHeight;
       imageWidth = Math.ceil(imageHeight * naturalImageWidth /
           naturalImageHeight);
     }
-    var x = i == 0 ? width - imageWidth - halfSpacer : width + halfSpacer;
-    var y = Math.floor((height - imageHeight) / 2);
+    var x = i == 0 ? halfWidth - imageWidth - halfSpacer : halfWidth +
+        halfSpacer;
+    var y = Math.floor((displayBounds.height - imageHeight) / 2);
+    y = Math.max(headerHeight, y);
     goog.style.setPosition(this.imageEls_[i], x, y);
     goog.style.setBorderBoxSize(this.imageEls_[i],
         new goog.math.Size(imageWidth, imageHeight));
 
-    var crossEyeDot = this.crossEyeDotEls_[i];
-    goog.style.setPosition(crossEyeDot,
-        x + (imageWidth - crossEyeDot.offsetWidth) / 2,
-        y - crossEyeDot.offsetHeight - 16);
+    goog.style.setPosition(this.crossEyeDotEls_[i],
+        x + (imageWidth - crossEyeDotSize) / 2,
+        y - crossEyeDotSize - ThreeDCross.CROSS_EYE_DOT_MARGIN);
   }
 }
