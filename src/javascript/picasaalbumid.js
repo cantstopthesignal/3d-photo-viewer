@@ -4,6 +4,7 @@ goog.provide('pics3.PicasaAlbumId');
 
 goog.require('goog.Uri');
 goog.require('goog.asserts');
+goog.require('pics3.AlbumId');
 
 
 /**
@@ -12,8 +13,11 @@ goog.require('goog.asserts');
  * @param {string=} opt_albumId
  * @param {string=} opt_authKey
  * @constructor
+ * @extends {pics3.AlbumId}
  */
 pics3.PicasaAlbumId = function(userId, opt_album, opt_albumId, opt_authKey) {
+  goog.base(this);
+
   /** @type {string} */
   this.userId = goog.asserts.assertString(userId);
 
@@ -26,6 +30,7 @@ pics3.PicasaAlbumId = function(userId, opt_album, opt_albumId, opt_authKey) {
   /** @type {?string} */
   this.authKey = opt_authKey || null;
 };
+goog.inherits(pics3.PicasaAlbumId, pics3.AlbumId);
 
 /**
  * @param {string} url
@@ -71,4 +76,15 @@ pics3.PicasaAlbumId.fromUrlAndId = function(url, opt_albumId) {
     return null;
   }
   return new pics3.PicasaAlbumId(userId, album, albumId, authKey);
+};
+
+/** @override */
+pics3.PicasaAlbumId.prototype.equals = function(other) {
+  if (!(other instanceof pics3.PicasaAlbumId)) {
+    return false;
+  }
+  return this.album == other.album &&
+      this.albumId == other.albumId &&
+      this.authKey == other.authKey &&
+      this.userId == other.userId;
 };

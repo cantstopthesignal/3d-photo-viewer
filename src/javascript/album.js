@@ -8,12 +8,16 @@ goog.require('goog.events.EventTarget');
 
 
 /**
+ * @param {pics3.AlbumId=} opt_albumId
  * @param {pics3.loader.Album=} opt_loader
  * @extends {goog.events.EventTarget}
  * @constructor
  */
-pics3.Album = function(opt_loader) {
+pics3.Album = function(opt_albumId, opt_loader) {
   goog.base(this);
+
+  /** @type {?pics3.AlbumId} */
+  this.albumId_ = opt_albumId || null;
 
   /** @type {?pics3.loader.Album} */
   this.loader_ = opt_loader || null;
@@ -66,6 +70,18 @@ pics3.Album.prototype.getName = function() {
   return this.name_;
 };
 
+/** @return {?pics3.AlbumId} */
+pics3.Album.prototype.getAlbumId = function() {
+  return this.albumId_;
+};
+
+/** @return {!Array.<!pics3.PhotoId>} */
+pics3.Album.prototype.getPhotoIds = function() {
+  return goog.array.map(this.photos, function(photo) {
+    return photo.getId();
+  });
+};
+
 /** @return {!goog.async.Deferred} */
 pics3.Album.prototype.getLoadDeferred = function() {
   return this.loadDeferred_;
@@ -88,17 +104,55 @@ pics3.Album.prototype.getError = function() {
 
 /** @param {!pics3.Photo} photo */
 pics3.Album.prototype.add = function(photo) {
+  if (photo.getId()) {
+    if (this.getPhotoById(photo.getId())) {
+      return;
+    }
+  }
   this.photos.push(photo);
   this.dispatchEvent(pics3.Album.EventType.CHANGED);
 };
 
 /** @param {!Array.<!pics3.Photo>} photos */
 pics3.Album.prototype.addAll = function(photos) {
-  if (!photos.length) {
+  var newPhotos = [];
+  goog.array.forEach(photos, function(photo) {
+    if (!photo.getId() || !this.getPhotoById(photo.getId())) {
+      newPhotos.push(photo);
+    }
+  }, this);
+  if (!newPhotos) {
     return;
   }
-  goog.array.extend(this.photos, photos);
+  goog.array.extend(this.photos, newPhotos);
   this.dispatchEvent(pics3.Album.EventType.CHANGED);
+};
+
+/**
+ * @param {?pics3.PhotoId} id
+ * @return {?pics3.Photo}
+ */
+pics3.Album.prototype.getPhotoById = function(id) {
+  var index = this.getPhotoIndex(id);
+  if (index >= 0) {
+    return this.photos[index];
+  }
+  return null;
+};
+
+//TODO: Make fast
+/**
+ * @param {?pics3.PhotoId} id
+ * @return {number}
+ */
+pics3.Album.prototype.getPhotoIndex = function(id) {
+  if (!id) {
+    return -1;
+  }
+  return goog.array.findIndex(this.photos,
+      function(photo) {
+    return photo.getId() && photo.getId().equals(id);
+  });
 };
 
 /** @return {number} */

@@ -5,6 +5,8 @@ goog.provide('pics3.loader.PicasaPhoto');
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.string');
+goog.require('pics3.Photo');
+goog.require('pics3.PhotoId');
 goog.require('pics3.PicasaApi');
 goog.require('pics3.loader.File');
 goog.require('pics3.loader.FileResult');
@@ -69,6 +71,11 @@ pics3.loader.PicasaPhoto.prototype.downloadUrl_;
 /** @param {string} downloadUrl */
 pics3.loader.PicasaPhoto.prototype.setDownloadUrl_ = function(downloadUrl) {
   this.downloadUrl_ = downloadUrl;
+};
+
+/** @return {pics3.PhotoId} */
+pics3.loader.PicasaPhoto.prototype.getPhotoId = function() {
+  return new pics3.PhotoId(this.id_);
 };
 
 /** @override */

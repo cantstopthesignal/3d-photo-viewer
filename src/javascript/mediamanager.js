@@ -37,7 +37,9 @@ pics3.MediaManager.Source = {
 
 /** @enum {string} */
 pics3.MediaManager.EventType = {
-  ALBUMS_ADDED: goog.events.getUniqueId('albumsadded')
+  ALBUMS_ADDED: goog.events.getUniqueId('albumsadded'),
+  ALBUM_OPENED: goog.events.getUniqueId('albumopened'),
+  PHOTO_OPENED: goog.events.getUniqueId('photoopened')
 };
 
 /**
@@ -72,12 +74,68 @@ pics3.MediaManager.prototype.getSourceAlbum = function(source) {
   return album;
 };
 
+/**
+ * @param {?pics3.AlbumId} albumId
+ * @return {?pics3.Album}
+ */
+pics3.MediaManager.prototype.getAlbumById = function(albumId) {
+  if (!albumId) {
+    return null;
+  }
+  return /** @type {?pics3.Album} */ (goog.array.find(this.albums_,
+      function(album) {
+    return albumId.equals(album.getAlbumId());
+  }));
+};
+
 /** @param {!Array.<!pics3.Album>} albums */
 pics3.MediaManager.prototype.addAllAlbums = function(albums) {
-  goog.array.extend(this.albums_, albums);
-  if (albums.length) {
+  var newAlbums = [];
+  goog.array.forEach(albums, function(album) {
+    var existingAlbum = this.getAlbumById(album.getAlbumId());
+    if (!existingAlbum) {
+      newAlbums.push(album);
+    }
+  }, this);
+  goog.array.extend(this.albums_, newAlbums);
+  if (newAlbums) {
     this.dispatchEvent(new pics3.MediaManager.AlbumsAddedEvent(albums));
   }
+};
+
+/** @param {!pics3.Album} album */
+pics3.MediaManager.prototype.openAlbum = function(album) {
+  goog.asserts.assert(goog.array.contains(this.albums_, album));
+  this.dispatchEvent(new pics3.MediaManager.AlbumOpenedEvent(album));
+};
+
+/**
+ * @param {!pics3.Album} album
+ * @param {!pics3.PhotoId} photoId
+ */
+pics3.MediaManager.prototype.openPhoto = function(album, photoId) {
+  this.openAlbum(album);
+  this.dispatchEvent(new pics3.MediaManager.PhotoOpenedEvent(photoId));
+};
+
+/**
+ * @param {!pics3.Album} album
+ * @param {pics3.PhotoId=} opt_photoId
+ * @return {pics3.history.Token}
+ */
+pics3.MediaManager.prototype.getHistoryTokenForAlbum = function(album,
+    opt_photoId) {
+  var albumId = album.getAlbumId();
+  if (albumId) {
+    goog.asserts.assert(albumId instanceof pics3.PicasaAlbumId);
+    return new pics3.history.PicasaAlbumToken(
+        /** @type {!pics3.PicasaAlbumId} */ (albumId), opt_photoId);
+  }
+  if (album == this.getSourceAlbum(pics3.MediaManager.Source.GOOGLE_DRIVE)) {
+    return new pics3.history.GoogleDriveFilesToken(album.getPhotoIds(),
+        opt_photoId);
+  }
+  return null;
 };
 
 /** @override */
@@ -100,3 +158,29 @@ pics3.MediaManager.AlbumsAddedEvent = function(albums) {
   this.albums = albums;
 };
 goog.inherits(pics3.MediaManager.AlbumsAddedEvent, goog.events.Event);
+
+/**
+ * @param {!pics3.Album} album
+ * @constructor
+ * @extends {goog.events.Event}
+ */
+pics3.MediaManager.AlbumOpenedEvent = function(album) {
+  goog.base(this, pics3.MediaManager.EventType.ALBUM_OPENED);
+
+  /** @type {!pics3.Album} */
+  this.album = album;
+};
+goog.inherits(pics3.MediaManager.AlbumOpenedEvent, goog.events.Event);
+
+/**
+ * @param {!pics3.PhotoId} photoId
+ * @constructor
+ * @extends {goog.events.Event}
+ */
+pics3.MediaManager.PhotoOpenedEvent = function(photoId) {
+  goog.base(this, pics3.MediaManager.EventType.PHOTO_OPENED);
+
+  /** @type {!pics3.PhotoId} */
+  this.photoId = photoId;
+};
+goog.inherits(pics3.MediaManager.PhotoOpenedEvent, goog.events.Event);

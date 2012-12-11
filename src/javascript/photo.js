@@ -14,15 +14,19 @@ goog.require('pics3.parser.Mpo');
 
 /**
  * @param {!pics3.AppContext} appContext
+ * @param {?pics3.PhotoId} id
  * @param {!pics3.loader.File} loader
  * @extends {goog.events.EventTarget}
  * @constructor
  */
-pics3.Photo = function(appContext, loader) {
+pics3.Photo = function(appContext, id, loader) {
   goog.base(this);
 
+  /** @type {?pics3.PhotoId} */
+  this.id_ = id;
+
   /** @type {number} */
-  this.id_ = pics3.Photo.nextId_++;
+  this.uniqueId_ = pics3.Photo.nextUniqueId_++;
 
   /** @type {!pics3.loader.File} */
   this.loader_ = loader;
@@ -52,7 +56,7 @@ pics3.Photo.State = {
 };
 
 /** @type {number} */
-pics3.Photo.nextId_ = 1;
+pics3.Photo.nextUniqueId_ = 1;
 
 /** @type {goog.debug.Logger} */
 pics3.Photo.prototype.logger_ = goog.debug.Logger.getLogger('pics3.Photo');
@@ -76,6 +80,11 @@ pics3.Photo.prototype.error_;
 pics3.Photo.prototype.loadDeferred_;
 
 /** @return {number} */
+pics3.Photo.prototype.getUniqueId = function() {
+  return this.uniqueId_;
+};
+
+/** @return {?pics3.PhotoId} */
 pics3.Photo.prototype.getId = function() {
   return this.id_;
 };

@@ -14,6 +14,7 @@ goog.require('goog.json');
 goog.require('pics3.Dialog');
 goog.require('pics3.GoogleClient');
 goog.require('pics3.Photo');
+goog.require('pics3.PhotoId');
 goog.require('pics3.PicasaAlbumId');
 goog.require('pics3.loader.GoogleDriveFile');
 goog.require('pics3.loader.PicasaAlbum');
@@ -300,7 +301,8 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
       var loader = new pics3.loader.GoogleDriveFile(this.appContext_, id,
           mimeType, name);
       if (pics3.photoMimeType.isSupported(mimeType)) {
-        this.photos_.push(new pics3.Photo(this.appContext_, loader));
+        this.photos_.push(new pics3.Photo(this.appContext_,
+            new pics3.PhotoId(id), loader));
       } else {
         this.logger_.warning('Unsupported docs MimeType picked: ' + mimeType);
       }
@@ -311,14 +313,15 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
         if (albumId) {
           var loader = new pics3.loader.PicasaAlbum(this.appContext_,
               albumId, name);
-          this.albums_.push(new pics3.Album(loader));
+          this.albums_.push(new pics3.Album(albumId, loader));
         } else {
           this.logger_.severe('Could not recognize picasa url ' + url);
         }
       } else if (mimeType == 'application/vnd.google-apps.photo') {
         var loader = new pics3.loader.PicasaPhoto(this.appContext_, id,
             url, name);
-        this.photos_.push(new pics3.Photo(this.appContext_, loader));
+        this.photos_.push(new pics3.Photo(this.appContext_,
+            new pics3.PhotoId(id), loader));
       } else {
         this.logger_.warning('Unsupported picasa MimeType picked: ' +
             mimeType);

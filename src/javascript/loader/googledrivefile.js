@@ -6,6 +6,7 @@ goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.string');
 goog.require('pics3.GoogleDriveApi');
+goog.require('pics3.PhotoId');
 goog.require('pics3.loader.File');
 goog.require('pics3.loader.FileResult');
 goog.require('pics3.loader.ProgressEvent');
@@ -64,6 +65,11 @@ pics3.loader.GoogleDriveFile.prototype.setDownloadUrl_ = function(downloadUrl) {
 /** @return {string} */
 pics3.loader.GoogleDriveFile.prototype.getMimeType = function() {
   return this.mimeType_;
+};
+
+/** @return {pics3.PhotoId} */
+pics3.loader.GoogleDriveFile.prototype.getPhotoId = function() {
+  return new pics3.PhotoId(this.id_);
 };
 
 /** @override */

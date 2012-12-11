@@ -52,7 +52,7 @@ pics3.source.UploadTile.prototype.handleUploadFiles_ = function(fileEl, e) {
   if (fileEl.files.length) {
     goog.array.forEach(fileEl.files, function(file) {
       var photoLoader = new pics3.loader.BlobFile(file);
-      var photo = new pics3.Photo(this.appContext, photoLoader);
+      var photo = new pics3.Photo(this.appContext, null, photoLoader);
       this.album.add(photo);
     }, this);
     this.select();

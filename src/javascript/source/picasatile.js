@@ -70,8 +70,11 @@ pics3.source.PicasaTile.prototype.handlePickerPick_ = function(e) {
   var photos = e.result.getPhotos();
   this.album.addAll(photos);
   var albums = e.result.getAlbums();
-  if (albums.length) {
+  if (albums) {
     this.mediaManager_.addAllAlbums(albums);
+    var firstAlbum = this.mediaManager_.getAlbumById(albums[0].getAlbumId());
+    goog.asserts.assert(firstAlbum);
+    this.mediaManager_.openAlbum(firstAlbum);
   }
   if (photos.length) {
     this.select();

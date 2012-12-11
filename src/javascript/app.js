@@ -15,14 +15,15 @@ goog.require('pics3.AlbumView');
 goog.require('pics3.AppBar');
 goog.require('pics3.AppContext');
 goog.require('pics3.GoogleClient');
-goog.require('pics3.GoogleDriveActionHandler');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.GooglePickerClient');
 goog.require('pics3.ImageProcessor');
 goog.require('pics3.MediaManager');
 goog.require('pics3.NotificationManager');
-goog.require('pics3.PicasaActionHandler');
 goog.require('pics3.PicasaApi');
+goog.require('pics3.history.GoogleDriveHandler');
+goog.require('pics3.history.Manager');
+goog.require('pics3.history.PicasaHandler');
 goog.require('pics3.source.Picker');
 goog.require('pics3.source.Tile');
 goog.require('pics3.worker.Client');
@@ -36,6 +37,10 @@ pics3.App = function() {
   /** @type {!pics3.AppContext} */
   this.appContext_ = new pics3.AppContext();
   this.registerDisposable(this.appContext_);
+
+  /** @type {!pics3.history.Manager} */
+  this.history_ = new pics3.history.Manager();
+  this.history_.register(this.appContext_);
 
   /** @type {!goog.Uri} */
   this.uri_ = new goog.Uri(window.location.href);
@@ -67,15 +72,6 @@ pics3.App = function() {
   /** @type {pics3.MediaManager} */
   this.mediaManager_ = new pics3.MediaManager();
   this.mediaManager_.register(this.appContext_);
-
-  /** @type {!pics3.GoogleDriveActionHandler} */
-  this.googleDriveActionHandler_ = new pics3.GoogleDriveActionHandler(
-      this.appContext_);
-  this.registerDisposable(this.googleDriveActionHandler_);
-
-  /** @type {!pics3.PicasaActionHandler} */
-  this.picasaActionHandler_ = new pics3.PicasaActionHandler(this.appContext_);
-  this.registerDisposable(this.picasaActionHandler_);
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
@@ -144,15 +140,23 @@ pics3.App.prototype.start = function() {
   this.eventHandler_.
       listen(window, goog.events.EventType.RESIZE, this.handleWindowResize_).
       listen(window, 'beforeunload', this.handleWindowBeforeUnload_).
+      listen(this.albumView_, pics3.AlbumView.EventType.SWITCH_PHOTO,
+          this.handleAlbumViewSwitchPhoto_).
       listen(this.sourcePicker_, pics3.source.Tile.EventType.SELECT,
           this.handleSourcePickerSelectionChanged_).
-      listen(this.googleDriveActionHandler_, pics3.GoogleDriveActionHandler.
-          EventType.OPENED_FILES, this.handleGoogleDriveActionOpenedFiles_).
+      listen(this.mediaManager_, pics3.MediaManager.EventType.ALBUM_OPENED,
+          this.handleMediaManagerAlbumOpened_).
+      listen(this.mediaManager_, pics3.MediaManager.EventType.PHOTO_OPENED,
+          this.handleMediaManagerPhotoOpened_).
       listen(window, goog.events.EventType.FOCUS, this.handleWindowFocus_);
   this.resize();
   this.albumView_.focus();
-  this.maybeHandleGoogleDriveAction_();
-  this.maybeHandlePicasaAction_();
+
+  this.history_.registerHandler(new pics3.history.GoogleDriveHandler(
+      this.appContext_));
+  this.history_.registerHandler(new pics3.history.PicasaHandler(
+      this.appContext_));
+  this.history_.start();
 };
 
 /** @override */
@@ -160,35 +164,29 @@ pics3.App.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
 };
 
-pics3.App.prototype.maybeHandleGoogleDriveAction_ = function() {
-  var newUri = this.googleDriveActionHandler_.processUri(this.uri_);
-  if (newUri) {
-    window.history.replaceState(null, window.document.title || '',
-        newUri.toString());
-  }
-  this.googleDriveActionHandler_.handleActions();
-};
-
-pics3.App.prototype.maybeHandlePicasaAction_ = function() {
-  var newUri = this.picasaActionHandler_.processUri(this.uri_);
-  if (newUri) {
-    window.history.replaceState(null, window.document.title || '',
-        newUri.toString());
-  }
-  this.picasaActionHandler_.handleActions();
-};
-
 /** @param {goog.events.Event} e */
 pics3.App.prototype.handleSourcePickerSelectionChanged_ = function(e) {
-  this.albumView_.setAlbum(e.target.getAlbum());
+  goog.asserts.assert(e.target instanceof pics3.source.Tile);
+  var tile = /** @type {pics3.source.Tile} */ (e.target);
+  this.albumView_.setAlbum(tile.getAlbum());
+  this.updateHistory_();
 };
 
-pics3.App.prototype.handleGoogleDriveActionOpenedFiles_ = function() {
-  var tile = this.sourcePicker_.getTileForAlbum(this.mediaManager_.
-      getSourceAlbum(pics3.MediaManager.Source.GOOGLE_DRIVE));
+pics3.App.prototype.handleAlbumViewSwitchPhoto_ = function() {
+  this.updateHistory_();
+};
+
+/** @param {pics3.MediaManager.AlbumOpenedEvent} e */
+pics3.App.prototype.handleMediaManagerAlbumOpened_ = function(e) {
+  var tile = this.sourcePicker_.getTileForAlbum(e.album);
   if (tile) {
     tile.select();
   }
+};
+
+/** @param {pics3.MediaManager.PhotoOpenedEvent} e */
+pics3.App.prototype.handleMediaManagerPhotoOpened_ = function(e) {
+  this.albumView_.selectPhoto(e.photoId);
 };
 
 pics3.App.prototype.handleWindowResize_ = function() {
@@ -203,6 +201,22 @@ pics3.App.prototype.handleWindowFocus_ = function(e) {
   window.setTimeout(goog.bind(function() {
     this.albumView_.focus();
   }, this), 0);
+};
+
+pics3.App.prototype.updateHistory_ = function() {
+  if (!this.albumView_) {
+    return;
+  }
+  var currentAlbum = this.albumView_.getAlbum();
+  if (!currentAlbum) {
+    return;
+  }
+  var currentPhoto = this.albumView_.getDisplayedPhoto();
+  var token = this.mediaManager_.getHistoryTokenForAlbum(currentAlbum,
+      currentPhoto ? currentPhoto.getId() : undefined);
+  if (token) {
+    this.history_.pushToken(token);
+  }
 };
 
 pics3.App.prototype.resize = function() {

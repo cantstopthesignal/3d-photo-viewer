@@ -115,7 +115,6 @@ pics3.source.Picker.prototype.handleAlbumsAdded_ = function(e) {
     }
   }, this);
   this.sortTiles_();
-  firstTile.select();
 };
 
 pics3.source.Picker.prototype.sortTiles_ = function() {
