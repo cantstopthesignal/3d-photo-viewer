@@ -47,7 +47,7 @@ pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_DATA_LOAD_ERROR = goog.getMsg(
 
 /** @desc Message to show when a file could not be found */
 pics3.GoogleDriveApi.MSG_GOOGLE_DRIVE_FILE_NOT_FOUND_ERROR = goog.getMsg(
-    'Google Drive file not found.');
+    'Google Drive file not found.  You may not have permission to see it.');
 
 /** @enum {string} */
 pics3.GoogleDriveApi.ErrorMessage = {
@@ -185,6 +185,9 @@ pics3.GoogleDriveApi.prototype.callApi_ = function(name, version, params,
  * @param {string=} opt_message
  */
 pics3.GoogleDriveApi.prototype.reportError = function(error, opt_message) {
+  if (error instanceof goog.async.Deferred.CancelledError) {
+    return;
+  }
   var errorMessage = opt_message;
   if (!errorMessage) {
     if (error.code == pics3.ErrorCode.NETWORK) {
