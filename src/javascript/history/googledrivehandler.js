@@ -106,11 +106,15 @@ pics3.history.GoogleDriveHandler.prototype.openFilesWithMetadata_ = function(
     currentFileId, loadFiles) {
   var photos = [];
   goog.array.forEach(loadFiles.getArray(), function(loadFile) {
+    var metadata = loadFile.getMetadata();
     var loader = pics3.loader.GoogleDriveFile.fromMetadata(
-        this.appContext_, loadFile.getMetadata());
+        this.appContext_, metadata);
     if (pics3.photoMimeType.isSupported(loader.getMimeType())) {
-      photos.push(new pics3.Photo(this.appContext_, loader.getPhotoId(),
-          loader));
+      var photo = new pics3.Photo(this.appContext_, loader.getPhotoId(),
+          loader);
+      photo.addThumbnails(pics3.loader.GoogleDriveFile.
+          getThumbnailsFromMetadata(metadata));
+      photos.push(photo);
     } else {
       this.logger_.warning('Unsupported MimeType opened: ' +
           loader.getMimeType());

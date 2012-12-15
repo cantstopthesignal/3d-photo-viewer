@@ -10,6 +10,7 @@ goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
 goog.require('goog.object');
 goog.require('pics3.Component');
+goog.require('pics3.Filmstrip');
 goog.require('pics3.PhotoView');
 goog.require('pics3.Spinner');
 
@@ -26,6 +27,8 @@ pics3.AlbumView = function() {
 
   /** @type {!pics3.Spinner} */
   this.spinner_ = new pics3.Spinner(true, 48);
+
+  this.filmstrip_ = new pics3.Filmstrip();
 
   /** @type {!Array.<!Element>} */
   this.navArrowEls_ = [];
@@ -68,6 +71,8 @@ pics3.AlbumView.prototype.createDom = function() {
   this.spinner_.render(this.el);
   this.spinner_.setFloatingStyle(true);
 
+  this.filmstrip_.render(this.el);
+
   for (var i = 0; i < 2; i++) {
     var navArrowEl = document.createElement('div');
     goog.dom.classes.add(navArrowEl, 'album-nav-arrow');
@@ -81,6 +86,8 @@ pics3.AlbumView.prototype.createDom = function() {
 
   this.eventHandler.
       listen(this.el, goog.events.EventType.KEYDOWN, this.handleKeyDown_).
+      listen(this.filmstrip_, pics3.Filmstrip.EventType.SELECT_PHOTO,
+          this.handleFilmstripSelectPhoto_).
       listen(this.navArrowEls_[0], goog.events.EventType.CLICK, this.navLeft_).
       listen(this.navArrowEls_[1], goog.events.EventType.CLICK, this.navRight_);
 };
@@ -99,6 +106,7 @@ pics3.AlbumView.prototype.setAlbum = function(album) {
   this.cancelPhotoPrefetch_();
   delete this.selectPhotoOnLoad_;
   var spinEntry = this.spinner_.spin(100);
+  this.filmstrip_.setAlbum(album);
   this.album_.loadAsync().addBoth(function() {
         spinEntry.release();
       }).addCallback(this.handleAlbumLoad_, this);
@@ -133,6 +141,7 @@ pics3.AlbumView.prototype.selectPhoto = function(photoId) {
 };
 
 pics3.AlbumView.prototype.handleAlbumLoad_ = function() {
+  this.resizeContent_();
   if (!this.album_.getLength()) {
     return;
   }
@@ -147,6 +156,7 @@ pics3.AlbumView.prototype.handleAlbumLoad_ = function() {
 
 pics3.AlbumView.prototype.handleAlbumChanged_ = function() {
   this.updateNav_();
+  this.resizeContent_();
 };
 
 pics3.AlbumView.prototype.startPhotoPrefetch_ = function() {
@@ -186,7 +196,10 @@ pics3.AlbumView.prototype.maybePrefetchPhoto_ = function() {
   }
 };
 
-/** @param {number} index */
+/**
+ * @param {number} index
+ * @return {boolean} whether a new photo was displayed.
+ */
 pics3.AlbumView.prototype.displayPhotoByIndex_ = function(index) {
   var photoView = this.getPhotoViewByIndex_(index);
   goog.object.forEach(this.photoViewsMap_, function(photoView) {
@@ -194,21 +207,40 @@ pics3.AlbumView.prototype.displayPhotoByIndex_ = function(index) {
       goog.dom.removeNode(photoView.el);
     }
   });
+  var changed = this.photoIndex_ != index;
   this.photoIndex_ = index;
+  var photo = this.album_.get(this.photoIndex_);
+  this.filmstrip_.selectThumbnail(photo);
   // Note: this could cause reentrance of render: problem?
   photoView.render(this.el);
   photoView.start();
   this.resizePhotoView_();
   this.updateNav_();
+  return changed;
 };
 
-/** @param {pics3.PhotoId} photoId */
+/**
+ * @param {!pics3.PhotoId} photoId
+ * @return {boolean} whether a new photo was displayed.
+ */
 pics3.AlbumView.prototype.displayPhotoById_ = function(photoId) {
-  var photoIndex = this.album_.getPhotoIndex(photoId);
+  var photoIndex = this.album_.getPhotoIndexById(photoId);
   if (photoIndex < 0) {
     photoIndex = 0;
   }
-  this.displayPhotoByIndex_(photoIndex);
+  return this.displayPhotoByIndex_(photoIndex);
+};
+
+/**
+ * @param {number} photoUniqueId
+ * @return {boolean} whether a new photo was displayed.
+ */
+pics3.AlbumView.prototype.displayPhotoByUniqueId_ = function(photoUniqueId) {
+  var photoIndex = this.album_.getPhotoIndexByUniqueId(photoUniqueId);
+  if (photoIndex < 0) {
+    photoIndex = 0;
+  }
+  return this.displayPhotoByIndex_(photoIndex);
 };
 
 /** @return {?pics3.PhotoView} */
@@ -240,9 +272,23 @@ pics3.AlbumView.prototype.resize = function(opt_width, opt_height) {
   var height = opt_height || this.el.parentNode.offsetHeight;
   goog.style.setBorderBoxSize(this.el,
       new goog.math.Size(width, height));
+  this.resizeContent_();
+};
+
+pics3.AlbumView.prototype.resizeContent_ = function() {
+  var width = this.el.offsetWidth;
+  var height = this.el.offsetHeight;
   goog.style.setPosition(this.spinner_.el,
       (width - this.spinner_.getSize()) / 2,
       (height - this.spinner_.getSize()) / 2);
+  var showFilmstrip = this.album_ && this.album_.getState() ==
+      pics3.Album.State.LOADED && this.album_.getLength() > 1;
+  var filmstripHeight = showFilmstrip ? Math.min(120,
+      Math.max(80, height * 1/4)) : 0;
+  goog.style.setStyle(this.filmstrip_.el, 'visibility', showFilmstrip ? '' :
+      'hidden');
+  this.filmstrip_.resize(width, filmstripHeight);
+  goog.style.setPosition(this.filmstrip_.el, 0, height - filmstripHeight);
   this.resizePhotoView_();
 
   for (var i = 0; i < 2; i++) {
@@ -255,8 +301,10 @@ pics3.AlbumView.prototype.resize = function(opt_width, opt_height) {
 
 pics3.AlbumView.prototype.resizePhotoView_ = function() {
   var photoView = this.getCurrentPhotoView_();
-  if (photoView) {
-    photoView.resize(this.el.offsetWidth, this.el.offsetHeight);
+  if (photoView && photoView.el) {
+    var filmstripHeight = this.filmstrip_.el.offsetHeight;
+    photoView.resize(this.el.offsetWidth, this.el.offsetHeight -
+        filmstripHeight);
   }
 };
 
@@ -266,6 +314,13 @@ pics3.AlbumView.prototype.updateNav_ = function() {
   var albumLength = this.album_ ? this.album_.getLength() : 0;
   goog.style.setStyle(this.navArrowEls_[1], 'visibility',
       this.photoIndex_ < albumLength - 1 ? '' : 'hidden');
+};
+
+/** @param {pics3.Filmstrip.SelectPhotoEvent} e */
+pics3.AlbumView.prototype.handleFilmstripSelectPhoto_ = function(e) {
+  if (this.displayPhotoByUniqueId_(e.photoUniqueId)) {
+    this.dispatchEvent(pics3.AlbumView.EventType.SWITCH_PHOTO);
+  }
 };
 
 /** @param {goog.events.BrowserEvent} e */
@@ -279,15 +334,17 @@ pics3.AlbumView.prototype.handleKeyDown_ = function(e) {
 
 pics3.AlbumView.prototype.navLeft_ = function() {
   if (this.album_ && this.photoIndex_ > 0) {
-    this.displayPhotoByIndex_(this.photoIndex_ - 1);
-    this.dispatchEvent(pics3.AlbumView.EventType.SWITCH_PHOTO);
+    if (this.displayPhotoByIndex_(this.photoIndex_ - 1)) {
+      this.dispatchEvent(pics3.AlbumView.EventType.SWITCH_PHOTO);
+    }
   }
 };
 
 pics3.AlbumView.prototype.navRight_ = function() {
   if (this.album_ && this.photoIndex_ + 1 < this.album_.getLength()) {
-    this.displayPhotoByIndex_(this.photoIndex_ + 1);
-    this.dispatchEvent(pics3.AlbumView.EventType.SWITCH_PHOTO);
+    if (this.displayPhotoByIndex_(this.photoIndex_ + 1)) {
+      this.dispatchEvent(pics3.AlbumView.EventType.SWITCH_PHOTO);
+    }
   }
 };
 

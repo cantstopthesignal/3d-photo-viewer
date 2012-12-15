@@ -4,6 +4,7 @@ goog.provide('pics3.loader.GoogleDriveFile');
 
 goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
+goog.require('goog.debug.Logger');
 goog.require('goog.string');
 goog.require('pics3.GoogleDriveApi');
 goog.require('pics3.PhotoId');
@@ -44,6 +45,7 @@ goog.inherits(pics3.loader.GoogleDriveFile, pics3.loader.File);
 /**
  * @param {!pics3.AppContext} appContext
  * @param {Object} metadata
+ * @return {!pics3.loader.GoogleDriveFile}
  */
 pics3.loader.GoogleDriveFile.fromMetadata = function(appContext, metadata) {
   var id = goog.asserts.assertString(metadata['id']);
@@ -53,6 +55,27 @@ pics3.loader.GoogleDriveFile.fromMetadata = function(appContext, metadata) {
   loader.setDownloadUrl_(metadata['downloadUrl']);
   return loader;
 };
+
+/**
+ * @param {Object} metadata
+ * @return {!Array.<!pics3.Photo.Thumbnail>}
+ */
+pics3.loader.GoogleDriveFile.getThumbnailsFromMetadata = function(metadata) {
+  var thumbnails = [];
+  if ('thumbnailLink' in metadata) {
+    var thumbnailLink = metadata['thumbnailLink'];
+    if (!goog.string.endsWith(thumbnailLink, '=s220')) {
+      pics3.loader.GoogleDriveFile.logger_.warning(
+          'Thumbnail url does not end with =s220: ' + thumbnailLink);
+    }
+    thumbnails.push(new pics3.Photo.Thumbnail(null, 220, thumbnailLink));
+  }
+  return thumbnails;
+};
+
+/** @type {goog.debug.Logger} */
+pics3.loader.GoogleDriveFile.logger_ = goog.debug.Logger.getLogger(
+    'pics3.loader.GoogleDriveFile');
 
 /** @type {string} */
 pics3.loader.GoogleDriveFile.prototype.downloadUrl_;

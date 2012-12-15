@@ -57,6 +57,26 @@ pics3.loader.PicasaPhoto.fromMetadata = function(appContext, metadata) {
 };
 
 /**
+ * @param {Object} metadata
+ * @return {!Array.<!pics3.Photo.Thumbnail>}
+ */
+pics3.loader.PicasaPhoto.getThumbnailsFromMetadata = function(metadata) {
+  var thumbnails = [];
+  var mediaGroup = metadata['media$group'] || {};
+  var mediaThumbnails = mediaGroup['media$thumbnail'] || [];
+  if (!goog.isArray(mediaThumbnails)) {
+    mediaThumbnails = [mediaThumbnails];
+  }
+  goog.array.forEach(mediaThumbnails, function(thumbnailObject) {
+    thumbnails.push(new pics3.Photo.Thumbnail(
+        parseInt(thumbnailObject['width'], 10),
+        parseInt(thumbnailObject['height'], 10),
+        thumbnailObject['url']));
+  });
+  return thumbnails;
+};
+
+/**
  * @param {string} contentUrl
  * @return {string}
  */

@@ -104,10 +104,12 @@ pics3.Album.prototype.getError = function() {
 
 /** @param {!pics3.Photo} photo */
 pics3.Album.prototype.add = function(photo) {
-  if (photo.getId()) {
-    if (this.getPhotoById(photo.getId())) {
-      return;
-    }
+  var id = photo.getId();
+  if (id && this.getPhotoById(id)) {
+    return;
+  }
+  if (this.getPhotoByUniqueId(photo.getUniqueId())) {
+    return;
   }
   this.photos.push(photo);
   this.dispatchEvent(pics3.Album.EventType.CHANGED);
@@ -117,9 +119,14 @@ pics3.Album.prototype.add = function(photo) {
 pics3.Album.prototype.addAll = function(photos) {
   var newPhotos = [];
   goog.array.forEach(photos, function(photo) {
-    if (!photo.getId() || !this.getPhotoById(photo.getId())) {
-      newPhotos.push(photo);
+    var id = photo.getId();
+    if (id && this.getPhotoById(id)) {
+      return;
     }
+    if (this.getPhotoByUniqueId(photo.getUniqueId())) {
+      return;
+    }
+    newPhotos.push(photo);
   }, this);
   if (!newPhotos) {
     return;
@@ -129,11 +136,23 @@ pics3.Album.prototype.addAll = function(photos) {
 };
 
 /**
- * @param {?pics3.PhotoId} id
+ * @param {!pics3.PhotoId} id
  * @return {?pics3.Photo}
  */
 pics3.Album.prototype.getPhotoById = function(id) {
-  var index = this.getPhotoIndex(id);
+  var index = this.getPhotoIndexById(id);
+  if (index >= 0) {
+    return this.photos[index];
+  }
+  return null;
+};
+
+/**
+ * @param {number} uniqueId
+ * @return {?pics3.Photo}
+ */
+pics3.Album.prototype.getPhotoByUniqueId = function(uniqueId) {
+  var index = this.getPhotoIndexByUniqueId(uniqueId);
   if (index >= 0) {
     return this.photos[index];
   }
@@ -142,16 +161,25 @@ pics3.Album.prototype.getPhotoById = function(id) {
 
 //TODO: Make fast
 /**
- * @param {?pics3.PhotoId} id
+ * @param {!pics3.PhotoId} id
  * @return {number}
  */
-pics3.Album.prototype.getPhotoIndex = function(id) {
-  if (!id) {
-    return -1;
-  }
+pics3.Album.prototype.getPhotoIndexById = function(id) {
   return goog.array.findIndex(this.photos,
       function(photo) {
     return photo.getId() && photo.getId().equals(id);
+  });
+};
+
+//TODO: Make fast
+/**
+ * @param {number} uniqueId
+ * @return {number}
+ */
+pics3.Album.prototype.getPhotoIndexByUniqueId = function(uniqueId) {
+  return goog.array.findIndex(this.photos,
+      function(photo) {
+    return photo.getUniqueId() == uniqueId;
   });
 };
 

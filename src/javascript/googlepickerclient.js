@@ -263,14 +263,8 @@ pics3.GooglePickerClient.PickerResult = function(appContext, result) {
   /** @type {!Object} */
   this.result_ = result;
 
-  /** @type {Object} */
-  this.responseEnum_ = goog.getObjectByName('google.picker.Response');
-
-  /** @type {Object} */
-  this.documentEnum_ = goog.getObjectByName('google.picker.Document');
-
   /** @type {string} */
-  this.action_ = this.result_[this.responseEnum_['ACTION']];
+  this.action_ = this.result_['action'];
 
   /** @type {!Array.<!pics3.Photo>} */
   this.photos_ = [];
@@ -289,25 +283,30 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
   if (this.action_ != 'picked') {
     return;
   }
-  var items = this.result_[this.responseEnum_['DOCUMENTS']];
+  var items = this.result_['docs'];
   goog.array.forEach(items, function(item) {
-    var serviceId = goog.asserts.assertString(item[this.documentEnum_[
-        'SERVICE_ID']]);
-    var mimeType = goog.asserts.assertString(item[this.documentEnum_[
-        'MIME_TYPE']]);
-    var id = goog.asserts.assertString(item[this.documentEnum_['ID']]);
-    var name = goog.asserts.assertString(item[this.documentEnum_['NAME']]);
+    var serviceId = goog.asserts.assertString(item['serviceId']);
+    var mimeType = goog.asserts.assertString(item['mimeType']);
+    var id = goog.asserts.assertString(item['id']);
+    var name = goog.asserts.assertString(item['name']);
+    var thumbnails = goog.array.map(item['thumbnails'] || [], function(
+        thumbnailObject) {
+      return new pics3.Photo.Thumbnail(parseInt(thumbnailObject['width'], 10),
+          parseInt(thumbnailObject['height'], 10), thumbnailObject['url']);
+    });
     if (serviceId == 'docs') {
       var loader = new pics3.loader.GoogleDriveFile(this.appContext_, id,
           mimeType, name);
       if (pics3.photoMimeType.isSupported(mimeType)) {
-        this.photos_.push(new pics3.Photo(this.appContext_,
-            new pics3.PhotoId(id), loader));
+        var photo = new pics3.Photo(this.appContext_,
+            new pics3.PhotoId(id), loader);
+        photo.addThumbnails(thumbnails);
+        this.photos_.push(photo);
       } else {
         this.logger_.warning('Unsupported docs MimeType picked: ' + mimeType);
       }
     } else if (serviceId == 'picasa') {
-      var url = goog.asserts.assertString(item[this.documentEnum_['URL']]);
+      var url = goog.asserts.assertString(item['url']);
       if (mimeType == 'application/vnd.google-apps.photoalbum') {
         var albumId = pics3.PicasaAlbumId.fromUrlAndId(url, id);
         if (albumId) {
@@ -320,8 +319,10 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
       } else if (mimeType == 'application/vnd.google-apps.photo') {
         var loader = new pics3.loader.PicasaPhoto(this.appContext_, id,
             url, name);
-        this.photos_.push(new pics3.Photo(this.appContext_,
-            new pics3.PhotoId(id), loader));
+        var photo = new pics3.Photo(this.appContext_, new pics3.PhotoId(id),
+            loader);
+        photo.addThumbnails(thumbnails);
+        this.photos_.push(photo);
       } else {
         this.logger_.warning('Unsupported picasa MimeType picked: ' +
             mimeType);

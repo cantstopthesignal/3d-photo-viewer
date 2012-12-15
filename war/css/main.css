@@ -8,7 +8,7 @@ body {
   font-size: 16px;
 }
 body.main {
-  background-color: #333;
+  background-color: #222;
   font-family: Arial;
   margin: 0;
   overflow: hidden;
@@ -275,6 +275,48 @@ a:hover {
   border-left-color: #707070 !important;
   border-right-width: 0 !important;
 }
+.film-strip {
+  background-color: #333;
+  padding-bottom: 10px;
+  position: absolute;
+  outline: 0;
+  overflow-y: auto;
+  text-align: center;
+  font-size: 0;
+  box-shadow: 0px -3px 5px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0px -3px 5px rgba(0, 0, 0, 0.2);  /* FF lt 4 */
+  -webkit-box-shadow: 0px -3px 5px rgba(0, 0, 0, 0.2);  /* Safari le 5 */
+}
+.film-strip-thumbnail {
+  background-size: cover;
+  background-position: 50% 50%;
+  background-repeat: no-repeat;
+  display: inline-block;
+  margin: 10px 5px 0px 10px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  border: 3px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.film-strip-thumbnail.selected {
+  border-color: #ddd;
+}
+.film-strip-thumbnail.missing {
+  position: relative;
+  background-color: black;
+}
+.film-strip-thumbnail.missing > .inner {
+  width: 60%;
+  height: 60%;
+  background-color: #222;
+  border-radius: 5px;
+  position: absolute;
+  left: 20%;
+  top: 20%;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
 .photo-display {
   position: relative;
 }
@@ -299,7 +341,7 @@ a:hover {
   border-radius: 12px;
 }
 .help-flyout {
-  color: #333;
+  color: #222;
   background-color: #707070;
   display: inline-block;
   width: 18px;

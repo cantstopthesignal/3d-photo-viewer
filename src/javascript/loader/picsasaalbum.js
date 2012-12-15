@@ -49,6 +49,8 @@ pics3.loader.PicasaAlbum.prototype.loadAsync = function() {
           entry);
       var photo = new pics3.Photo(this.appContext_, loader.getPhotoId(),
           loader);
+      photo.addThumbnails(pics3.loader.PicasaPhoto.getThumbnailsFromMetadata(
+          entry));
       photos.push(photo);
     }, this);
     this.name_ = resp['feed']['title']['$t'] || this.name_;

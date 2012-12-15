@@ -78,9 +78,6 @@
             More 3D viewing modes: Nvidia 3D Vision, red/green anaglyph, split
             screen
           </li>
-          <li>
-            Album filmstrip and thumbnails
-          </li>
         </ul>
       <p>
         <a target="_blank" href="https://github.com/cantstopthesignal/3d-photo-viewer">Project source</a>

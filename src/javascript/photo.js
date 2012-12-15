@@ -38,6 +38,9 @@ pics3.Photo = function(appContext, id, loader) {
   /** @type {pics3.Photo.State} */
   this.state_ = pics3.Photo.State.PENDING;
 
+  /** @type {!Array.<!pics3.Photo.Thumbnail>} */
+  this.thumbnails_ = [];
+
   /** @type {goog.events.EventHandler} */
   this.eventHandler = new goog.events.EventHandler(this);
   this.registerDisposable(this.eventHandler);
@@ -139,6 +142,40 @@ pics3.Photo.prototype.getImageDataUrl = function(index) {
   return this.imageDataUrls_[index];
 };
 
+/** @param {!Array.<!pics3.Photo.Thumbnail>} thumbnails */
+pics3.Photo.prototype.addThumbnails = function(thumbnails) {
+  goog.array.extend(this.thumbnails_, thumbnails);
+};
+
+/**
+ * @param {number} minWidth
+ * @param {number} minHeight
+ * @return {?pics3.Photo.Thumbnail}
+ */
+pics3.Photo.prototype.getThumbnail = function(minWidth, minHeight) {
+  var best = null, bestScore;
+  var bestSmaller = null, bestSmallerScore;
+  function scoreThumbnail(thumbnail) {
+    return Math.abs(thumbnail.width - minWidth) +
+        Math.abs(thumbnail.height - minHeight);
+  }
+  goog.array.forEach(this.thumbnails_, function(thumbnail) {
+    var score = scoreThumbnail(thumbnail);
+    if (thumbnail.width >= minWidth && thumbnail.height >= minHeight) {
+      if (best == null || score < bestScore) {
+        best = thumbnail;
+        bestScore = score;
+      }
+    } else {
+      if (bestSmaller == null || score < bestSmallerScore) {
+        bestSmaller = thumbnail;
+        bestSmallerScore = score;
+      }
+    }
+  });
+  return best || bestSmaller;
+};
+
 /** @return {!goog.async.Deferred} */
 pics3.Photo.prototype.loadAsync = function() {
   if (!this.loadDeferred_) {
@@ -177,4 +214,21 @@ pics3.Photo.prototype.parseImageAsync_ = function() {
 /** @param {pics3.loader.ProgressEvent} e */
 pics3.Photo.prototype.handleLoadProgress_ = function(e) {
   this.dispatchEvent(e);
+};
+
+/**
+ * @param {?number} width
+ * @param {?number} height
+ * @param {string} imgUrl
+ * @constructor
+ */
+pics3.Photo.Thumbnail = function(width, height, imgUrl) {
+  /** @type {?number} */
+  this.width = width;
+
+  /** @type {?number} */
+  this.height = height;
+
+  /** @type {string} */
+  this.imgUrl = imgUrl;
 };
