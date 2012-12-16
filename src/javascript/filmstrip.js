@@ -42,6 +42,9 @@ pics3.Filmstrip.PHOTO_ID_ATTRIBUTE_ = 'pics3_photoid';
 pics3.Filmstrip.PHOTO_UNIQUE_ID_ATTRIBUTE_ = 'pics3_photouniqueid';
 
 /** @type {number} */
+pics3.Filmstrip.THUMBNAIL_PEEK_HEIGHT_ = 10;
+
+/** @type {number} */
 pics3.Filmstrip.SCROLL_ANIMATION_DURATION_MS_ = 300;
 
 /** @type {goog.debug.Logger} */
@@ -97,7 +100,8 @@ pics3.Filmstrip.prototype.scrollToThumbnailElement_ = function(thumbnailEl) {
   }
 
   var scrollToPos = thumbnailEl.offsetTop -
-      goog.style.getMarginBox(thumbnailEl).top;
+      goog.style.getMarginBox(thumbnailEl).top -
+      (pics3.Filmstrip.THUMBNAIL_PEEK_HEIGHT_ / 2);
   if (scrollToPos == this.el.scrollTop) {
     return;
   }
@@ -199,12 +203,30 @@ pics3.Filmstrip.prototype.resize = function(opt_width, opt_height) {
   goog.style.setBorderBoxSize(this.el,
       new goog.math.Size(width, height));
   this.resizeThumbnails_();
+  if (this.selectedThumbnailEl_) {
+    this.scrollToThumbnailElement_(this.selectedThumbnailEl_);
+  }
 };
 
 pics3.Filmstrip.prototype.resizeThumbnails_ = function() {
-  var height = this.el.offsetHeight - 20;
+  var sampleThumbnailEl = /** @type {?Element} */ (goog.object.getAnyValue(
+      this.thumbnailElMap_));
+  if (!sampleThumbnailEl) {
+    return;
+  }
+  var marginBox = goog.style.getMarginBox(sampleThumbnailEl);
+  var thumbnailCount = goog.object.getCount(this.thumbnailElMap_);
+  var thumbnailHeight = this.el.offsetHeight - 2 * marginBox.top -
+      2 * marginBox.bottom;
+  var thumbnailWidth = Math.ceil(thumbnailHeight * 1.5);
+  var singleRowWidthNeeded = thumbnailCount * (thumbnailWidth +
+      2 * marginBox.left + 2 * marginBox.right);
+  if (singleRowWidthNeeded > this.el.offsetWidth) {
+    thumbnailHeight -= pics3.Filmstrip.THUMBNAIL_PEEK_HEIGHT_;
+    thumbnailWidth = Math.ceil(thumbnailHeight * 1.5);
+  }
   goog.object.forEach(this.thumbnailElMap_, function(thumbnailEl) {
-    goog.style.setSize(thumbnailEl, Math.ceil(height * 1.5), height);
+    goog.style.setSize(thumbnailEl, thumbnailWidth, thumbnailHeight);
   });
 };
 
