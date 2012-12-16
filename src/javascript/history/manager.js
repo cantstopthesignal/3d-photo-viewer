@@ -70,13 +70,18 @@ pics3.history.Manager.prototype.registerHandler = function(handler) {
 };
 
 pics3.history.Manager.prototype.start = function() {
-  this.eventHandler_.listen(window, goog.events.EventType.POPSTATE,
-      this.handleWindowPopState_);
+  // Avoid the browser's initial POPSTATE event on first page load.  This
+  // happens for webkit browsers right after the window's load event.
+  window.setTimeout(goog.bind(function() {
+    this.eventHandler_.listen(window, goog.events.EventType.POPSTATE,
+        this.handleWindowPopState_);
+  }, this), 0);
   var uri = new goog.Uri(window.location.href);
   var tokenResult = this.getTokenFromUri_(uri);
   if (tokenResult) {
     this.replaceWithToken_(tokenResult.token);
   }
+  this.historyChanged_();
 };
 
 /**
@@ -138,6 +143,10 @@ pics3.history.Manager.prototype.uriToString_ = function(uri) {
 };
 
 pics3.history.Manager.prototype.handleWindowPopState_ = function() {
+  this.historyChanged_();
+};
+
+pics3.history.Manager.prototype.historyChanged_ = function() {
   var uri = new goog.Uri(window.location.href);
   var tokenResult = this.getTokenFromUri_(uri);
   if (tokenResult) {
