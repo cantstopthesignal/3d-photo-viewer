@@ -8,6 +8,8 @@ goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('goog.events.EventType');
 goog.require('goog.events.KeyCodes');
+goog.require('goog.fx.Animation');
+goog.require('goog.fx.easing');
 goog.require('goog.object');
 goog.require('pics3.Component');
 
@@ -39,6 +41,9 @@ pics3.Filmstrip.PHOTO_ID_ATTRIBUTE_ = 'pics3_photoid';
 /** @type {string} */
 pics3.Filmstrip.PHOTO_UNIQUE_ID_ATTRIBUTE_ = 'pics3_photouniqueid';
 
+/** @type {number} */
+pics3.Filmstrip.SCROLL_ANIMATION_DURATION_MS_ = 300;
+
 /** @type {goog.debug.Logger} */
 pics3.Filmstrip.prototype.logger_ = goog.debug.Logger.getLogger(
     'pics3.Filmstrip');
@@ -48,6 +53,9 @@ pics3.Filmstrip.prototype.album_;
 
 /** @type {Element} */
 pics3.Filmstrip.prototype.selectedThumbnailEl_;
+
+/** @type {goog.fx.Animation} */
+pics3.Filmstrip.prototype.scrollAnimation_;
 
 pics3.Filmstrip.prototype.createDom = function() {
   goog.base(this, 'createDom');
@@ -77,7 +85,32 @@ pics3.Filmstrip.prototype.selectThumbnail = function(photo) {
   this.selectedThumbnailEl_ = this.thumbnailElMap_[photo.getUniqueId()];
   if (this.selectedThumbnailEl_) {
     goog.dom.classes.add(this.selectedThumbnailEl_, 'selected');
+    this.scrollToThumbnailElement_(this.selectedThumbnailEl_);
   }
+};
+
+pics3.Filmstrip.prototype.scrollToThumbnailElement_ = function(thumbnailEl) {
+  var EventType = goog.fx.Animation.EventType;
+
+  if (this.scrollAnimation_) {
+    goog.dispose(this.scrollAnimation_);
+  }
+
+  var scrollToPos = thumbnailEl.offsetTop -
+      goog.style.getMarginBox(thumbnailEl).top;
+  if (scrollToPos == this.el.scrollTop) {
+    return;
+  }
+  this.scrollAnimation_ = new goog.fx.Animation([this.el.scrollTop],
+      [scrollToPos], pics3.Filmstrip.SCROLL_ANIMATION_DURATION_MS_,
+      goog.fx.easing.easeOut);
+  var eventHandler = new goog.events.EventHandler(this);
+  this.scrollAnimation_.registerDisposable(eventHandler);
+  eventHandler.listen(this.scrollAnimation_, [EventType.END, EventType.ANIMATE],
+      function(e) {
+    this.el.scrollTop = e.x;
+  });
+  this.scrollAnimation_.play();
 };
 
 pics3.Filmstrip.prototype.handleAlbumLoad_ = function() {
@@ -178,6 +211,7 @@ pics3.Filmstrip.prototype.resizeThumbnails_ = function() {
 /** @override */
 pics3.Filmstrip.prototype.disposeInternal = function() {
   delete this.thumbnailElMap_;
+  goog.dispose(this.scrollAnimation_);
   goog.base(this, 'disposeInternal');
 };
 
