@@ -161,11 +161,11 @@ a:hover {
   display: inline-block;
 }
 .source-tile > .spinner-wrapper > .spinner {
-  position: relative;
+  position: absolute;
   width: 28px;
   height: 28px;
-  top: -4px;
-  left: 4px;
+  margin-top: -4px;
+  margin-left: 4px;
 }
 .button {
   background: -moz-linear-gradient(top, #eee, #ccc);
