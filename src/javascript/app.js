@@ -186,6 +186,12 @@ pics3.App.prototype.handleMediaManagerAlbumOpened_ = function(e) {
 
 /** @param {pics3.MediaManager.PhotoOpenedEvent} e */
 pics3.App.prototype.handleMediaManagerPhotoOpened_ = function(e) {
+  this.history_.lock();
+  var tile = this.sourcePicker_.getTileForAlbum(e.album);
+  if (tile) {
+    tile.select();
+  }
+  this.history_.unlock();
   this.albumView_.selectPhoto(e.photoId);
 };
 

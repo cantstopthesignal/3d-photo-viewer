@@ -55,6 +55,9 @@ pics3.history.Manager.get = function(appContext) {
 pics3.history.Manager.prototype.logger_ = goog.debug.Logger.getLogger(
     'pics3.history.Manager');
 
+/** @type {boolean} */
+pics3.history.Manager.prototype.locked_ = false;
+
 /** @param {!pics3.AppContext} appContext */
 pics3.history.Manager.prototype.register = function(appContext) {
   appContext.register(pics3.history.Manager.SERVICE_ID, this);
@@ -80,6 +83,9 @@ pics3.history.Manager.prototype.start = function() {
  * @param {!pics3.history.Token} token
  */
 pics3.history.Manager.prototype.pushToken = function(token) {
+  if (this.locked_) {
+    return;
+  }
   var currentUri = new goog.Uri(window.location.href);
   var newUri = this.makeNewUriForToken_(currentUri, token);
   if (newUri.toString() != currentUri.toString()) {
@@ -87,10 +93,21 @@ pics3.history.Manager.prototype.pushToken = function(token) {
   }
 };
 
+pics3.history.Manager.prototype.lock = function() {
+  this.locked_ = true;
+};
+
+pics3.history.Manager.prototype.unlock = function() {
+  this.locked_ = false;
+};
+
 /**
  * @param {!pics3.history.Token} token
  */
 pics3.history.Manager.prototype.replaceWithToken_ = function(token) {
+  if (this.locked_) {
+    return;
+  }
   var currentUri = new goog.Uri(window.location.href);
   var newUri = this.makeNewUriForToken_(currentUri, token);
   window.history.replaceState({}, document.title, this.uriToString_(newUri));

@@ -114,8 +114,8 @@ pics3.MediaManager.prototype.openAlbum = function(album) {
  * @param {!pics3.PhotoId} photoId
  */
 pics3.MediaManager.prototype.openPhoto = function(album, photoId) {
-  this.openAlbum(album);
-  this.dispatchEvent(new pics3.MediaManager.PhotoOpenedEvent(photoId));
+  goog.asserts.assert(goog.array.contains(this.albums_, album));
+  this.dispatchEvent(new pics3.MediaManager.PhotoOpenedEvent(album, photoId));
 };
 
 /**
@@ -173,12 +173,16 @@ pics3.MediaManager.AlbumOpenedEvent = function(album) {
 goog.inherits(pics3.MediaManager.AlbumOpenedEvent, goog.events.Event);
 
 /**
+ * @param {!pics3.Album} album
  * @param {!pics3.PhotoId} photoId
  * @constructor
  * @extends {goog.events.Event}
  */
-pics3.MediaManager.PhotoOpenedEvent = function(photoId) {
+pics3.MediaManager.PhotoOpenedEvent = function(album, photoId) {
   goog.base(this, pics3.MediaManager.EventType.PHOTO_OPENED);
+
+  /** @type {!pics3.Album} */
+  this.album = album;
 
   /** @type {!pics3.PhotoId} */
   this.photoId = photoId;
