@@ -76,9 +76,16 @@ pics3.AlbumView.prototype.createDom = function() {
   for (var i = 0; i < 2; i++) {
     var navArrowEl = document.createElement('div');
     goog.dom.classes.add(navArrowEl, 'album-nav-arrow');
-    var innerEl = document.createElement('div');
-    goog.dom.classes.add(innerEl, i == 0 ? 'left' : 'right');
-    navArrowEl.appendChild(innerEl);
+    goog.dom.classes.add(navArrowEl, i == 0 ? 'left' : 'right');
+    var underlay1El = document.createElement('div');
+    goog.dom.classes.add(underlay1El, 'underlay1');
+    navArrowEl.appendChild(underlay1El);
+    var underlay2El = document.createElement('div');
+    goog.dom.classes.add(underlay2El, 'underlay2');
+    navArrowEl.appendChild(underlay2El);
+    var overlayEl = document.createElement('div');
+    goog.dom.classes.add(overlayEl, 'overlay');
+    navArrowEl.appendChild(overlayEl);
     goog.style.setStyle(navArrowEl, 'visibility', 'hidden');
     this.navArrowEls_.push(navArrowEl);
     this.el.appendChild(navArrowEl);
