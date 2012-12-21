@@ -218,9 +218,12 @@ pics3.AlbumView.prototype.displayPhotoByIndex_ = function(index) {
   this.photoIndex_ = index;
   var photo = this.album_.get(this.photoIndex_);
   this.filmstrip_.selectThumbnail(photo);
-  // Note: this could cause reentrance of render: problem?
-  photoView.render(this.el);
-  photoView.start();
+  if (!photoView.el) {
+    photoView.render(this.el);
+    photoView.start();
+  } else {
+    this.el.appendChild(photoView.el);
+  }
   this.resizePhotoView_();
   this.updateNav_();
   return changed;

@@ -11,8 +11,12 @@ goog.require('pics3.Component');
 goog.require('pics3.Photo');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.ProgressIndicator');
+goog.require('pics3.ThreeDDisplayChooser');
 goog.require('pics3.display.ThreeDCross');
+goog.require('pics3.display.ThreeDSingleImage');
+goog.require('pics3.display.ThreeDWobble');
 goog.require('pics3.display.TwoD');
+goog.require('pics3.display.type');
 
 
 /**
@@ -28,6 +32,10 @@ pics3.PhotoView = function(photo) {
 
   /** @type {pics3.display.Base} */
   this.display_;
+
+  /** @type {!pics3.ThreeDDisplayChooser} */
+  this.displayChooser_ = new pics3.ThreeDDisplayChooser();
+  this.registerDisposable(this.displayChooser_);
 
   /** @type {!pics3.Spinner} */
   this.spinner_ = new pics3.Spinner(true);
@@ -53,8 +61,14 @@ pics3.PhotoView.prototype.createDom = function() {
   this.progress_.render(this.el);
   goog.style.setStyle(this.progress_.el, 'visibility', 'hidden');
 
-  this.eventHandler.listen(this.photo_, pics3.loader.EventType.PROGRESS,
-      this.handlePhotoLoadProgress_);
+  this.displayChooser_.render(this.el);
+  goog.style.showElement(this.displayChooser_.el, false);
+
+  this.eventHandler.
+      listen(this.photo_, pics3.loader.EventType.PROGRESS,
+          this.handlePhotoLoadProgress_).
+      listen(this.displayChooser_, pics3.ThreeDDisplayChooser.EventType.CHANGED,
+          this.handleThreeDDisplayChooserChanged_);
 };
 
 pics3.PhotoView.prototype.start = function() {
@@ -70,22 +84,54 @@ pics3.PhotoView.prototype.handlePhotoLoadProgress_ = function(e) {
   this.progress_.setState(e.loaded, e.total);
 };
 
+pics3.PhotoView.prototype.handleThreeDDisplayChooserChanged_ = function() {
+  this.recreateDisplay_();
+};
+
 pics3.PhotoView.prototype.updateDisplay_ = function() {
   if (this.photo_.getState() == pics3.Photo.State.ERROR) {
     this.logger_.severe('Update photo: ' + this.photo_.getError());
     return;
   } else if (this.photo_.getState() == pics3.Photo.State.LOADED) {
     goog.style.setStyle(this.progress_.el, 'display', 'none');
-    goog.dispose(this.display_);
-    if (this.photo_.getMimeType() == pics3.PhotoMimeType.MPO) {
-      this.display_ = new pics3.display.ThreeDCross(this.photo_);
-      this.display_.render(this.el);
-    } else {
-      this.display_ = new pics3.display.TwoD(this.photo_);
-      this.display_.render(this.el);
-    }
+    this.recreateDisplay_();
   } else {
     goog.asserts.fail('Unexpected photo state: ' + this.photo_.getState());
+  }
+};
+
+pics3.PhotoView.prototype.recreateDisplay_ = function() {
+  goog.dispose(this.display_);
+  delete this.display_;
+  this.createDisplay_();
+};
+
+pics3.PhotoView.prototype.createDisplay_ = function() {
+  goog.asserts.assert(!this.display_);
+  if (this.photo_.getMimeType() == pics3.PhotoMimeType.MPO) {
+    goog.style.showElement(this.displayChooser_.el, true);
+    var type = this.displayChooser_.getSelectedType();
+    switch (type) {
+      case pics3.display.Type.THREE_D_CROSS:
+        this.display_ = new pics3.display.ThreeDCross(this.photo_);
+        break;
+      case pics3.display.Type.THREE_D_LEFT_IMAGE:
+        this.display_ = new pics3.display.ThreeDSingleImage(true, this.photo_);
+        break;
+      case pics3.display.Type.THREE_D_RIGHT_IMAGE:
+        this.display_ = new pics3.display.ThreeDSingleImage(false, this.photo_);
+        break;
+      case pics3.display.Type.THREE_D_WOBBLE:
+        this.display_ = new pics3.display.ThreeDWobble(this.photo_);
+        break;
+      default:
+        goog.asserts.fail('Unexpected display type: ' + type);
+    }
+    this.display_.render(this.el);
+  } else {
+    goog.style.showElement(this.displayChooser_.el, false);
+    this.display_ = new pics3.display.TwoD(this.photo_);
+    this.display_.render(this.el);
   }
   this.resizeDisplay_();
 };

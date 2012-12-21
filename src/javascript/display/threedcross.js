@@ -11,6 +11,7 @@ goog.require('pics3.Component');
 goog.require('pics3.Photo');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.display.Base');
+goog.require('pics3.display.Type');
 
 
 /**
@@ -19,7 +20,7 @@ goog.require('pics3.display.Base');
  * @extends {pics3.display.Base}
  */
 pics3.display.ThreeDCross = function(photo) {
-  goog.base(this, photo);
+  goog.base(this, pics3.display.Type.THREE_D_CROSS, photo);
   goog.asserts.assert(photo.getState() == pics3.Photo.State.LOADED);
   goog.asserts.assert(photo.getMimeType() == pics3.PhotoMimeType.MPO);
   goog.asserts.assert(photo.getImageCount() == 2);
@@ -83,26 +84,14 @@ pics3.display.ThreeDCross.prototype.createDom = function() {
 };
 
 pics3.display.ThreeDCross.prototype.handleImagesLoaded_ = function() {
-  this.layout_();
+  this.layout();
   for (var i = 0; i < 2; i++) {
     goog.style.setStyle(this.imageEls_[i], 'visibility', '');
     goog.style.setStyle(this.crossEyeDotEls_[i], 'visibility', '');
   }
 };
 
-/**
- * @param {number=} opt_width
- * @param {number=} opt_height
- */
-pics3.display.ThreeDCross.prototype.resize = function(opt_width, opt_height) {
-  var width = opt_width || this.el.parentNode.offsetWidth;
-  var height = opt_height || this.el.parentNode.offsetHeight;
-  goog.style.setBorderBoxSize(this.el,
-      new goog.math.Size(width, height));
-  this.layout_();
-};
-
-pics3.display.ThreeDCross.prototype.layout_ = function() {
+pics3.display.ThreeDCross.prototype.layout = function() {
   var ThreeDCross = pics3.display.ThreeDCross;
 
   var displayBounds = goog.style.getBounds(this.el);

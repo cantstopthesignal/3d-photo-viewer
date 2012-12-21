@@ -1,0 +1,14 @@
+<svg width="500" height="500" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <rect ry="30" rx="30" fill="#888888" stroke-width="10" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x="159" y="96" width="237.999988" height="247.999984" id="svg_2" stroke="#cccccc"/>
+  <rect ry="30" rx="30" fill="#888888" stroke-width="10" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x="100" y="133" width="237.999988" height="247.999984" id="svg_2" stroke="#cccccc"/>
+  <line stroke="#cccccc" id="svg_4" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="468" y1="412" x2="410.000001" y2="385.000001"/>
+  <line stroke="#cccccc" id="svg_7" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="417.000001" y1="197" x2="474.049975" y2="197"/>
+  <line stroke="#cccccc" id="svg_10" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="415.999999" y1="293" x2="475.049972" y2="293"/>
+  <line stroke="#cccccc" id="svg_11" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="472" y1="86" x2="411.000002" y2="110.000001"/>
+  <line id="svg_12" stroke="#cccccc" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="78" y1="112" x2="20.000001" y2="85.000001"/>
+  <line id="svg_13" stroke="#cccccc" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="18.000001" y1="200" x2="75.049975" y2="200"/>
+  <line id="svg_14" stroke="#cccccc" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="16.999999" y1="294" x2="76.049972" y2="294"/>
+  <line stroke="#cccccc" id="svg_15" fill="none" stroke-width="20" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x1="78.000001" y1="385" x2="21.000001" y2="408"/>
+ </g>
+</svg>
