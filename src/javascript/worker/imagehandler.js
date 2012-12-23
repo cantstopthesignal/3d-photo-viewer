@@ -46,6 +46,7 @@ pics3.worker.ImageHandler.prototype.handleParseImageRpc_ = function(request) {
     var mpo = new pics3.parser.Mpo();
     if (mpo.parse(buffer)) {
       imageResult.mimeType = pics3.PhotoMimeType.MPO;
+      imageResult.parallax = mpo.getParallax();
       goog.array.forEach(mpo.getImages(), function(mpoImage) {
         imageResult.imageDataUrls.push(mpoImage.toDataUrl());
       });

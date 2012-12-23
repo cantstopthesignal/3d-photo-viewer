@@ -32,19 +32,33 @@ pics3.parser.BaseParser.prototype.dumpBytes = function(bytes, opt_msg) {
   window.console.log(this.name + ': ' + (opt_msg || ''), formattedBytes);
 };
 
-/** @protected */
+/**
+ * @param {!Array} arr1
+ * @param {!Array} arr2
+ * @param {string} msg
+ * @protected
+ */
 pics3.parser.BaseParser.prototype.assertArraysEqual = function(arr1, arr2,
     msg) {
   this.assert(goog.array.equals(arr1, arr2), msg);
 };
 
-/** @protected */
+/**
+ * @param {*} val1
+ * @param {*} val2
+ * @param {string} msg
+ * @protected
+ */
 pics3.parser.BaseParser.prototype.assertEquals = function(val1, val2,
     msg) {
   this.assert(val1 == val2, msg + ": " + val1 + ' != ' + val2);
 };
 
-/** @protected */
+/**
+ * @param {*} cond
+ * @param {string} msg
+ * @protected
+ */
 pics3.parser.BaseParser.prototype.assert = function(cond, msg) {
   if (!cond) {
     throw pics3.parser.parseError.newError(this.name + ': ' + msg);

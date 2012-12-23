@@ -3,13 +3,24 @@
 goog.provide('pics3.parser.Exif');
 
 goog.require('goog.asserts');
+goog.require('pics3.parser.Ifd');
 goog.require('pics3.parser.util');
 
 
 goog.scope(function() {
 
-var Exif = pics3.parser.Exif;
 var util = pics3.parser.util;
+var Ifd = pics3.parser.Ifd;
+
+/**
+ * @extends {pics3.parser.BaseParser}
+ * @constructor
+ */
+pics3.parser.Exif = function() {
+  goog.base(this, 'pics3.parser.Exif');
+};
+var Exif = pics3.parser.Exif;
+goog.inherits(Exif, pics3.parser.BaseParser);
 
 /** @type {!Array.<number>} */
 Exif.START_OF_IMAGE = [0xff, 0xd8];
@@ -33,56 +44,6 @@ Exif.EndianTag = {
   LITTLE: [0x49, 0x49, 0x2a, 0x00]
 };
 
-/** @enum {number} */
-Exif.IfdTagType = {
-  /** An 8-bit unsigned integer */
-  BYTE: 1,
-
-  /**
-   * An 8-bit byte containing one 7-bit ASCII code. The final byte
-   * is terminated with NULL.
-   */
-  ASCII: 2,
-
-  /** A 16-bit (2-byte) unsigned integer */
-  SHORT: 3,
-
-  /** A 32-bit (4-byte) unsigned integer */
-  LONG: 4,
-
-  /**
-   * Two LONGs. The first LONG is the numerator and the second
-   * LONG expresses the denominator.
-   */
-  RATIONAL: 5,
-
-  /**
-   * An 8-bit byte that can take any value depending on the field
-   * definition.
-   */
-  UNDEFINED: 7,
-
-  /** A 32-bit (4-byte) signed integer (2's complement notation). */
-  SLONG: 9,
-
-  /**
-   * SRATIONAL Two SLONGs. The first SLONG is the numerator and the second
-   * SLONG is the denominator.
-   */
-  SRATIONAL: 10
-};
-
-Exif.isIfdTagType = function(tagType) {
-  if (!Exif.ifdTagTypeValuesSet_) {
-    Exif.ifdTagTypeValuesSet_ = {};
-    for (var tagTypeName in Exif.IfdTagType) {
-      Exif.ifdTagTypeValuesSet_[
-          Exif.IfdTagType[tagTypeName]] = true;
-    }
-  }
-  return tagType in Exif.ifdTagTypeValuesSet_;
-}
-
 Exif.isAppMarker = function(arr) {
   if (arr.length != 2) {
     throw new Error('App markers should be 2 bytes');
@@ -99,6 +60,65 @@ Exif.isEndianTag = function(arr) {
   }
   return goog.array.equals(Exif.EndianTag.BIG, arr) ||
       goog.array.equals(Exif.EndianTag.LITTLE, arr);
+};
+
+/** @type {?number} */
+Exif.prototype.baseOffset_;
+
+/** @type {pics3.parser.Ifd} */
+Exif.prototype.ifd_;
+
+/** @type {pics3.parser.Ifd} */
+Exif.prototype.exifIfd_;
+
+/** @type {pics3.parser.DataReader} */
+Exif.prototype.makernoteBuffer_;
+
+/** @param {!pics3.parser.DataReader} reader */
+Exif.prototype.parse = function(reader) {
+  var formatIdentifier = reader.readBytes(6);
+  this.assertArraysEqual(Exif.EXIF_FORMAT_IDENTIFIER,
+      formatIdentifier, 'Expected Exif IDF format');
+  this.baseOffset_ = reader.getOffset();
+  var endianTag = reader.readBytes(4);
+  this.assert(Exif.isEndianTag(endianTag), 'Expected endian tag');
+  reader.setBigEndian(goog.array.equals(Exif.EndianTag.BIG, endianTag));
+
+  var offsetToIfd = reader.readUint32();
+  this.assertEquals(8, offsetToIfd, 'Expected first offset value');
+  this.assertEquals(reader.getOffset() - this.baseOffset_, offsetToIfd,
+      'Expected first IFD to follow directly');
+  this.ifd_ = new Ifd(true, this.baseOffset_);
+  this.ifd_.parse(reader.clone());
+  if (!this.ifd_.hasKey(Ifd.TagId.EXIF_IFD)) {
+    return;
+  }
+
+  var exifIfdKey = this.ifd_.getAndAssertKey(Ifd.TagId.EXIF_IFD,
+      Ifd.TagType.LONG, 1);
+  var exifIfdJumpOffset = this.baseOffset_ - reader.getOffset() +
+      exifIfdKey.payloadUint32;
+  this.exifIfd_ = new Ifd(true, this.baseOffset_);
+  this.exifIfd_.parse(reader.subReader(exifIfdJumpOffset));
+
+  if (this.exifIfd_.hasKey(Ifd.TagId.MAKERNOTE)) {
+    var makernoteKey = this.exifIfd_.getAndAssertKey(Ifd.TagId.MAKERNOTE,
+        Ifd.TagType.UNDEFINED);
+    var makernoteJumpOffset = this.baseOffset_ - reader.getOffset() +
+        makernoteKey.payloadUint32;
+    this.makernoteBuffer_ = reader.subReader(makernoteJumpOffset,
+        makernoteKey.count);
+  }
+};
+
+/** @return {boolean} */
+Exif.prototype.hasMakernoteBuffer = function() {
+  return !!this.makernoteBuffer_;
+};
+
+/** @return {pics3.parser.DataReader} */
+Exif.prototype.getMakernoteBuffer = function() {
+  return this.makernoteBuffer_;
 };
 
 });

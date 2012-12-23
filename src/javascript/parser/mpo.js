@@ -48,6 +48,9 @@ Mpo.IMAGE_DATA_FORMAT_JPEG = 0;
 /** @type {!Array.<number>} */
 Mpo.TYPE_CODE_DISPARITY = [0x02, 0x00, 0x02];
 
+/** @type {!Array.<number>} */
+Mpo.FUJIFILM_MAKERNOTE_IDENTIFIER = util.strToCodeArray('FUJIFILM');
+
 /** @type {!goog.debug.Logger} */
 Mpo.prototype.logger_ = goog.debug.Logger.getLogger('pics3.parser.Mpo');
 
@@ -75,23 +78,28 @@ Mpo.prototype.parse = function(data, opt_throwErrors) {
   return true;
 };
 
-/**
- * @return {!Array.<pics3.parser.Mpo.Image>}
- */
+/** @return {!Array.<pics3.parser.Mpo.Image>} */
 Mpo.prototype.getImages = function() {
   return this.images_;
 };
 
-/**
- * @return {Error}
- */
+/** @return {?pics3.parser.Rational} */
+Mpo.prototype.getParallax = function() {
+  if (this.images_.length == 2) {
+    var fujifilmMakernote = this.images_[1].getFujifilmMakernote();
+    if (fujifilmMakernote) {
+      return fujifilmMakernote.getParallax();
+    }
+  }
+  return null;
+};
+
+/** @return {Error} */
 Mpo.prototype.getError = function() {
   return this.error_;
 };
 
-/**
- * @param {ArrayBuffer} data
- */
+/** @param {ArrayBuffer} data */
 Mpo.prototype.parseInternal = function(data) {
   this.assertEquals(0, this.images_.length, 'Expected no found images yet');
   this.images_.push(new Mpo.Image(0));
@@ -132,8 +140,14 @@ Mpo.Image = function(index) {
   /** @type {pics3.parser.DataReader} */
   this.reader_;
 
+  /** @type {pics3.parser.Exif} */
+  this.exif_;
+
   /** @type {pics3.parser.Mpo.Ifd} */
   this.mpoIfd_;
+
+  /** @type {pics3.parser.Mpo.FujifilmMakernote} */
+  this.fujifilmMakernote_;
 };
 goog.inherits(Mpo.Image, pics3.parser.BaseParser);
 
@@ -157,6 +171,11 @@ Mpo.Image.prototype.parse = function(reader) {
 
 Mpo.Image.prototype.getMpoIfd = function() {
   return this.mpoIfd_;
+};
+
+/** @return {pics3.parser.Mpo.FujifilmMakernote} */
+Mpo.Image.prototype.getFujifilmMakernote = function() {
+  return this.fujifilmMakernote_;
 };
 
 Mpo.Image.prototype.getByteLength = function() {
@@ -210,6 +229,16 @@ Mpo.Image.prototype.parseApp1Section_ = function(reader) {
   this.assert(sectionLength >= 2, 'App section length should be >= 2 but ' +
       'was: ' + sectionLength);
   var sectionRemaining = sectionLength - 2;
+  var formatIdentifier = reader.peekBytes(6);
+  if (goog.array.equals(Exif.EXIF_FORMAT_IDENTIFIER,
+      formatIdentifier)) {
+    this.assert(!this.exif_, 'Expected at most one exif block');
+    this.exif_ = new Exif();
+    this.exif_.parse(reader.subReader(0, sectionRemaining));
+    if (this.exif_.hasMakernoteBuffer()) {
+      this.parseMakernote_(this.exif_.getMakernoteBuffer().clone());
+    }
+  }
   reader.readBytes(sectionRemaining);
 };
 
@@ -235,6 +264,18 @@ Mpo.Image.prototype.parseApp2Section_ = function(reader) {
   reader.readBytes(sectionRemaining);
 };
 
+/** @param {pics3.parser.DataReader} reader */
+Mpo.Image.prototype.parseMakernote_ = function(reader) {
+  var makernoteIdentifier = reader.peekBytes(8);
+  if (goog.array.equals(Mpo.FUJIFILM_MAKERNOTE_IDENTIFIER,
+      makernoteIdentifier)) {
+    this.assert(!this.fujifilmMakernote_,
+        'Expected at most one fujifilm makernote');
+    this.fujifilmMakernote_ = new Mpo.FujifilmMakernote();
+    this.fujifilmMakernote_.parse(reader);
+  }
+};
+
 /**
  * @extends {pics3.parser.BaseParser}
  * @constructor
@@ -248,7 +289,7 @@ Mpo.Ifd = function() {
 goog.inherits(Mpo.Ifd, pics3.parser.BaseParser);
 
 /** @enum {number} */
-Mpo.Ifd.TagsId = {
+Mpo.Ifd.TagId = {
   VERSION: 45056,
   IMAGE_COUNT: 45057,
   ENTRY: 45058
@@ -263,6 +304,7 @@ Mpo.Ifd.prototype.baseOffsetAbsolute_;
 /** @type {?number} */
 Mpo.Ifd.prototype.imageCount_;
 
+/** @param {!pics3.parser.DataReader} reader */
 Mpo.Ifd.prototype.parse = function(reader) {
   var formatIdentifier = reader.readBytes(4);
   this.assertArraysEqual(Mpo.FORMAT_IDENTIFIER,
@@ -277,19 +319,19 @@ Mpo.Ifd.prototype.parse = function(reader) {
   this.assertEquals(8, offsetToIfd, 'Expected first offset value');
   this.assertEquals(reader.getOffset() - this.baseOffset_, offsetToIfd,
       'Expected first IFD to follow directly');
-  var ifdParser = new pics3.parser.Ifd(this.baseOffset_, true);
+  var ifdParser = new pics3.parser.Ifd(true, this.baseOffset_);
   ifdParser.parse(reader.clone());
 
-  ifdParser.getAndAssertKey(Mpo.Ifd.TagsId.VERSION,
-      Exif.IfdTagType.UNDEFINED, 4, Mpo.VERSION);
+  ifdParser.getAndAssertKey(Mpo.Ifd.TagId.VERSION,
+      pics3.parser.Ifd.TagType.UNDEFINED, 4, Mpo.VERSION);
 
   var imageCountKey = ifdParser.getAndAssertKey(
-      Mpo.Ifd.TagsId.IMAGE_COUNT, Exif.IfdTagType.LONG, 1);
+      Mpo.Ifd.TagId.IMAGE_COUNT, pics3.parser.Ifd.TagType.LONG, 1);
   this.imageCount_ = imageCountKey.payloadUint32;
   this.assertEquals(2, this.imageCount_, 'Expected stereoscopic image');
 
-  var mpEntryKey = ifdParser.getAndAssertKey(Mpo.Ifd.TagsId.ENTRY,
-      Exif.IfdTagType.UNDEFINED, 16 * this.imageCount_);
+  var mpEntryKey = ifdParser.getAndAssertKey(Mpo.Ifd.TagId.ENTRY,
+      pics3.parser.Ifd.TagType.UNDEFINED, 16 * this.imageCount_);
   var mpEntryOffset = mpEntryKey.payloadUint32;
   this.assert(mpEntryOffset > reader.getOffset() - this.baseOffset_,
       'Expect mp entry offset to be upcoming.');
@@ -345,6 +387,49 @@ Mpo.Ifd.ImageInfo = function(byteLength, dataOffset) {
 
   /** @type {number} */
   this.dataOffset = dataOffset;
+};
+
+/**
+ * @extends {pics3.parser.BaseParser}
+ * @constructor
+ */
+Mpo.FujifilmMakernote = function() {
+  goog.base(this, 'pics3.parser.Mpo.FujifilmMakernote');
+};
+goog.inherits(Mpo.FujifilmMakernote, pics3.parser.BaseParser);
+
+/** @enum {number} */
+Mpo.FujifilmMakernote.TagId = {
+  PARALLAX: 45585
+};
+
+/** @type {pics3.parser.Ifd} */
+Mpo.FujifilmMakernote.prototype.ifd_;
+
+/** @type {pics3.parser.Rational} */
+Mpo.FujifilmMakernote.prototype.parallax_ = null;
+
+/** @param {!pics3.parser.DataReader} reader */
+Mpo.FujifilmMakernote.prototype.parse = function(reader) {
+  reader = reader.subReader(0);
+  var makernoteIdentifier = reader.readBytes(8);
+  this.assertArraysEqual(Mpo.FUJIFILM_MAKERNOTE_IDENTIFIER,
+      makernoteIdentifier, 'Expected fujifilm makernote');
+  reader.setBigEndian(false);  // Fujifilm IFD is little endian.
+  var ifdOffset = reader.readUint32();
+  this.assertEquals(ifdOffset, reader.getOffset(),
+      'Expected fujifilm makernote ifd to directly follow');
+  this.ifd_ = new pics3.parser.Ifd(false, 0);
+  this.ifd_.parse(reader);
+  if (this.ifd_.hasKey(Mpo.FujifilmMakernote.TagId.PARALLAX)) {
+    this.parallax_ = this.ifd_.getSRationalKey(reader,
+        Mpo.FujifilmMakernote.TagId.PARALLAX);
+  }
+};
+
+/** @return {?pics3.parser.Rational} */
+Mpo.FujifilmMakernote.prototype.getParallax = function() {
+  return this.parallax_;
 };
 
 });

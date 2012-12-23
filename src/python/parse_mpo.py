@@ -121,10 +121,24 @@ def BytesToInt(byte_str, is_big_endian):
   else:
     return BytesToIntLittle(byte_str)
 
+def BytesToSIntBig(byte_str):
+  assert len(byte_str) == 4
+  return struct.unpack('>i', byte_str)[0]
+
+def BytesToSIntLittle(byte_str):
+  assert len(byte_str) == 4
+  return struct.unpack('<i', byte_str)[0]
+
+def BytesToSInt(byte_str, is_big_endian):
+  if is_big_endian:
+    return BytesToSIntBig(byte_str)
+  else:
+    return BytesToSIntLittle(byte_str)
+
 def BytesToSRational(byte_str, is_big_endian):
   assert len(byte_str) == 8
-  numer = BytesToInt(byte_str[:4], is_big_endian)
-  denom = BytesToInt(byte_str[4:8], is_big_endian)
+  numer = BytesToSInt(byte_str[:4], is_big_endian)
+  denom = BytesToSInt(byte_str[4:8], is_big_endian)
   return (numer, denom)
 
 def BytesToByte(byte_str):
@@ -304,7 +318,7 @@ class ImageParser:
                 section_remaining -= 8
                 maker_remaining -= 8
                 maker_offset += 8
-                print "Parallax %f" % (numer * 1.0 / denom)
+                print "Parallax %f (%d/%d)" % (numer * 1.0 / denom, numer, denom)
             else:
               print "Unknown makernote"
         if not exif_offset_to_next_ifd:

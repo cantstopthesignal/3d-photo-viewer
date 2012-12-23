@@ -50,6 +50,10 @@ function testParseImage() {
     assertEquals('image/jpeg', dataUrl.getMimeType());
   });
 
+  var parallax = mpo.getParallax();
+  assertEquals(8640, parallax.numer);
+  assertEquals(1920, parallax.denom);
+
   var callbacks = new goog.async.Deferred();
   goog.array.forEach(imageDataUrls, function(dataUrl) {
     deferredTestCase.addWaitForAsync('Waiting for image render', callbacks);

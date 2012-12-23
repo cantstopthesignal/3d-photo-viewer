@@ -55,12 +55,24 @@ pics3.parser.DataReader.prototype.clone = function() {
   return reader;
 };
 
-pics3.parser.DataReader.prototype.subReader = function(offset, byteCount) {
-  if (offset + this.offset_ + byteCount > this.byteLength_) {
+/**
+ * @param {number} offset
+ * @param {number=} opt_byteCount Byte count, otherwise reads to the end of
+ *     the current reader's byte length.
+ * @return {!pics3.parser.DataReader}
+ */
+pics3.parser.DataReader.prototype.subReader = function(offset, opt_byteCount) {
+  var subOffset = offset + this.offset_;
+  var byteCount = goog.isDefAndNotNull(opt_byteCount) ? opt_byteCount :
+      this.byteLength_ - subOffset;
+  if (byteCount <= 0) {
+    throw new Error('SubReader created with 0 or negative length');
+  }
+  if (subOffset + byteCount > this.byteLength_) {
     throw new Error('SubReader past end of DataReader buffer');
   }
   var reader = new pics3.parser.DataReader(this.array_.buffer,
-      this.baseOffset_ + this.offset_ + offset, byteCount, this.bigEndian_);
+      this.baseOffset_ + subOffset, byteCount, this.bigEndian_);
   return reader;
 };
 
@@ -103,6 +115,12 @@ pics3.parser.DataReader.prototype.readUint16 = function() {
 
 pics3.parser.DataReader.prototype.readUint32 = function() {
   var value = this.view_.getUint32(this.offset_, !this.bigEndian_);
+  this.offset_ += 4;
+  return value;
+};
+
+pics3.parser.DataReader.prototype.readInt32 = function() {
+  var value = this.view_.getInt32(this.offset_, !this.bigEndian_);
   this.offset_ += 4;
   return value;
 };
