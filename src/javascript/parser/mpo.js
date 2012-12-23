@@ -74,7 +74,7 @@ Mpo.prototype.parse = function(data, opt_throwErrors) {
       return false;
     }
   }
-  this.logger_.info('Parsed in ' + (goog.now() - startTime) + 'ms');
+  this.logger_.fine('Parsed in ' + (goog.now() - startTime) + 'ms');
   return true;
 };
 

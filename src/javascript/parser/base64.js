@@ -103,7 +103,7 @@ pics3.parser.base64.fromUint8Array = function(input) {
     output += base64.keyStr_.charAt(enc1) + base64.keyStr_.charAt(enc2) +
         base64.keyStr_.charAt(enc3) + base64.keyStr_.charAt(enc4);
   }
-  pics3.parser.base64.logger_.info('generate time ' + (
+  pics3.parser.base64.logger_.fine('generate time ' + (
       goog.now() - startTime) + 'ms');
   return output;
 };

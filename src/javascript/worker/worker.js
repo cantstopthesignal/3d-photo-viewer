@@ -62,7 +62,7 @@ pics3.worker.Worker.prototype.handleMessage_ = function(e) {
 /** @param {!pics3.worker.RpcMessage} rpcMessage */
 pics3.worker.Worker.prototype.handleRpcMessage_ = function(rpcMessage) {
   var rpcName = rpcMessage.type + ':' + rpcMessage.id;
-  this.logger_.info('rpc[' + rpcName + '] start');
+  this.logger_.fine('rpc[' + rpcName + '] start');
   var startTime = goog.now();
   var handler = this.handlerMap_[rpcMessage.type];
   if (handler) {

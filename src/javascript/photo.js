@@ -208,6 +208,10 @@ pics3.Photo.prototype.parseImageAsync_ = function() {
       function(result) {
         this.mimeType_ = result.mimeType;
         this.imageDataUrls_ = result.imageDataUrls;
+        this.logger_.info('Image \'' + this.name_ +
+            '\' parsed as ' + result.mimeType +
+            (result.parallax ? '; parallax: ' + result.parallax.getValue() :
+              ''));
       }, this);
 };
 
