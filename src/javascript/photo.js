@@ -76,6 +76,9 @@ pics3.Photo.prototype.name_;
 /** @type {Array.<!pics3.parser.DataUrl>} */
 pics3.Photo.prototype.imageDataUrls_;
 
+/** @type {number} */
+pics3.Photo.prototype.parallaxXOffset_ = 0;
+
 /** @type {Error} */
 pics3.Photo.prototype.error_;
 
@@ -140,6 +143,13 @@ pics3.Photo.prototype.getImageDataUrl = function(index) {
   goog.asserts.assert(index < this.getImageCount());
   goog.asserts.assertString(this.mimeType_);
   return this.imageDataUrls_[index];
+};
+
+/**
+ * @return {number}
+ */
+pics3.Photo.prototype.getParallaxXOffset = function() {
+  return this.parallaxXOffset_;
 };
 
 /** @param {!Array.<!pics3.Photo.Thumbnail>} thumbnails */
@@ -208,10 +218,11 @@ pics3.Photo.prototype.parseImageAsync_ = function() {
       function(result) {
         this.mimeType_ = result.mimeType;
         this.imageDataUrls_ = result.imageDataUrls;
+        this.parallaxXOffset_ = result.parallaxXOffset || 0;
         this.logger_.info('Image \'' + this.name_ +
             '\' parsed as ' + result.mimeType +
-            (result.parallax ? '; parallax: ' + result.parallax.getValue() :
-              ''));
+            (result.parallaxXOffset ? '; parallaxXOffset: ' +
+                result.parallaxXOffset : ''));
       }, this);
 };
 

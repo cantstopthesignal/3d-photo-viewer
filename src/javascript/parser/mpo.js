@@ -51,6 +51,9 @@ Mpo.TYPE_CODE_DISPARITY = [0x02, 0x00, 0x02];
 /** @type {!Array.<number>} */
 Mpo.FUJIFILM_MAKERNOTE_IDENTIFIER = util.strToCodeArray('FUJIFILM');
 
+/** @type {number} */
+Mpo.FUJIFILM_PARALLAX_TO_PIXELS_RATIO = 35;
+
 /** @type {!goog.debug.Logger} */
 Mpo.prototype.logger_ = goog.debug.Logger.getLogger('pics3.parser.Mpo');
 
@@ -83,12 +86,15 @@ Mpo.prototype.getImages = function() {
   return this.images_;
 };
 
-/** @return {?pics3.parser.Rational} */
-Mpo.prototype.getParallax = function() {
+/** @return {?number} */
+Mpo.prototype.getParallaxXOffset = function() {
   if (this.images_.length == 2) {
     var fujifilmMakernote = this.images_[1].getFujifilmMakernote();
     if (fujifilmMakernote) {
-      return fujifilmMakernote.getParallax();
+      // TODO: Figure out how to correctly calculate the ratio between
+      // pixel parallax and fujifilm parallax values.
+      return fujifilmMakernote.getParallax().getValue() *
+          Mpo.FUJIFILM_PARALLAX_TO_PIXELS_RATIO;
     }
   }
   return null;

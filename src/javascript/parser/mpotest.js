@@ -50,9 +50,7 @@ function testParseImage() {
     assertEquals('image/jpeg', dataUrl.getMimeType());
   });
 
-  var parallax = mpo.getParallax();
-  assertEquals(8640, parallax.numer);
-  assertEquals(1920, parallax.denom);
+  assertEquals(157.5, mpo.getParallaxXOffset());
 
   var callbacks = new goog.async.Deferred();
   goog.array.forEach(imageDataUrls, function(dataUrl) {

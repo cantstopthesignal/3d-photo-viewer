@@ -360,9 +360,14 @@ a:hover {
 .photo-display {
   position: relative;
 }
-.photo-display > .image {
+.photo-display > .image,
+.threedwobble-image-container > .image {
   display: inline-block;
   position: absolute;
+}
+.threedwobble-image-container {
+  position: absolute;
+  overflow: hidden;
 }
 .threedcross-photo-display > .help-container {
   color: #707070;

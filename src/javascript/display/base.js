@@ -69,4 +69,3 @@ pics3.display.Base.prototype.resizeImageToFullSize = function(imageEl) {
   goog.style.setBorderBoxSize(imageEl,
       new goog.math.Size(imageWidth, imageHeight));
 };
-

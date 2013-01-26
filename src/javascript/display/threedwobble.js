@@ -32,6 +32,9 @@ goog.inherits(pics3.display.ThreeDWobble, pics3.display.Base);
 /** @type {number} */
 pics3.display.ThreeDWobble.ANIMATION_INTERVAL_MS_ = 100;
 
+/** @type {Element} */
+pics3.display.ThreeDWobble.prototype.imageContainerEl_;
+
 /** @type {number} */
 pics3.display.ThreeDWobble.prototype.animationIntervalId_;
 
@@ -47,6 +50,10 @@ pics3.display.ThreeDWobble.prototype.createDom = function() {
     }
   }
 
+  this.imageContainerEl_ = document.createElement('div');
+  goog.dom.classes.add(this.imageContainerEl_, 'threedwobble-image-container');
+  this.el.appendChild(this.imageContainerEl_);
+
   for (var i = 0; i < 2; i++) {
     var imageEl = document.createElement('img');
     goog.dom.classes.add(imageEl, 'image');
@@ -54,7 +61,7 @@ pics3.display.ThreeDWobble.prototype.createDom = function() {
         handleImageLoad);
     imageEl.src = this.photo.getImageDataUrl(i);
     goog.style.setStyle(imageEl, 'visibility', 'hidden');
-    this.el.appendChild(imageEl);
+    this.imageContainerEl_.appendChild(imageEl);
     this.imageEls_.push(imageEl);
   }
 };
@@ -79,7 +86,38 @@ pics3.display.ThreeDWobble.prototype.handleImagesLoaded_ = function() {
 };
 
 pics3.display.ThreeDWobble.prototype.layout = function() {
+  var width = this.el.offsetWidth;
+  var height = this.el.offsetHeight;
+  var naturalImageWidth = this.imageEls_[0].naturalWidth;
+  var naturalImageHeight = this.imageEls_[0].naturalHeight;
+  if (!naturalImageWidth || !naturalImageHeight) {
+    return;
+  }
+  var xOffsetRatio = this.photo.getParallaxXOffset() / naturalImageWidth;
+  var clippedImageWidth = naturalImageWidth * (1 - Math.abs(xOffsetRatio));
+  var containerWidth = width;
+  var containerHeight = Math.ceil(containerWidth * naturalImageHeight /
+      clippedImageWidth);
+  if (containerHeight > height) {
+    containerHeight = height;
+    containerWidth = Math.ceil(containerHeight * clippedImageWidth /
+        naturalImageHeight);
+  }
+  var imageHeight = containerHeight;
+  var imageWidth = containerHeight * naturalImageWidth / naturalImageHeight;
+  var xOffset = imageWidth * xOffsetRatio;
+  goog.style.setPosition(this.imageContainerEl_,
+      Math.floor((width - containerWidth) / 2),
+      Math.floor((height - containerHeight) / 2));
+  goog.style.setBorderBoxSize(this.imageContainerEl_,
+      new goog.math.Size(containerWidth, containerHeight));
+  if (xOffset >= 0) {
+    goog.style.setPosition(this.imageEls_[0], Math.floor(-xOffset), 0);
+  } else {
+    goog.style.setPosition(this.imageEls_[1], Math.floor(xOffset), 0);
+  }
   for (var i = 0; i < 2; i++) {
-    this.resizeImageToFullSize(this.imageEls_[i]);
+    goog.style.setBorderBoxSize(this.imageEls_[i],
+        new goog.math.Size(Math.floor(imageWidth), Math.floor(imageHeight)));
   }
 };

@@ -14,8 +14,8 @@ pics3.parser.ImageResult = function(mimeType) {
   /** @type {pics3.PhotoMimeType} */
   this.mimeType = mimeType;
 
-  /** @type {?pics3.parser.Rational} */
-  this.parallax = null;
+  /** @type {?number} */
+  this.parallaxXOffset = null;
 
   /** @type {!Array.<!pics3.parser.DataUrl>} */
   this.imageDataUrls = [];
@@ -27,8 +27,7 @@ pics3.parser.ImageResult = function(mimeType) {
  */
 pics3.parser.ImageResult.fromObject = function(object) {
   var imageResult = new pics3.parser.ImageResult(object['mimeType']);
-  imageResult.parallax = object['parallax'] ? pics3.parser.Rational.fromObject(
-      object['parallax']) : null;
+  imageResult.parallaxXOffset = object['parallaxXOffset'];
   imageResult.imageDataUrls = goog.array.map(object['imageDataUrls'],
       function(imageDataUrlObject) {
     return pics3.parser.DataUrl.fromObject(imageDataUrlObject);
@@ -40,7 +39,7 @@ pics3.parser.ImageResult.fromObject = function(object) {
 pics3.parser.ImageResult.prototype.toObject = function() {
   return {
     'mimeType': this.mimeType,
-    'parallax': this.parallax ? this.parallax.toObject() : null,
+    'parallaxXOffset': this.parallaxXOffset,
     'imageDataUrls': goog.array.map(this.imageDataUrls, function(imageDataUrl) {
       return imageDataUrl.toObject();
     })
