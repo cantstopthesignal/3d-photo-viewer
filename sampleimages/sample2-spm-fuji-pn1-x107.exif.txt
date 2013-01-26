@@ -1,0 +1,230 @@
+===== Main Image =====
+ExifTool Version Number         : 9.06
+File Name                       : sample2-spm-fuji-pn1-x107.mpo
+Directory                       : .
+File Size                       : 3.2 MB
+File Modification Date/Time     : 2013:01:24 21:10:54-08:00
+File Access Date/Time           : 2013:01:26 09:21:51-08:00
+File Permissions                : rw-rw-rw-
+File Type                       : JPEG
+MIME Type                       : image/jpeg
+Exif Byte Order                 : Little-endian (Intel, II)
+Make                            : FUJIFILM
+Camera Model Name               : FinePix REAL 3D W1
+Orientation                     : Horizontal (normal)
+X Resolution                    : 72
+Y Resolution                    : 72
+Resolution Unit                 : inches
+Software                        : Digital Camera FinePix REAL 3D W1 Ver1.00
+Modify Date                     : 2013:01:24 21:10:53
+Y Cb Cr Positioning             : Co-sited
+Copyright                       : 
+Exposure Time                   : 1/180
+F Number                        : 8.0
+Exposure Program                : Program AE
+ISO                             : 100
+Exif Version                    : 0220
+Date/Time Original              : 2013:01:24 21:10:53
+Create Date                     : 2013:01:24 21:10:53
+Components Configuration        : Y, Cb, Cr, -
+Compressed Bits Per Pixel       : 2
+Shutter Speed Value             : 1/182
+Aperture Value                  : 8.0
+Brightness Value                : 8.48
+Exposure Compensation           : 0
+Max Aperture Value              : 3.2
+Metering Mode                   : Multi-segment
+Light Source                    : Unknown
+Flash                           : Auto, Did not fire
+Focal Length                    : 6.3 mm
+Version                         : 0130
+Internal Serial Number          : FC  A5196936     592D32323031 2009:07:24 C3631012018B
+Quality                         : NORMAL
+White Balance                   : Auto
+Saturation                      : Normal
+Fuji Flash Mode                 : Auto
+Flash Exposure Comp             : 0
+Macro                           : Off
+Focus Mode                      : Auto
+Fuji Film 0x1022                : 1
+Focus Pixel                     : 1824 1368
+Slow Sync                       : Off
+Picture Mode                    : Auto
+Fuji Film 0x1032                : 1
+Auto Bracketing                 : Off
+Sequence Number                 : 0
+Fuji Film 0x1200                : 0
+Color Mode                      : Standard
+Blur Warning                    : None
+Focus Warning                   : Good
+Exposure Warning                : Good
+Fuji Film 0x1303                : 0
+Dynamic Range                   : Standard
+Fuji Film 0x1408                : 0100
+Fuji Film 0x1409                : 0100
+Fuji Film 0x140a                : 0
+Faces Detected                  : 0
+Fuji Film 0x4200                : 0
+Fuji Film 0xb213                : 0
+Fuji Film 0xb214                : 0
+Flashpix Version                : 0100
+Color Space                     : sRGB
+Exif Image Width                : 3477
+Exif Image Height               : 2016
+Interoperability Index          : R98 - DCF basic file (sRGB)
+Interoperability Version        : 0100
+Focal Plane X Resolution        : 5952
+Focal Plane Y Resolution        : 5952
+Focal Plane Resolution Unit     : cm
+Sensing Method                  : One-chip color area
+File Source                     : Digital Camera
+Scene Type                      : Directly photographed
+Custom Rendered                 : Normal
+Exposure Mode                   : Auto
+Scene Capture Type              : Standard
+Sharpness                       : Normal
+Subject Distance Range          : Unknown
+PrintIM Version                 : 0250
+Print IM 0x0002                 : 0x00000001
+Print IM 0x0101                 : 0x00000000
+Compression                     : JPEG (old-style)
+Thumbnail Offset                : 1480
+Thumbnail Length                : 4688
+MPF Version                     : 0100
+Number Of Images                : 2
+MP Image Flags                  : (none)
+MP Image Format                 : JPEG
+MP Image Type                   : Multi-frame Disparity
+MP Image Length                 : 1665057
+MP Image Start                  : 1690624
+Dependent Image 1 Entry Number  : 0
+Dependent Image 2 Entry Number  : 0
+MP Individual Num               : 1
+Base Viewpoint Num              : 1
+Convergence Angle               : 0
+Baseline Length                 : 0.077
+Image Width                     : 3477
+Image Height                    : 2016
+Encoding Process                : Baseline DCT, Huffman coding
+Bits Per Sample                 : 8
+Color Components                : 3
+Y Cb Cr Sub Sampling            : YCbCr4:2:2 (2 1)
+Aperture                        : 8.0
+Image Size                      : 3477x2016
+MP Image 2                      : (Binary data 1665057 bytes, use -b option to extract)
+Scale Factor To 35 mm Equivalent: 6.4
+Shutter Speed                   : 1/180
+Thumbnail Image                 : (Binary data 4688 bytes, use -b option to extract)
+Circle Of Confusion             : 0.005 mm
+Field Of View                   : 48.1 deg
+Focal Length                    : 6.3 mm (35 mm equivalent: 40.4 mm)
+Hyperfocal Distance             : 1.06 m
+Light Value                     : 13.5
+
+===== Second Image =====
+ExifTool Version Number         : 9.06
+File Type                       : JPEG
+MIME Type                       : image/jpeg
+Exif Byte Order                 : Little-endian (Intel, II)
+Make                            : FUJIFILM
+Camera Model Name               : FinePix REAL 3D W1
+Orientation                     : Horizontal (normal)
+X Resolution                    : 72
+Y Resolution                    : 72
+Resolution Unit                 : inches
+Software                        : Digital Camera FinePix REAL 3D W1 Ver1.00
+Modify Date                     : 2013:01:24 21:10:53
+Y Cb Cr Positioning             : Co-sited
+Copyright                       : 
+Exposure Time                   : 1/300
+F Number                        : 5.0
+Exposure Program                : Program AE
+ISO                             : 100
+Exif Version                    : 0220
+Date/Time Original              : 2013:01:24 21:10:53
+Create Date                     : 2013:01:24 21:10:53
+Components Configuration        : Y, Cb, Cr, -
+Compressed Bits Per Pixel       : 2
+Shutter Speed Value             : 1/311
+Aperture Value                  : 4.9
+Brightness Value                : 8.11
+Exposure Compensation           : 0
+Max Aperture Value              : 3.2
+Metering Mode                   : Multi-segment
+Light Source                    : Unknown
+Flash                           : Off, Did not fire
+Focal Length                    : 6.3 mm
+Version                         : 0130
+Internal Serial Number          : FPX 25000039     592D32323031 2009:06:04 C040101200BF
+Quality                         : NORMAL
+White Balance                   : Auto
+Saturation                      : Normal
+Fuji Flash Mode                 : Off
+Flash Exposure Comp             : 0
+Macro                           : Off
+Focus Mode                      : Auto
+Fuji Film 0x1022                : 1
+Focus Pixel                     : 1824 1368
+Slow Sync                       : Off
+Picture Mode                    : Auto
+Fuji Film 0x1032                : 1
+Fuji Film 0x1035                : 1
+Auto Bracketing                 : Off
+Sequence Number                 : 0
+Fuji Film 0x1200                : 0
+Color Mode                      : Standard
+Blur Warning                    : None
+Focus Warning                   : Good
+Exposure Warning                : Good
+Fuji Film 0x1303                : 0
+Dynamic Range                   : Standard
+Fuji Film 0x1408                : 0100
+Fuji Film 0x1409                : 0100
+Fuji Film 0x140a                : 0
+Faces Detected                  : 0
+Fuji Film 0x4200                : 0
+Parallax                        : 0
+Fuji Film 0xb212                : 0
+Fuji Film 0xb213                : 65535
+Fuji Film 0xb214                : 65535
+Flashpix Version                : 0100
+Color Space                     : sRGB
+Exif Image Width                : 3477
+Exif Image Height               : 2016
+Interoperability Index          : R98 - DCF basic file (sRGB)
+Interoperability Version        : 0100
+Focal Plane X Resolution        : 5952
+Focal Plane Y Resolution        : 5952
+Focal Plane Resolution Unit     : cm
+Sensing Method                  : One-chip color area
+File Source                     : Digital Camera
+Scene Type                      : Directly photographed
+Custom Rendered                 : Normal
+Exposure Mode                   : Auto
+Scene Capture Type              : Standard
+Sharpness                       : Normal
+Subject Distance Range          : Unknown
+Compression                     : JPEG (old-style)
+Thumbnail Offset                : 1492
+Thumbnail Length                : 4780
+MPF Version                     : 0100
+MP Individual Num               : 2
+Base Viewpoint Num              : 1
+Convergence Angle               : 2.2
+Baseline Length                 : 0.077
+Image Width                     : 3477
+Image Height                    : 2016
+Encoding Process                : Baseline DCT, Huffman coding
+Bits Per Sample                 : 8
+Color Components                : 3
+Y Cb Cr Sub Sampling            : YCbCr4:2:2 (2 1)
+Aperture                        : 5.0
+Image Size                      : 3477x2016
+Scale Factor To 35 mm Equivalent: 6.4
+Shutter Speed                   : 1/300
+Thumbnail Image                 : (Binary data 4780 bytes, use -b option to extract)
+Circle Of Confusion             : 0.005 mm
+Field Of View                   : 48.1 deg
+Focal Length                    : 6.3 mm (35 mm equivalent: 40.4 mm)
+Hyperfocal Distance             : 1.69 m
+Light Value                     : 12.9
