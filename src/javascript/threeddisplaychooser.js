@@ -35,15 +35,51 @@ pics3.ThreeDDisplayChooser.EventType = {
   CHANGED: goog.events.getUniqueId('changed')
 };
 
+/** @type {Element} */
+pics3.ThreeDDisplayChooser.prototype.underlay1El_;
+
+/** @type {Element} */
+pics3.ThreeDDisplayChooser.prototype.selectionEl_;
+
+/** @type {Element} */
+pics3.ThreeDDisplayChooser.prototype.dropdownEl_;
+
 pics3.ThreeDDisplayChooser.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'threed-display-chooser');
 
+  this.underlay1El_ = document.createElement('div');
+  goog.dom.classes.add(this.underlay1El_, 'underlay1');
+  this.el.appendChild(this.underlay1El_);
+  var underlay2El = document.createElement('div');
+  goog.dom.classes.add(underlay2El, 'underlay2');
+  this.el.appendChild(underlay2El);
+
+  var dropdownArrowEl = document.createElement('div');
+  goog.dom.classes.add(dropdownArrowEl, 'dropdown-arrow');
+  dropdownArrowEl.appendChild(document.createElement('div'));
+  this.el.appendChild(dropdownArrowEl);
+
+  this.selectionEl_ = document.createElement('div');
+  goog.dom.classes.add(this.selectionEl_, 'selection');
+  this.el.appendChild(this.selectionEl_);
+
+  this.dropdownEl_ = document.createElement('div');
+  goog.dom.classes.add(this.dropdownEl_, 'dropdown');
+  goog.style.showElement(this.dropdownEl_, false);
+  this.el.appendChild(this.dropdownEl_);
+
   goog.array.forEach(this.entries_, function(entry) {
-    entry.render(this.el);
+    entry.render(this.dropdownEl_);
     this.eventHandler.listen(entry.el, goog.events.EventType.CLICK,
         goog.partial(this.handleEntryClick_, entry));
   }, this);
+
+  this.updateSelection_();
+
+  this.eventHandler.
+      listen(this.el, goog.events.EventType.MOUSEOVER, this.handleMouseOver_).
+      listen(this.el, goog.events.EventType.MOUSEOUT, this.handleMouseOut_);
 };
 
 pics3.ThreeDDisplayChooser.prototype.createEntries_ = function() {
@@ -61,7 +97,28 @@ pics3.ThreeDDisplayChooser.prototype.createEntries_ = function() {
 
 pics3.ThreeDDisplayChooser.prototype.handleEntryClick_ = function(entry) {
   this.selectedEntry_ = entry;
+  this.updateSelection_();
   this.dispatchEvent(pics3.ThreeDDisplayChooser.EventType.CHANGED);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+pics3.ThreeDDisplayChooser.prototype.handleMouseOver_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
+  goog.style.showElement(this.underlay1El_, false);
+  goog.style.showElement(this.dropdownEl_, true);
+  goog.style.showElement(this.selectionEl_, false);
+};
+
+/** @param {goog.events.BrowserEvent} e */
+pics3.ThreeDDisplayChooser.prototype.handleMouseOut_ = function(e) {
+  if (e.relatedTarget && goog.dom.contains(this.el, e.relatedTarget)) {
+    return;
+  }
+  goog.style.showElement(this.underlay1El_, true);
+  goog.style.showElement(this.selectionEl_, true);
+  goog.style.showElement(this.dropdownEl_, false);
 };
 
 /**
@@ -78,6 +135,22 @@ pics3.ThreeDDisplayChooser.prototype.getEntry_ = function(type) {
 /** @return {!pics3.display.Type} */
 pics3.ThreeDDisplayChooser.prototype.getSelectedType = function() {
   return this.selectedEntry_.type;
+};
+
+pics3.ThreeDDisplayChooser.prototype.updateSelection_ = function() {
+  var oldEntryEls = this.selectionEl_.getElementsByClassName('entry');
+  goog.array.forEach(oldEntryEls, function(oldEntryEl) {
+    goog.dom.removeNode(oldEntryEl);
+  });
+  goog.array.forEach(this.entries_, function(entry) {
+    goog.dom.classes.remove(entry.el, 'selected');
+  });
+  if (this.selectedEntry_) {
+    goog.dom.classes.add(this.selectedEntry_.el, 'selected');
+    var clonedEntryEl = this.selectedEntry_.el.cloneNode(true);
+    this.selectionEl_.insertBefore(clonedEntryEl,
+        this.selectionEl_.firstChild);
+  }
 };
 
 /**
@@ -104,6 +177,7 @@ goog.inherits(pics3.ThreeDDisplayChooser.Entry_, pics3.Component);
 pics3.ThreeDDisplayChooser.Entry_.prototype.createDom = function() {
   goog.base(this, 'createDom');
   goog.dom.classes.add(this.el, 'entry');
+  this.el.title = this.name;
 
   var overlayEl = document.createElement('div');
   goog.dom.classes.add(overlayEl, 'overlay');

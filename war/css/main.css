@@ -293,16 +293,35 @@ a:hover {
 }
 .threed-display-chooser {
   position: absolute;
+  margin: 5px 0 0 5px;
+  width: 70px;
 }
-.threed-display-chooser > .entry {
+.threed-display-chooser > .underlay1 {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+.threed-display-chooser > .underlay2 {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 4;
+}
+.threed-display-chooser > .selection {
+  display: inline-block;
+}
+.threed-display-chooser .entry {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   cursor: pointer;
   width: 64px;
   height: 64px;
-  margin-left: -8px;
 }
-.threed-display-chooser > .entry > .overlay {
+.threed-display-chooser .entry > .overlay {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: 50% 50%;
@@ -310,11 +329,39 @@ a:hover {
   width: 48px;
   height: 48px;
   margin: 8px;
-  z-index: 3;
+  z-index: 5;
   position: absolute;
 }
-.threed-display-chooser > .entry > .overlay:hover {
-  opacity: 1;
+.threed-display-chooser > .dropdown > .entry > .overlay:hover {
+  opacity: 0.8;
+}
+.threed-display-chooser > .dropdown > .entry.selected > .overlay {
+  opacity: 1 !important;
+}
+.threed-display-chooser > .dropdown-arrow {
+  position: absolute;
+  right: 2px;
+  top: 30px;
+}
+.threed-display-chooser:hover > .dropdown-arrow > div {
+  border-top-color: #aaa !important;
+}
+.dropdown-arrow {
+  display: inline-block;
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  cursor: pointer;
+}
+.dropdown-arrow > div {
+  border: 5px solid transparent;
+  width: 0px;
+  height: 0px;
+}
+.dropdown-arrow > div {
+  border-top-color: #707070 !important;
+  border-bottom-width: 0 !important;
 }
 .film-strip {
   background-color: #333;
@@ -375,8 +422,10 @@ a:hover {
   text-align: center;
   position: absolute;
   width: 100%;
-  padding-top: 10px;
+  padding: 10px 84px 0px 84px;
   line-height: 32px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
 }
 .threedcross-photo-display > .cross-eye-dot {
   background-color: #707070;
