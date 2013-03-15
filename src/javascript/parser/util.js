@@ -17,3 +17,16 @@ pics3.parser.util.strToCodeArray = function(str) {
   }
   return array;
 };
+
+
+/**
+ * @param {!Array.<number>} codeArray
+ * @return {string}
+ */
+pics3.parser.util.codeArrayToStr = function(codeArray) {
+  var array = [];
+  for (var i = 0; i < codeArray.length; i++) {
+    array.push(String.fromCharCode(codeArray[i]));
+  }
+  return array.join('');
+};

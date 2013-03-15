@@ -87,3 +87,7 @@ pics3.parser.DataUrl.prototype.toObject = function() {
 pics3.parser.DataUrl.prototype.toUint8Array = function() {
   return pics3.parser.base64.toUint8Array(this.base64Data_);
 };
+
+pics3.parser.DataUrl.prototype.toArrayBuffer = function() {
+  return pics3.parser.base64.toUint8Array(this.base64Data_).buffer;
+};

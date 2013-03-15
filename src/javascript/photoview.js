@@ -13,6 +13,7 @@ goog.require('pics3.PhotoMimeType');
 goog.require('pics3.ProgressIndicator');
 goog.require('pics3.ThreeDDisplayChooser');
 goog.require('pics3.display.ThreeDCross');
+goog.require('pics3.display.ThreeDNvidia');
 goog.require('pics3.display.ThreeDSingleImage');
 goog.require('pics3.display.ThreeDWobble');
 goog.require('pics3.display.TwoD');
@@ -120,6 +121,9 @@ pics3.PhotoView.prototype.createDisplay_ = function() {
         break;
       case pics3.display.Type.THREE_D_RIGHT_IMAGE:
         this.display_ = new pics3.display.ThreeDSingleImage(false, this.photo_);
+        break;
+      case pics3.display.Type.THREE_D_NVIDIA:
+        this.display_ = new pics3.display.ThreeDNvidia(this.photo_);
         break;
       case pics3.display.Type.THREE_D_WOBBLE:
         this.display_ = new pics3.display.ThreeDWobble(this.photo_);

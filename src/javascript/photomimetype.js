@@ -13,7 +13,8 @@ pics3.PhotoMimeType = {
   MPO: 'image/mpo',
   JPG: 'image/jpeg',
   PNG: 'image/png',
-  GIF: 'image/gif'
+  GIF: 'image/gif',
+  WEBP: 'image/webp'
 };
 
 /**

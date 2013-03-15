@@ -2,6 +2,8 @@
 
 goog.provide('pics3.parser.DataReader');
 
+goog.require('pics3.parser.util');
+
 
 /**
  * @param {ArrayBuffer} buffer
@@ -44,8 +46,18 @@ pics3.parser.DataReader.prototype.getByteLength = function() {
   return this.byteLength_;
 };
 
+pics3.parser.DataReader.prototype.getBytesRemaining = function() {
+  return this.byteLength_ - this.offset_;
+};
+
 pics3.parser.DataReader.prototype.getUint8Array = function() {
   return this.array_;
+};
+
+pics3.parser.DataReader.prototype.toArrayBuffer = function() {
+  var start = this.baseOffset_ + this.offset_;
+  var end = this.baseOffset_ + this.byteLength_;
+  return this.array_.buffer.slice(start, end);
 };
 
 pics3.parser.DataReader.prototype.clone = function() {
@@ -56,13 +68,14 @@ pics3.parser.DataReader.prototype.clone = function() {
 };
 
 /**
- * @param {number} offset
+ * @param {number=} opt_offset
  * @param {number=} opt_byteCount Byte count, otherwise reads to the end of
  *     the current reader's byte length.
  * @return {!pics3.parser.DataReader}
  */
-pics3.parser.DataReader.prototype.subReader = function(offset, opt_byteCount) {
-  var subOffset = offset + this.offset_;
+pics3.parser.DataReader.prototype.subReader = function(opt_offset,
+    opt_byteCount) {
+  var subOffset = (opt_offset || 0) + this.offset_;
   var byteCount = goog.isDefAndNotNull(opt_byteCount) ? opt_byteCount :
       this.byteLength_ - subOffset;
   if (byteCount <= 0) {
@@ -74,6 +87,14 @@ pics3.parser.DataReader.prototype.subReader = function(offset, opt_byteCount) {
   var reader = new pics3.parser.DataReader(this.array_.buffer,
       this.baseOffset_ + subOffset, byteCount, this.bigEndian_);
   return reader;
+};
+
+pics3.parser.DataReader.prototype.skip = function(length) {
+  this.assert_(length > 0, 'skip: length should be > 0 but was ' + length);
+  if (this.offset_ + length > this.byteLength_) {
+    throw new Error('Skip past end of DataReader buffer');
+  }
+  this.offset_ += length;
 };
 
 pics3.parser.DataReader.prototype.seek = function(bytePosition) {
@@ -99,6 +120,10 @@ pics3.parser.DataReader.prototype.readBytes = function(length) {
   var subArray = this.peekBytes(length);
   this.offset_ += length;
   return subArray;
+};
+
+pics3.parser.DataReader.prototype.readString = function(length) {
+  return pics3.parser.util.codeArrayToStr(this.readBytes(length));
 };
 
 pics3.parser.DataReader.prototype.readUint8 = function() {

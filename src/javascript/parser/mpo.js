@@ -59,23 +59,18 @@ Mpo.prototype.logger_ = goog.debug.Logger.getLogger('pics3.parser.Mpo');
 
 /**
  * @param {ArrayBuffer} data
- * @param {boolean=} opt_throwErrors
  * @return {boolean}
  */
-Mpo.prototype.parse = function(data, opt_throwErrors) {
+Mpo.prototype.parse = function(data) {
   var startTime = goog.now();
-  if (opt_throwErrors) {
+  try {
     this.parseInternal(data);
-  } else {
-    try {
-      this.parseInternal(data);
-    } catch (e) {
-      if (!pics3.parser.parseError.is(e)) {
-        throw e;
-      }
-      this.error_ = e;
-      return false;
+  } catch (e) {
+    if (!pics3.parser.parseError.is(e)) {
+      throw e;
     }
+    this.error_ = e;
+    return false;
   }
   this.logger_.fine('Parsed in ' + (goog.now() - startTime) + 'ms');
   return true;

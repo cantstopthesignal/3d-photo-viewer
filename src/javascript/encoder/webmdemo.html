@@ -1,0 +1,38 @@
+<!-- Copyright cantstopthesignals@gmail.com -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>pics3.encoder.WebmDemo</title>
+  <script src="../../../lib/closure-library/closure/goog/base.js"></script>
+  <script src="../../../src/javascript/deps.js"></script>
+  <script>
+    goog.require('goog.events');
+    goog.require('goog.events.EventType');
+    goog.require('pics3.encoder.WebmDemo');
+  </script>
+  <script>
+    goog.events.listen(window, goog.events.EventType.LOAD, function() {
+      new pics3.encoder.WebmDemo().start();
+    });
+  </script>
+  <link rel="stylesheet" type="text/css" href="webmdemo.css" />
+</head>
+<body>
+  <div class="demo-box">
+    <p>
+      <progress id="progress" value="0" max="10" min="0" style="width: 300px">
+      </progress>
+    </p>
+    <p>
+      <canvas id="canvas" width="150" height="150"></canvas>
+      <video id="video" width="150" height="150" controls autoplay loop></video>
+    </p>
+    <p>
+      Status: <span id="status">Idle</span>
+    </p>
+    <p>
+      <a id="download" download="clock.webm">Download WebM</a>
+    </p>
+  </div>
+</body>
+</html>

@@ -20,6 +20,8 @@ goog.inherits(pics3.AllTests, goog.events.EventTarget);
 
 /** @type {Array.<string>} */
 pics3.AllTests.TESTS = [
+    'encoder/webmdemo.html',
+    'encoder/webmtest.html',
     'parser/mpotest.html'
     ];
 

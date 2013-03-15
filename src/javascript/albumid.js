@@ -12,7 +12,7 @@ pics3.AlbumId = function() {
 };
 
 /**
- * @param {!pics3.AlbumId} other
+ * @param {pics3.AlbumId} other
  * @return {boolean}
  */
 pics3.AlbumId.prototype.equals = function(other) {

@@ -159,7 +159,7 @@ pics3.Album.prototype.getPhotoByUniqueId = function(uniqueId) {
   return null;
 };
 
-//TODO: Make fast
+// TODO: Make fast
 /**
  * @param {!pics3.PhotoId} id
  * @return {number}
@@ -167,11 +167,11 @@ pics3.Album.prototype.getPhotoByUniqueId = function(uniqueId) {
 pics3.Album.prototype.getPhotoIndexById = function(id) {
   return goog.array.findIndex(this.photos,
       function(photo) {
-    return photo.getId() && photo.getId().equals(id);
+    return !!photo.getId() && photo.getId().equals(id);
   });
 };
 
-//TODO: Make fast
+// TODO: Make fast
 /**
  * @param {number} uniqueId
  * @return {number}
@@ -211,11 +211,11 @@ pics3.Album.prototype.loadAsync = function() {
           this.name_ = result.name;
         }, this).
         addCallback(function() {
-          this.setState_(pics3.Photo.State.LOADED);
+          this.setState_(pics3.Album.State.LOADED);
           this.loadDeferred_.callback(null);
         }, this).addErrback(function(err) {
           this.error_ = err;
-          this.setState_(pics3.Photo.State.ERROR);
+          this.setState_(pics3.Album.State.ERROR);
           this.loadDeferred_.errback(err);
         }, this);
   }

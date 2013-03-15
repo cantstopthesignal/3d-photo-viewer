@@ -36,7 +36,9 @@ pics3.loader.BlobFile.prototype.loadAsync = function() {
   var deferred = new goog.async.Deferred();
 
   function handleLoad() {
-    var fileResult = new pics3.loader.FileResult(fileReader.result,
+    var result = fileReader.result;
+    goog.asserts.assertInstanceof(result, ArrayBuffer);
+    var fileResult = new pics3.loader.FileResult(result,
         this.blob_.type, this.blob_.name);
     deferred.callback(fileResult);
   }

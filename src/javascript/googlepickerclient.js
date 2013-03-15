@@ -253,11 +253,12 @@ pics3.GooglePickerClient.PickerEvent = function(type, result) {
 goog.inherits(pics3.GooglePickerClient.PickerEvent, goog.events.Event);
 
 /**
+ * @param {!pics3.AppContext} appContext
  * @param {!Object} result
  * @constructor
  */
 pics3.GooglePickerClient.PickerResult = function(appContext, result) {
-  /** @type {pics3.AppContext} */
+  /** @type {!pics3.AppContext} */
   this.appContext_ = appContext;
 
   /** @type {!Object} */

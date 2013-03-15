@@ -47,25 +47,29 @@ pics3.display.Base.prototype.resize = function(opt_width, opt_height) {
 
 pics3.display.Base.prototype.layout = goog.abstractMethod;
 
-pics3.display.Base.prototype.resizeImageToFullSize = function(imageEl) {
+pics3.display.Base.prototype.resizeComponentToFullSize = function(componentEl,
+    naturalComponentWidth, naturalComponentHeight) {
   var width = this.el.offsetWidth;
   var height = this.el.offsetHeight;
-  var naturalImageWidth = imageEl.naturalWidth;
-  var naturalImageHeight = imageEl.naturalHeight;
-  if (!naturalImageWidth || !naturalImageHeight) {
+  if (!naturalComponentWidth || !naturalComponentHeight) {
     return;
   }
-  var imageWidth = width;
-  var imageHeight = Math.ceil(imageWidth * naturalImageHeight /
-      naturalImageWidth);
-  if (imageHeight > height) {
-    imageHeight = height;
-    imageWidth = Math.ceil(imageHeight * naturalImageWidth /
-        naturalImageHeight);
+  var componentWidth = width;
+  var componentHeight = Math.ceil(componentWidth * naturalComponentHeight /
+      naturalComponentWidth);
+  if (componentHeight > height) {
+    componentHeight = height;
+    componentWidth = Math.ceil(componentHeight * naturalComponentWidth /
+        naturalComponentHeight);
   }
-  goog.style.setPosition(imageEl,
-      Math.floor((width - imageWidth) / 2),
-      Math.floor((height - imageHeight) / 2));
-  goog.style.setBorderBoxSize(imageEl,
-      new goog.math.Size(imageWidth, imageHeight));
+  goog.style.setPosition(componentEl,
+      Math.floor((width - componentWidth) / 2),
+      Math.floor((height - componentHeight) / 2));
+  goog.style.setBorderBoxSize(componentEl,
+      new goog.math.Size(componentWidth, componentHeight));
+};
+
+pics3.display.Base.prototype.resizeImageToFullSize = function(imageEl) {
+  this.resizeComponentToFullSize(imageEl, imageEl.naturalWidth,
+      imageEl.naturalHeight);
 };

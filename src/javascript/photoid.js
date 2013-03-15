@@ -15,9 +15,12 @@ pics3.PhotoId = function(id) {
 };
 
 /**
- * @param {!pics3.PhotoId} other
+ * @param {pics3.PhotoId} other
  * @return {boolean}
  */
 pics3.PhotoId.prototype.equals = function(other) {
+  if (!other) {
+    return false;
+  }
   return this.id == other.id;
 };

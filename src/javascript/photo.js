@@ -9,7 +9,6 @@ goog.require('pics3.ImageProcessor');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.loader.EventType');
 goog.require('pics3.parser.DataUrl');
-goog.require('pics3.parser.Mpo');
 
 
 /**
@@ -143,6 +142,15 @@ pics3.Photo.prototype.getImageDataUrl = function(index) {
   goog.asserts.assert(index < this.getImageCount());
   goog.asserts.assertString(this.mimeType_);
   return this.imageDataUrls_[index];
+};
+
+/**
+ * @return {!Array.<!pics3.parser.DataUrl>}
+ */
+pics3.Photo.prototype.getImageDataUrls = function() {
+  goog.asserts.assert(this.state_ == pics3.Photo.State.LOADED);
+  goog.asserts.assertString(this.mimeType_);
+  return this.imageDataUrls_ || [];
 };
 
 /**

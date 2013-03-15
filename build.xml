@@ -30,10 +30,12 @@
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
         namespace="pics3.main"
         warningLevel="VERBOSE"
+        externs="${js-source.dir}/externs.js"
         destfile="${js-output.dir}/maindebug.js" />
     <closure-builder-compile compilationLevel="WHITESPACE_ONLY"
         namespace="pics3.worker.main"
         warningLevel="VERBOSE"
+        externs="${js-source.dir}/externs.js"
         destfile="${js-output.dir}/workermaindebug.js" />
   </target>
 
@@ -41,10 +43,12 @@
     <closure-builder-compile compilationLevel="ADVANCED_OPTIMIZATIONS"
         namespace="pics3.main"
         warningLevel="VERBOSE"
+        externs="${js-source.dir}/externs.js"
         destfile="${js-output.dir}/mainoptimized.js" />
     <closure-builder-compile compilationLevel="ADVANCED_OPTIMIZATIONS"
         namespace="pics3.worker.main"
         warningLevel="VERBOSE"
+        externs="${js-source.dir}/externs.js"
         destfile="${js-output.dir}/workermainoptimized.js" />
   </target>
 
@@ -94,6 +98,7 @@
     <attribute name="warningLevel" default="DEFAULT" />
     <attribute name="namespace" />
     <attribute name="destfile" />
+    <attribute name="externs" />
     <sequential>
       <exec executable="${closure-builder.bin}" output="@{destfile}"
           logError="true">
@@ -104,6 +109,7 @@
         <arg value="--compiler_jar=${closure-compiler.jar}" />
         <arg value="--compiler_flags=--compilation_level=@{compilationLevel}" />
         <arg value="--compiler_flags=--warning_level=@{warningLevel}" />
+        <arg value="--compiler_flags=--externs=@{externs}" />
         <arg value="--compiler_flags=--jscomp_error=accessControls" />
         <arg value="--compiler_flags=--jscomp_error=ambiguousFunctionDecl" />
         <arg value="--compiler_flags=--jscomp_error=checkDebuggerStatement" />
