@@ -29,8 +29,8 @@ pics3.encoder.Webp = function() {
   /** @type {Error} */
   this.error_;
 
-  /** @type {!Array.<!pics3.encoder.Webp.Image>} */
-  this.images_ = [];
+  /** @type {pics3.encoder.Webp.Image} */
+  this.image_;
 
   /** @type {goog.events.EventHandler} */
   this.eventHandler_ = new goog.events.EventHandler(this);
@@ -53,9 +53,9 @@ Webp.prototype.setSupportTransparency = function(supportTransparency) {
   this.supportTransparency_ = supportTransparency;
 };
 
-/** @return {!Array.<!pics3.encoder.Webp.Image>} */
-Webp.prototype.getImages = function() {
-  return this.images_;
+/** @return {pics3.encoder.Webp.Image} */
+Webp.prototype.getImage = function() {
+  return this.image_;
 }
 
 /**
@@ -64,16 +64,17 @@ Webp.prototype.getImages = function() {
  */
 Webp.prototype.encode = function(photo) {
   goog.asserts.assert(photo.getState() == pics3.Photo.State.LOADED);
-  return this.encodeDataUrls(photo.getImageDataUrls());
+  return this.encodeFromDataUrls(photo.getImageDataUrls());
 };
 
 /**
- * @param {!Array.<!pics3.parser.DataUrl>} dataUrls
+ * @param {!Array.<!pics3.parser.DataUrl>} dataUrls Mono or stereo images to
+ *     encode.
  * @return {!goog.async.Deferred} produces {boolean}
  */
-Webp.prototype.encodeDataUrls = function(dataUrls) {
+Webp.prototype.encodeFromDataUrls = function(dataUrls) {
   var startTime = goog.now();
-  return this.runSafeDeferred(goog.bind(this.encodeDataUrlsInternal, this,
+  return this.runSafeDeferred(goog.bind(this.encodeFromDataUrlsInternal, this,
       dataUrls)).
       addCallback(function() {
         this.logger_.fine('Encoded in ' + (goog.now() - startTime) + 'ms');
@@ -122,30 +123,31 @@ Webp.prototype.getError = function() {
  * @param {!Array.<!pics3.parser.DataUrl>} dataUrls
  * @return {!goog.async.Deferred}
  */
-Webp.prototype.encodeDataUrlsInternal = function(dataUrls) {
-  var deferredArray = [];
-  for (var i = 0; i < dataUrls.length; i++) {
-    deferredArray.push(this.encodeFromDataUrl(dataUrls[i]).
-        addCallback(function(image) {
-          this.images_.push(image);
-        }, this));
-  }
-  return new goog.async.DeferredList(deferredArray, false, true).addCallback(
-      function() { return true; });
-};
-
-/**
- * @param {!pics3.parser.DataUrl} dataUrl
- * @return {!goog.async.Deferred} producing {pics3.encoder.Webp.Image}
- */
-Webp.prototype.encodeFromDataUrl = function(dataUrl) {
+Webp.prototype.encodeFromDataUrlsInternal = function(dataUrls) {
   var deferred = new goog.async.Deferred();
-  var image = new Image();
+
+  var images = goog.array.map(dataUrls, function(){
+    return new Image();
+  });
+  var loadCount = 0;
 
   var handleImageLoad = function() {
+    loadCount++;
+    if (loadCount < images.length) {
+      return;
+    }
+    var image = images[0];
+    var rightImage = images.length > 1 ? images[1] : null;
     var canvas = document.createElement('canvas');
     var width = image.naturalWidth;
     var height = image.naturalHeight;
+    if (rightImage) {
+      this.assertEquals(width, rightImage.naturalWidth,
+          'Stereo images should be the same size');
+      this.assertEquals(height, rightImage.naturalHeight,
+          'Stereo images should be the same size');
+      width *= 2;
+    }
     canvas.setAttribute('width', width);
     canvas.setAttribute('height', height);
     var canvasCtx = canvas.getContext('2d');
@@ -154,23 +156,29 @@ Webp.prototype.encodeFromDataUrl = function(dataUrl) {
       canvasCtx.fillRect(0, 0, width, height);
     }
     canvasCtx.drawImage(image, 0, 0);
+    if (rightImage) {
+      canvasCtx.drawImage(rightImage, image.naturalWidth, 0);
+    }
     var dataUrl = new pics3.parser.DataUrl(
         canvas.toDataURL(pics3.PhotoMimeType.WEBP, this.quality_));
-    var webPImage = new pics3.encoder.Webp.Image(
+    this.image_ = new pics3.encoder.Webp.Image(
         dataUrl, width, height);
-    deferred.callback(webPImage);
+    deferred.callback(true);
   };
 
-  this.eventHandler_.listen(image, goog.events.EventType.LOAD,
-      this.wrapSafe(goog.bind(handleImageLoad, this)));
-  image.src = dataUrl;
+  goog.array.forEach(dataUrls, function(dataUrl, i) {
+    var image = images[i];
+    this.eventHandler_.listen(image, goog.events.EventType.LOAD,
+        this.wrapSafe(goog.bind(handleImageLoad, this)));
+    image.src = dataUrl;
+  }, this);
   return deferred;
 };
 
 /** @override */
 Webp.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
-  delete this.images_;
+  delete this.image_;
 };
 
 /**

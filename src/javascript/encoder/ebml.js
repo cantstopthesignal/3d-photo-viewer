@@ -10,6 +10,7 @@ goog.require('goog.async.DeferredList');
 goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
+goog.require('pics3.encoder.Asserter');
 goog.require('pics3.encoder.BaseEncoder');
 goog.require('pics3.parser.DataReader');
 goog.require('pics3.parser.DataUrl');
@@ -23,10 +24,13 @@ goog.scope(function() {
  * @extends {pics3.encoder.BaseEncoder}
  */
 pics3.encoder.Ebml = function() {
-  goog.base(this, 'pics3.parser.Ebml');
+  goog.base(this, 'pics3.encoder.Ebml');
 };
 var Ebml = pics3.encoder.Ebml;
 goog.inherits(Ebml, pics3.encoder.BaseEncoder);
+
+/** @type {pics3.encoder.Asserter} */
+Ebml.ASSERTER = new pics3.encoder.Asserter('pics3.encoder.Ebml');
 
 /** @enum {number} */
 Ebml.TagId = {
@@ -46,10 +50,7 @@ Ebml.TagId = {
  * @return {!Uint8Array}
  */
 Ebml.encodeId = function(value) {
-  if (value < 0) {
-    throw pics3.encoder.encodeError.newError(
-        'Ebml.encodeNumber: Number less than zero');
-  }
+  Ebml.ASSERTER.assert(value >= 0, 'Number must be >= 0');
   var parts = [];
   while (value > 0) {
     parts.push(value & 0xff);
@@ -59,11 +60,35 @@ Ebml.encodeId = function(value) {
 };
 
 /**
- * @param {number} value
+ * @param {number} value Positive integer
  * @return {!Uint8Array}
  */
-Ebml.encodeNumber = function(value) {
-  return Ebml.encodeBinaryString(value.toString(2));
+Ebml.encodeVint = function(value) {
+  Ebml.ASSERTER.assert(value >= 0, 'Number must be >= 0');
+  var zeroes = Math.ceil(Math.ceil(Math.log(value) / Math.log(2)) / 8);
+  var valueString = value.toString(2);
+  var padded = (new Array((zeroes * 7 + 7 + 1) - valueString.length)).
+      join('0') + valueString;
+  valueString = (new Array(zeroes)).join('0') + '1' + padded;
+  return Ebml.encodeBinaryString(valueString);
+};
+
+/**
+ * @param {number} value
+ * @param {number=} opt_byteLength
+ * @return {!Uint8Array}
+ */
+Ebml.encodeNumber = function(value, opt_byteLength) {
+  Ebml.ASSERTER.assert(value >= 0, 'Number must be >= 0');
+  var encoded = Ebml.encodeBinaryString(value.toString(2));
+  if (!goog.isDefAndNotNull(opt_byteLength)) {
+    return encoded;
+  }
+  Ebml.ASSERTER.assert(opt_byteLength >= encoded.length,
+      'Buffer size must be greater than encoded size');
+  var data = new Uint8Array(opt_byteLength);
+  data.set(encoded, opt_byteLength - encoded.length);
+  return data;
 };
 
 /**
@@ -131,6 +156,9 @@ Ebml.prototype.encode = function(nodeOrArray) {
 Ebml.Node = function(id) {
   /** @type {number} */
   this.id = id;
+
+  /** @type {number} */
+  this.uid = goog.getUid(this);
 };
 
 /** @return {!pics3.encoder.Ebml.EncodedNode} */
@@ -143,17 +171,11 @@ Ebml.Node.prototype.encode = goog.abstractMethod;
 Ebml.Node.prototype.encodeIdSizeAndPayload = function(encodedPayload) {
   var idNode = new Ebml.EncodedLeafNode(Ebml.encodeId(this.id));
 
-  // TODO: This could be cleaned up
-  var payloadSize = encodedPayload.getByteLength();
-  var zeroes = Math.ceil(Math.ceil(Math.log(payloadSize) / Math.log(2)) / 8);
-  var payloadSizeString = payloadSize.toString(2);
-  var padded = (new Array((zeroes * 7 + 7 + 1) - payloadSizeString.length)).
-      join('0') + payloadSizeString;
-  payloadSizeString = (new Array(zeroes)).join('0') + '1' + padded;
-  var sizeNode = new Ebml.EncodedLeafNode(Ebml.encodeBinaryString(
-      payloadSizeString));
+  var sizeNode = new Ebml.EncodedLeafNode(Ebml.encodeVint(
+      encodedPayload.getByteLength()));
 
-  return new Ebml.EncodedTrunkNode([idNode, sizeNode, encodedPayload]);
+  return new Ebml.EncodedTrunkNode([idNode, sizeNode, encodedPayload],
+      this.uid);
 };
 
 /**
@@ -206,6 +228,18 @@ Ebml.TrunkNode.prototype.addDoubleNode = function(id, value) {
 };
 
 /**
+ * @param {number} id
+ * @param {!pics3.encoder.Ebml.Node} refNode
+ * @param {pics3.encoder.Ebml.Node=} opt_fromRefNode
+ * @return {!pics3.encoder.Ebml.TrunkNode}
+ */
+Ebml.TrunkNode.prototype.addBytePositionRefNode = function(id, refNode,
+    opt_fromRefNode) {
+  return this.addChild(new Ebml.BytePositionRefNode(id, refNode,
+      opt_fromRefNode));
+}
+
+/**
  * @param {pics3.encoder.Ebml.Node} node
  * @return {!pics3.encoder.Ebml.TrunkNode}
  */
@@ -221,6 +255,11 @@ Ebml.TrunkNode.prototype.addChild = function(node) {
 Ebml.TrunkNode.prototype.addChildren = function(nodes) {
   goog.array.extend(this.children, nodes);
   return this;
+};
+
+/** @return {pics3.encoder.Ebml.Node} */
+Ebml.TrunkNode.prototype.getFirstChild = function() {
+  return this.children[0];
 };
 
 /**
@@ -313,19 +352,63 @@ Ebml.DataNode.prototype.encode = function() {
   return this.encodeIdSizeAndPayload(payloadNode);
 };
 
+/**
+ * @param {number} id
+ * @param {!pics3.encoder.Ebml.Node} refNode
+ * @param {pics3.encoder.Ebml.Node=} opt_fromRefNode
+ * @constructor
+ * @extends {pics3.encoder.Ebml.LeafNode}
+ */
+Ebml.BytePositionRefNode = function(id, refNode, opt_fromRefNode) {
+  goog.base(this, id);
+
+  /** @type {!pics3.encoder.Ebml.Node} */
+  this.refNode = refNode;
+
+  /** @type {pics3.encoder.Ebml.Node} */
+  this.fromRefNode = opt_fromRefNode || null;
+};
+goog.inherits(Ebml.BytePositionRefNode, Ebml.LeafNode);
+
+/** @override */
+Ebml.BytePositionRefNode.prototype.encode = function() {
+  var payloadNode = new Ebml.EncodedBytePositionRefNode(this.refNode.uid,
+      this.fromRefNode ? this.fromRefNode.uid : undefined);
+  return this.encodeIdSizeAndPayload(payloadNode);
+};
+
 /** @constructor */
 Ebml.EncodedNode = function() {
 };
 
-/** @return {number} */
-Ebml.EncodedNode.prototype.getByteLength = goog.abstractMethod;
+/** @enum {number} */
+Ebml.EncodedNode.OffsetPass = {
+  FIRST: 1,
+  SECOND: 2,
+  THIRD: 3
+};
+
+/** @type {!Array.<Ebml.EncodedNode.OffsetPass>} */
+Ebml.EncodedNode.OFFSET_PASSES_ = [
+    Ebml.EncodedNode.OffsetPass.FIRST,
+    Ebml.EncodedNode.OffsetPass.SECOND,
+    Ebml.EncodedNode.OffsetPass.THIRD];
 
 /**
  * @param {!Uint8Array} buffer
  * @param {number} offset
  * @return {number} The new offset
  */
-Ebml.EncodedNode.prototype.writeToBuffer = goog.abstractMethod;
+Ebml.EncodedNode.prototype.writeToBuffer = function(buffer, offset) {
+  var nodeMap = {};
+  this.attachReferences(nodeMap, true);
+  this.attachReferences(nodeMap, false);
+  var offsetMap = {};
+  goog.array.forEach(Ebml.EncodedNode.OFFSET_PASSES_, function(offsetPass) {
+    this.calculateOffsets(offsetMap, offset, offsetPass);
+  }, this);
+  return this.writeToBufferInternal(buffer, offset);
+};
 
 /** @return {!Uint8Array} */
 Ebml.EncodedNode.prototype.toUint8Array = function() {
@@ -333,6 +416,30 @@ Ebml.EncodedNode.prototype.toUint8Array = function() {
   this.writeToBuffer(outputArray, 0);
   return outputArray;
 };
+
+/** @return {number} */
+Ebml.EncodedNode.prototype.getByteLength = goog.abstractMethod;
+
+/**
+ * @param {Object} nodeMap
+ * @param {boolean} firstPass
+ */
+Ebml.EncodedNode.prototype.attachReferences = goog.nullFunction;
+
+/**
+ * @param {Object} offsetMap
+ * @param {number} offset
+ * @param {!Ebml.EncodedNode.OffsetPass} offsetPass
+ * @return {number} The new offset
+ */
+Ebml.EncodedNode.prototype.calculateOffsets = goog.abstractMethod;
+
+/**
+ * @param {!Uint8Array} buffer
+ * @param {number} offset
+ * @return {number} The new offset
+ */
+Ebml.EncodedNode.prototype.writeToBufferInternal = goog.abstractMethod;
 
 /**
  * @param {!Uint8Array} data
@@ -353,21 +460,91 @@ Ebml.EncodedLeafNode.prototype.getByteLength = function() {
 };
 
 /** @override */
-Ebml.EncodedLeafNode.prototype.writeToBuffer = function(buffer, offset) {
+Ebml.EncodedLeafNode.prototype.calculateOffsets = function(offsetMap, offset,
+    offsetPass) {
+  return offset + this.getByteLength();
+};
+
+/** @override */
+Ebml.EncodedLeafNode.prototype.writeToBufferInternal = function(buffer, offset) {
+  buffer.set(this.data, offset);
+  return offset + this.data.length;
+};
+
+/**
+ * @param {number} refUid
+ * @param {number=} opt_fromRefUid
+ * @constructor
+ * @extends {pics3.encoder.Ebml.EncodedNode}
+ */
+Ebml.EncodedBytePositionRefNode = function(refUid, opt_fromRefUid) {
+  goog.base(this);
+
+  /** @type {number} */
+  this.refUid = refUid;
+
+  /** @type {?number} */
+  this.fromRefUid = opt_fromRefUid || null;
+
+  /** @type {Uint8Array} */
+  this.data;
+};
+goog.inherits(Ebml.EncodedBytePositionRefNode, Ebml.EncodedNode);
+
+/** @override */
+Ebml.EncodedBytePositionRefNode.prototype.getByteLength = function() {
+  return 4;
+};
+
+/** @override */
+Ebml.EncodedBytePositionRefNode.prototype.attachReferences = function(nodeMap,
+    firstPass) {
+  if (!firstPass) {
+    Ebml.ASSERTER.assert(!!nodeMap[this.refUid],
+        'Expected to find encoded referenced node');
+  }
+};
+
+/** @override */
+Ebml.EncodedBytePositionRefNode.prototype.calculateOffsets = function(offsetMap,
+    offset, offsetPass) {
+  var refOffset = offsetMap[this.refUid];
+  if (goog.isDefAndNotNull(refOffset)) {
+    var fromRefOffset = this.fromRefUid ?
+        offsetMap[this.fromRefUid] : null;
+    if (goog.isDefAndNotNull(fromRefOffset)) {
+      Ebml.ASSERTER.assert(refOffset >= fromRefOffset,
+          'Referenced node should be after from node');
+      refOffset -= fromRefOffset;
+    }
+    this.data = Ebml.encodeNumber(refOffset, 4);
+  }
+  return offset + this.getByteLength();
+};
+
+/** @override */
+Ebml.EncodedBytePositionRefNode.prototype.writeToBufferInternal = function(
+    buffer, offset) {
+  Ebml.ASSERTER.assert(this.data && this.data.length > 0,
+      'Expected referencing node to have a value');
   buffer.set(this.data, offset);
   return offset + this.data.length;
 };
 
 /**
  * @param {!Array.<!pics3.encoder.Ebml.EncodedNode>} children
+ * @param {number=} opt_uid
  * @constructor
  * @extends {pics3.encoder.Ebml.EncodedNode}
  */
-Ebml.EncodedTrunkNode = function(children) {
+Ebml.EncodedTrunkNode = function(children, opt_uid) {
   goog.base(this);
 
   /** @type {!Array.<!pics3.encoder.Ebml.EncodedNode>} */
   this.children = children;
+
+  /** @type {?number} */
+  this.uid = opt_uid || null;
 };
 goog.inherits(Ebml.EncodedTrunkNode, Ebml.EncodedNode);
 
@@ -380,9 +557,35 @@ Ebml.EncodedTrunkNode.prototype.getByteLength = function() {
 };
 
 /** @override */
-Ebml.EncodedTrunkNode.prototype.writeToBuffer = function(buffer, offset) {
+Ebml.EncodedTrunkNode.prototype.attachReferences = function(nodeMap,
+    firstPass) {
+  if (firstPass) {
+    if (this.uid) {
+      nodeMap[this.uid] = this;
+    }
+  }
   goog.array.forEach(this.children, function(child) {
-    offset = child.writeToBuffer(buffer, offset);
+    child.attachReferences(nodeMap, firstPass);
+  });
+};
+
+/** @override */
+Ebml.EncodedTrunkNode.prototype.calculateOffsets = function(offsetMap, offset,
+    offsetPass) {
+  if (this.uid) {
+    offsetMap[this.uid] = offset;
+  }
+  goog.array.forEach(this.children, function(child) {
+    offset = child.calculateOffsets(offsetMap, offset, offsetPass);
+  });
+  return offset;
+};
+
+/** @override */
+Ebml.EncodedTrunkNode.prototype.writeToBufferInternal = function(buffer,
+    offset) {
+  goog.array.forEach(this.children, function(child) {
+    offset = child.writeToBufferInternal(buffer, offset);
   });
   return offset;
 };

@@ -6,6 +6,7 @@ goog.require('goog.Disposable');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.debug.Logger');
+goog.require('pics3.encoder.Asserter');
 goog.require('pics3.encoder.BaseEncoder');
 goog.require('pics3.encoder.Ebml');
 goog.require('pics3.encoder.Webp');
@@ -24,7 +25,7 @@ var Ebml = pics3.encoder.Ebml;
  * @extends {pics3.encoder.BaseEncoder}
  */
 pics3.encoder.Webm = function() {
-  goog.base(this, 'pics3.parser.Webm');
+  goog.base(this, 'pics3.encoder.Webm');
 
   /** @type {Error} */
   this.error_;
@@ -37,6 +38,9 @@ pics3.encoder.Webm = function() {
 };
 var Webm = pics3.encoder.Webm;
 goog.inherits(Webm, pics3.encoder.BaseEncoder);
+
+/** @type {pics3.encoder.Asserter} */
+Webm.ASSERTER = new pics3.encoder.Asserter('pics3.encoder.Webm');
 
 /** @type {!Array.<number>} */
 Webm.VP8_FRAME_MARKER = [0x9d, 0x01, 0x2a];
@@ -52,7 +56,7 @@ Webm.EbmlTagId = {
   TRACKS: 0x1654ae6b,
   TRACK_ENTRY: 0xae,
   TRACK_NUMBER: 0xd7,
-  TRACK_UID: 0x63c5,
+  TRACK_UID: 0x73c5,
   TRACK_FLAG_LACING: 0x9c,
   TRACK_LANGUAGE: 0x22b59c,
   TRACK_CODEC_ID: 0x86,
@@ -61,9 +65,27 @@ Webm.EbmlTagId = {
   TRACK_VIDEO: 0xe0,
   TRACK_VIDEO_PIXEL_WIDTH: 0xb0,
   TRACK_VIDEO_PIXEL_HEIGHT: 0xba,
+  TRACK_VIDEO_STEREO_MODE: 0x53b8,
   CLUSTER: 0x1f43b675,
   CLUSTER_TIMECODE: 0xe7,
-  CLUSTER_FRAME_BLOCK: 0xa3
+  CLUSTER_FRAME_BLOCK: 0xa3,
+  SEEK_HEAD: 0x114d9b74,
+  SEEK_ENTRY: 0x4dbb,
+  SEEK_ID: 0x53ab,
+  SEEK_POSITION: 0x53ac,
+  CUES: 0x1c53bb6b,
+  CUE_POINT: 0xbb,
+  CUE_TIME: 0xb3,
+  CUE_TRACK_POSITIONS: 0xb7,
+  CUE_TRACK: 0xf7,
+  CUE_CLUSTER_POSITION: 0xf1,
+  CUE_RELATIVE_POSITION: 0xf0
+};
+
+/** @enum {number} */
+Webm.MkvStereoMode = {
+  MONO: 0,
+  SIDE_BY_SIDE: 1
 };
 
 /**
@@ -139,25 +161,18 @@ Webm.prototype.compileInternal = function() {
 /** @return {pics3.encoder.Webm.VideoInfo_} */
 Webm.prototype.validateFrames_ = function() {
   this.assert(this.frames_.length, 'At least one frame expected');
-  var videoInfo = new Webm.VideoInfo_(this.frames_[0].images[0].width,
-      this.frames_[0].images[0].height, this.frames_.length,
-      this.frames_[0].images.length);
+  var videoInfo = new Webm.VideoInfo_(this.frames_[0].image.width,
+      this.frames_[0].image.height, this.frames_[0].isStereoSideBySide,
+      this.frames_.length);
   for (var i = 0; i < this.frames_.length; i++) {
     var frame = this.frames_[i];
-    this.assert(frame.images.length >= 1 && frame.images.length <= 2,
-        'Expected mono or stereo frame');
-    this.assertEquals(videoInfo.width, frame.images[0].width,
+    this.assertEquals(videoInfo.width, frame.image.width,
         'All Frames should have the same width');
-    this.assertEquals(videoInfo.height, frame.images[0].height,
+    this.assertEquals(videoInfo.height, frame.image.height,
         'All Frames should have the same height');
-    this.assertEquals(videoInfo.perFrameImageCount, frame.images.length,
+    this.assertEquals(videoInfo.isStereoSideBySide,
+        frame.isStereoSideBySide,
         'Expected stereoscope consistency across frames');
-    if (frame.images.length == 2) {
-      this.assertEquals(videoInfo.width, frame.images[1].width,
-          'Stereo images should have same width');
-      this.assertEquals(videoInfo.height, frame.images[1].height,
-          'Stereo images should have same height');
-    }
     this.assert(frame.duration > 0, 'Expected a positive frame duration');
     videoInfo.duration += frame.duration;
   }
@@ -168,12 +183,7 @@ Webm.prototype.parseWebpImages_ = function() {
   this.webpFrames_ = [];
   for (var i = 0; i < this.frames_.length; i++) {
     var frame = this.frames_[i];
-    var images = frame.images;
-    frame.parsedImages = goog.array.map(images,
-        /** @param {!pics3.encoder.Webp.Image} image */
-        function(image) {
-          return this.parseWebpImage_(image);
-        }, this);
+    frame.parsedImage = this.parseWebpImage_(frame.image);
   }
 };
 
@@ -236,15 +246,26 @@ Webm.prototype.encodeEbml_ = function(videoInfo) {
 
   var segmentNode = new Ebml.TrunkNode(Webm.EbmlTagId.SEGMENT);
 
+  var seekHeadNode = new Ebml.TrunkNode(Webm.EbmlTagId.SEEK_HEAD);
+  segmentNode.addChild(seekHeadNode);
+
   var segmentInfoNode = new Ebml.TrunkNode(Webm.EbmlTagId.SEGMENT_INFO).
       addIntegerNode(Webm.EbmlTagId.TIMECODE_SCALE, 1e6).  // Milliseconds
       addStringNode(Webm.EbmlTagId.MUXING_APP, "pics3").
       addStringNode(Webm.EbmlTagId.WRITING_APP, "pics3").
       addDoubleNode(Webm.EbmlTagId.DURATION, videoInfo.duration);
   segmentNode.addChild(segmentInfoNode);
+  seekHeadNode.addChild(new Ebml.TrunkNode(Webm.EbmlTagId.SEEK_ENTRY).
+      addIntegerNode(Webm.EbmlTagId.SEEK_ID, Webm.EbmlTagId.SEGMENT_INFO).
+      addBytePositionRefNode(Webm.EbmlTagId.SEEK_POSITION, segmentInfoNode,
+          segmentNode.getFirstChild()));
 
   var tracksNode = new Ebml.TrunkNode(Webm.EbmlTagId.TRACKS);
   segmentNode.addChild(tracksNode);
+  seekHeadNode.addChild(new Ebml.TrunkNode(Webm.EbmlTagId.SEEK_ENTRY).
+      addIntegerNode(Webm.EbmlTagId.SEEK_ID, Webm.EbmlTagId.TRACKS).
+      addBytePositionRefNode(Webm.EbmlTagId.SEEK_POSITION, tracksNode,
+          segmentNode.getFirstChild()));
 
   var trackEntryNode = new Ebml.TrunkNode(Webm.EbmlTagId.TRACK_ENTRY).
       addIntegerNode(Webm.EbmlTagId.TRACK_NUMBER, 1).
@@ -256,20 +277,43 @@ Webm.prototype.encodeEbml_ = function(videoInfo) {
       addIntegerNode(Webm.EbmlTagId.TRACK_TYPE, 1);
   tracksNode.addChild(trackEntryNode);
 
+  var videoWidth = videoInfo.isStereoSideBySide ?
+      Math.floor(videoInfo.width / 2) : videoInfo.width;
   var trackEntryVideoNode = new Ebml.TrunkNode(Webm.EbmlTagId.TRACK_VIDEO).
-      addIntegerNode(Webm.EbmlTagId.TRACK_VIDEO_PIXEL_WIDTH, videoInfo.width).
+      addIntegerNode(Webm.EbmlTagId.TRACK_VIDEO_PIXEL_WIDTH, videoWidth).
       addIntegerNode(Webm.EbmlTagId.TRACK_VIDEO_PIXEL_HEIGHT, videoInfo.height);
+  if (videoInfo.isStereoSideBySide) {
+    trackEntryVideoNode.addIntegerNode(Webm.EbmlTagId.TRACK_VIDEO_STEREO_MODE,
+        Webm.MkvStereoMode.SIDE_BY_SIDE);
+  }
   trackEntryNode.addChild(trackEntryVideoNode);
 
-  var clusters = this.encodeClusters_();
-  segmentNode.addChildren(clusters);
+  var clusterResult = this.encodeClusters_(segmentNode.getFirstChild());
+
+  goog.array.forEach(clusterResult.clusterNodes, function(clusterNode) {
+    segmentNode.addChild(clusterNode);
+    seekHeadNode.addChild(new Ebml.TrunkNode(Webm.EbmlTagId.SEEK_ENTRY).
+        addIntegerNode(Webm.EbmlTagId.SEEK_ID, Webm.EbmlTagId.CLUSTER).
+        addBytePositionRefNode(Webm.EbmlTagId.SEEK_POSITION, clusterNode,
+            segmentNode.getFirstChild()));
+  });
+
+  var cuesNode = new Ebml.TrunkNode(Webm.EbmlTagId.CUES);
+  segmentNode.addChild(cuesNode);
+  seekHeadNode.addChild(new Ebml.TrunkNode(Webm.EbmlTagId.SEEK_ENTRY).
+      addIntegerNode(Webm.EbmlTagId.SEEK_ID, Webm.EbmlTagId.CUES).
+      addBytePositionRefNode(Webm.EbmlTagId.SEEK_POSITION, cuesNode,
+          segmentNode.getFirstChild()));
+  goog.array.forEach(clusterResult.cuePointNodes, function(cuePointNode) {
+    cuesNode.addChild(cuePointNode);
+  });
 
   this.output_ = new Ebml().encode([headerNode, segmentNode]);
 };
 
-/** @return {!Array.<!pics3.encoder.Ebml.Node>} */
-Webm.prototype.encodeClusters_ = function() {
-  var clusters = [];
+/** @return {!pics3.encoder.Webm.EncodeClusterResult_} */
+Webm.prototype.encodeClusters_ = function(segmentFirstChild) {
+  var result = new Webm.EncodeClusterResult_();
   var frameIdx = 0;
   var clusterTimecode = 0;
   while (frameIdx < this.frames_.length) {
@@ -282,15 +326,27 @@ Webm.prototype.encodeClusters_ = function() {
       var frame = this.frames_[frameIdx];
       var timecode = clusterDuration;
       var frameBlockInfo = new Webm.FrameBlockInfo_(timecode);
-      var vp8Data = frame.parsedImages[0].vp8Data;
+      var vp8Data = frame.parsedImage.vp8Data;
       var frameBlock = this.encodeFrameBlock_(frameBlockInfo, vp8Data);
       cluster.addChild(frameBlock);
+
+      var cuePointNode = new Ebml.TrunkNode(Webm.EbmlTagId.CUE_POINT).
+          addIntegerNode(Webm.EbmlTagId.CUE_TIME, timecode);
+      var cueTrackPositionsNode = new Ebml.TrunkNode(
+          Webm.EbmlTagId.CUE_TRACK_POSITIONS).
+          addIntegerNode(Webm.EbmlTagId.CUE_TRACK, 1);
+      cuePointNode.addChild(cueTrackPositionsNode);
+
+      cueTrackPositionsNode. addBytePositionRefNode(
+          Webm.EbmlTagId.CUE_CLUSTER_POSITION, cluster, segmentFirstChild);
+      result.cuePointNodes.push(cuePointNode);
+
       clusterDuration += frame.duration;
       frameIdx++;
     }
-    clusters.push(cluster);
+    result.clusterNodes.push(cluster);
   }
-  return clusters;
+  return result;
 };
 
 /**
@@ -337,18 +393,22 @@ Webm.prototype.disposeInternal = function() {
 };
 
 /**
+ * @param {!pics3.encoder.Webp.Image} image
  * @param {number} duration
  * @constructor
  */
-Webm.Frame = function(duration) {
+Webm.Frame = function(image, duration) {
   /** @type {number} */
   this.duration = duration;
 
-  /** @type {!Array.<!pics3.encoder.Webp.Image>} */
-  this.images = [];
+  /** @type {!pics3.encoder.Webp.Image} */
+  this.image = image;
 
-  /** @type {Array.<!pics3.encoder.Webm.ParsedWebp_>} */
-  this.parsedImages;
+  /** @type {!pics3.encoder.Webm.ParsedWebp_} */
+  this.parsedImage;
+
+  /** @type {boolean} */
+  this.isStereoSideBySide = false;
 };
 
 /**
@@ -356,9 +416,12 @@ Webm.Frame = function(duration) {
  * @param {number} duration
  */
 Webm.Frame.newFrame = function(image, duration) {
-  var frame = new Webm.Frame(duration);
-  frame.images.push(image);
-  return frame;
+  return new Webm.Frame(image, duration);
+};
+
+/** @param {boolean} isStereoSideBySide */
+Webm.Frame.prototype.setStereoSideBySide = function(isStereoSideBySide) {
+  this.isStereoSideBySide = isStereoSideBySide;
 };
 
 /**
@@ -379,15 +442,15 @@ Webm.ParsedWebp_ = function(width, height, vp8Data) {
 };
 
 /** @constructor */
-Webm.VideoInfo_ = function(width, height, frameCount, perFrameImageCount) {
+Webm.VideoInfo_ = function(width, height, isStereoSideBySide, frameCount) {
   /** @type {number} */
   this.width = width;
 
   /** @type {number} */
   this.height = height;
 
-  /** @type {number} */
-  this.perFrameImageCount = perFrameImageCount;
+  /** @type {boolean} */
+  this.isStereoSideBySide = isStereoSideBySide;
 
   /** @type {number} */
   this.duration = 0;
@@ -415,6 +478,15 @@ Webm.FrameBlockInfo_ = function(timecode) {
 
   /** @type {number} */
   this.timecode = Math.round(timecode);
+};
+
+/** @constructor */
+Webm.EncodeClusterResult_ = function() {
+  /** @type {!Array.<!pics3.encoder.Ebml.TrunkNode>} */
+  this.clusterNodes = [];
+
+  /** @type {!Array.<!pics3.encoder.Ebml.TrunkNode>} */
+  this.cuePointNodes = [];
 };
 
 });

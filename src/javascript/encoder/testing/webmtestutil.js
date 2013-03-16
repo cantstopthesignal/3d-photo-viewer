@@ -12,7 +12,7 @@ pics3.encoder.testing.webmTestUtil.renderClock = function(canvasCtx, time) {
   var now = new Date();
   now.setTime(time);
   canvasCtx.save();
-  canvasCtx.fillStyle = 'white'
+  canvasCtx.fillStyle = 'white';
   canvasCtx.fillRect(0, 0, 150, 150); // Transparency not supported.
   canvasCtx.translate(75, 75);
   canvasCtx.scale(0.4, 0.4);
@@ -101,6 +101,51 @@ pics3.encoder.testing.webmTestUtil.renderClock = function(canvasCtx, time) {
   canvasCtx.strokeStyle = '#325FA2';
   canvasCtx.arc(0, 0, 142, 0, Math.PI * 2, true);
   canvasCtx.stroke();
+
+  canvasCtx.restore();
+};
+
+/**
+ * Draw a 150x150 sized 3d scene sample
+ * @param {Object} canvasCtx
+ * @param {number} frameIndex
+ * @param {boolean} isLeftImage
+ */
+pics3.encoder.testing.webmTestUtil.render3dSample = function(canvasCtx,
+    frameIndex, isLeftImage) {
+  canvasCtx.save();
+  canvasCtx.fillStyle = 'white';
+  canvasCtx.fillRect(0, 0, 150, 150); // Transparency not supported.
+  canvasCtx.strokeStyle = "black";
+  canvasCtx.lineCap = "round";
+
+  // Checkerboard
+  canvasCtx.save();
+  canvasCtx.fillStyle = '#bbb';
+  for (var x = 0; x < 10; x++) {
+    for (var y = 0; y < 10; y++) {
+      if ((x + y) % 2 == 0) {
+        continue;
+      }
+      canvasCtx.fillRect(x * 15, y * 15, 15, 15);
+    }
+  }
+  canvasCtx.restore();
+
+  // Triangle
+  canvasCtx.save();
+  canvasCtx.fillStyle = '#a00';
+  var xOffset = Math.round(5 * (Math.sin((frameIndex - 5) /
+      10 * Math.PI) + 1)) * (isLeftImage ? 1 : -1);
+  var sizeOffset = Math.round(Math.abs(xOffset) / 2);
+  canvasCtx.translate(75 + xOffset, 75);
+  canvasCtx.beginPath();
+  canvasCtx.moveTo(0, -45 - sizeOffset);
+  canvasCtx.lineTo(45 + sizeOffset, 45 + sizeOffset);
+  canvasCtx.lineTo(-45 - sizeOffset, 45 + sizeOffset);
+  canvasCtx.fill();
+
+  canvasCtx.restore();
 
   canvasCtx.restore();
 };
