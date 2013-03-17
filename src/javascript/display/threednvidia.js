@@ -52,11 +52,10 @@ pics3.display.ThreeDNvidia.prototype.createDom = function() {
   this.eventHandler.listen(this.videoEl_, pics3.display.ThreeDNvidia.
       VIDEO_LOADED_DATA_EVENT_TYPE, this.handleVideoLoaded_);
 
-  var dataUrls = this.photo.getImageDataUrls();
-  this.webp_.encodeFromDataUrls(dataUrls).addCallback(function() {
+  this.webp_.encode(this.photo).addCallback(function() {
     var image = goog.asserts.assertObject(this.webp_.getImage());
     var frame = pics3.encoder.Webm.Frame.newFrame(image, 1000);
-    if (dataUrls.length == 2) {
+    if (this.photo.getImageCount() == 2) {
       frame.setStereoSideBySide(true);
     }
     this.webm_.addFrame(frame);
