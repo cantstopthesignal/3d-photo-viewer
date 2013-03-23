@@ -14,6 +14,7 @@ goog.require('goog.testing.jsunit');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.encoder.Webm');
 goog.require('pics3.encoder.Webp');
+goog.require('pics3.encoder.testing.WebpTestFactory');
 goog.require('pics3.encoder.testing.webmTestUtil');
 goog.require('pics3.encoder.util');
 
@@ -37,8 +38,15 @@ pics3.encoder.WebmDemo = function() {
 };
 goog.inherits(pics3.encoder.WebmDemo, goog.events.EventTarget);
 
+/** @type {!pics3.encoder.Webp.Factory} */
+pics3.encoder.WebmDemo.WEBP_FACTORY_ =
+    new pics3.encoder.testing.WebpTestFactory();
+
 /** @type {Element} */
 pics3.encoder.WebmDemo.prototype.stereoCheckboxEl_;
+
+/** @type {Element} */
+pics3.encoder.WebmDemo.prototype.nativeWebpCheckboxEl_;
 
 /** @type {Element} */
 pics3.encoder.WebmDemo.prototype.canvasEl_;
@@ -63,6 +71,7 @@ pics3.encoder.WebmDemo.prototype.threeD_ = false;
 
 pics3.encoder.WebmDemo.prototype.start = function() {
   this.stereoCheckboxEl_ = document.getElementById('stereo-checkbox');
+  this.nativeWebpCheckboxEl_ = document.getElementById('native-webp-checkbox');
   this.canvasEl_ = document.getElementById('canvas');
   this.canvasCtx_ = this.canvasEl_.getContext('2d');
   this.progressEl_ = document.getElementById('progress');
@@ -71,13 +80,16 @@ pics3.encoder.WebmDemo.prototype.start = function() {
   this.downloadEl_ = document.getElementById('download');
   goog.style.showElement(this.downloadEl_, true);
 
-  goog.events.listen(this.stereoCheckboxEl_, goog.events.EventType.CHANGE,
-      this.handleStereoCheckboxClick_, false, this);
+  this.eventHandler_.
+      listen(this.stereoCheckboxEl_, goog.events.EventType.CHANGE,
+          this.handleInputOptionsChanged_).
+      listen(this.nativeWebpCheckboxEl_, goog.events.EventType.CHANGE,
+          this.handleInputOptionsChanged_);
 
   this.startRenderVideo_();
 };
 
-pics3.encoder.WebmDemo.prototype.handleStereoCheckboxClick_ = function() {
+pics3.encoder.WebmDemo.prototype.handleInputOptionsChanged_ = function() {
   this.startRenderVideo_();
 };
 
@@ -97,7 +109,7 @@ pics3.encoder.WebmDemo.prototype.startRenderVideo_ = function() {
 
   this.progressEl_.value = 0;
   this.progressEl_.style.visibility = 'visible';
-  this.videoEl_.src = null;
+  goog.style.showElement(this.videoEl_, false);
   this.downloadEl_.href = null;
   this.statusEl_.innerHTML = '';
   this.stereoCheckboxEl_.disabled = true;
@@ -135,9 +147,10 @@ pics3.encoder.WebmDemo.prototype.nextAnimation_ = function() {
         this.canvasEl_.toDataURL(pics3.PhotoMimeType.JPG)));
   }
 
-  var webp = new pics3.encoder.Webp();
-  webp.encodeFromDataUrls(dataUrls).addCallback(function() {
-    var frame = pics3.encoder.Webm.Frame.newFrame(webp.getImage(), 50);
+  var webpEncoder = pics3.encoder.WebmDemo.WEBP_FACTORY_.createWebp();
+  webpEncoder.setEnableNativeEncoder(this.nativeWebpCheckboxEl_.checked);
+  webpEncoder.encodeFromDataUrls(dataUrls).addCallback(function() {
+    var frame = pics3.encoder.Webm.Frame.newFrame(webpEncoder.getImage(), 50);
     if (dataUrls.length == 2) {
       frame.setStereoSideBySide(true);
     }
@@ -154,6 +167,7 @@ pics3.encoder.WebmDemo.prototype.finalizeVideo_ = function() {
 
   var url = pics3.encoder.util.createObjectUrl(output);
   this.videoEl_.src = url;
+  goog.style.showElement(this.videoEl_, true);
 
   this.downloadEl_.href = url;
   goog.style.showElement(this.downloadEl_, true);

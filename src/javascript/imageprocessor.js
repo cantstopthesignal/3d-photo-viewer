@@ -9,6 +9,7 @@ goog.require('goog.events.EventTarget');
 goog.require('pics3.parser.ImageResult');
 goog.require('pics3.worker.Client');
 goog.require('pics3.Service');
+goog.require('webp.Encoder');
 
 
 /**
@@ -64,4 +65,45 @@ pics3.ImageProcessor.prototype.parseImageAsync = function(mimeType, name,
       addCallback(function(response) {
         return pics3.parser.ImageResult.fromObject(response);
       }, this);
+};
+
+/** @return {!pics3.encoder.Webp.AsyncEncoder} */
+pics3.ImageProcessor.prototype.getWebpAsyncEncoder = function() {
+  return {
+    encodeAsync: goog.bind(this.encodeWebpAsync, this)
+  };
+};
+
+/**
+ * Encode an image to a webp version asynchronously using a pure javascript
+ * encoder.
+ * @param {Element} canvasEl Canvas element holding the image data.
+ * @param {number} quality
+ * @return {!goog.async.Deferred} producing {pics3.encoder.Webp.Image}
+ */
+pics3.ImageProcessor.prototype.encodeWebpAsync = function(canvasEl, quality) {
+  var width = parseInt(canvasEl.getAttribute('width'));
+  var height = parseInt(canvasEl.getAttribute('height'));
+  var canvasCtx = canvasEl.getContext('2d');
+  var rgbaBuffer = new Uint8Array(canvasCtx.getImageData(
+      0, 0, width, height).data);
+  var stride = 4 * width;
+  var request = {
+    'width': width,
+    'height': height,
+    'stride': 4 * width,
+    'rgbaBuffer': rgbaBuffer,
+    'quality': quality
+  };
+
+  var webpEncoder = new webp.Encoder();
+  webpEncoder.setQuality(quality);
+  if (!webpEncoder.encodeFromRgba(rgbaBuffer, width, height, stride)) {
+    return goog.async.Deferred.fail(Error('Error encoding Webp'));
+  }
+
+  var dataUrl = pics3.parser.DataUrl.fromUint8Array(
+      pics3.PhotoMimeType.WEBP, webpEncoder.getOutput());
+  var webpImage = new pics3.encoder.Webp.Image(dataUrl, width, height);
+  return goog.async.Deferred.succeed(webpImage);
 };

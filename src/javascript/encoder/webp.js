@@ -21,11 +21,15 @@ goog.require('pics3.parser.util');
 goog.scope(function() {
 
 /**
+ * @param {!pics3.encoder.Webp.AsyncEncoder} fallbackEncoder
  * @constructor
  * @extends {pics3.encoder.BaseEncoder}
  */
-pics3.encoder.Webp = function() {
+pics3.encoder.Webp = function(fallbackEncoder) {
   goog.base(this, 'pics3.parser.Webp');
+
+  /** @type {pics3.encoder.Webp.AsyncEncoder} */
+  this.fallbackEncoder_ = fallbackEncoder;
 
   /** @type {Error} */
   this.error_;
@@ -40,11 +44,26 @@ pics3.encoder.Webp = function() {
 var Webp = pics3.encoder.Webp;
 goog.inherits(Webp, pics3.encoder.BaseEncoder);
 
+/** @type {number} */
+Webp.NATIVE_MAX_IMAGE_WIDTH_ = 1920;
+
+/** @type {number} */
+Webp.NATIVE_MAX_IMAGE_HEIGHT_ = 1080;
+
+/** @type {number} */
+Webp.FALLBACK_MAX_IMAGE_WIDTH_ = 800;
+
+/** @type {number} */
+Webp.FALLBACK_MAX_IMAGE_HEIGHT_ = 600;
+
 /** @type {!goog.debug.Logger} */
 Webp.prototype.logger_ = goog.debug.Logger.getLogger('pics3.encoder.Webp');
 
 /** @type {boolean} */
 Webp.prototype.supportTransparency_ = false;
+
+/** @type {boolean} */
+Webp.prototype.enableNativeEncoder_ = true;
 
 /** @type {number} */
 Webp.prototype.maxImageWidth_ = 1920;
@@ -55,9 +74,32 @@ Webp.prototype.maxImageHeight_ = 1080;
 /** @type {number} */
 Webp.prototype.quality_ = 0.8;
 
+/** @type {boolean} */
+Webp.prototype.browserHasWebpSupport_;
+
+Webp.prototype.updateMaxImageSize_ = function() {
+  if (!goog.isDefAndNotNull(this.maxImageWidth_)) {
+    this.maxImageWidth_ = Webp.NATIVE_MAX_IMAGE_WIDTH_;
+  }
+  if (!goog.isDefAndNotNull(this.maxImageHeight_)) {
+    this.maxImageHeight_ = Webp.NATIVE_MAX_IMAGE_HEIGHT_;
+  }
+  if (!this.browserHasWebpSupport_ || !this.enableNativeEncoder_) {
+    this.maxImageWidth_ = Math.min(this.maxImageWidth_,
+        Webp.FALLBACK_MAX_IMAGE_WIDTH_);
+    this.maxImageHeight_ = Math.min(this.maxImageHeight_,
+        Webp.FALLBACK_MAX_IMAGE_HEIGHT_);
+  }
+};
+
 /** @param {boolean} supportTransparency */
 Webp.prototype.setSupportTransparency = function(supportTransparency) {
   this.supportTransparency_ = supportTransparency;
+};
+
+/** @param {boolean} enable */
+Webp.prototype.setEnableNativeEncoder = function(enable) {
+  this.enableNativeEncoder_ = enable;
 };
 
 /** @return {pics3.encoder.Webp.Image} */
@@ -84,15 +126,19 @@ Webp.prototype.encode = function(photo) {
 Webp.prototype.encodeFromDataUrls = function(dataUrls, opt_parallaxXOffset) {
   var parallaxXOffset = opt_parallaxXOffset || 0;
   var startTime = goog.now();
-  return this.runSafeDeferred(goog.bind(this.loadImages_, this, dataUrls)).
+  return this.runSafeDeferred(goog.bind(this.testWebpSupport_, this)).
+      addCallback(this.wrapSafe(function() {
+        return this.loadImages_(dataUrls);
+      }), this).
       addCallback(this.wrapSafe(function(images) {
+        this.updateMaxImageSize_();
         var canvasEl;
         if (images.length == 2) {
           canvasEl = this.drawCanvasFor3dSideBySide_(images, parallaxXOffset);
         } else {
           canvasEl = this.drawCanvasFor2d_(images[0]);
         }
-        this.encodeFromCanvas_(canvasEl);
+        return this.encodeFromCanvas_(canvasEl);
       }), this).
       addCallback(function() {
         this.logger_.fine('Encoded in ' + (goog.now() - startTime) + 'ms');
@@ -106,7 +152,7 @@ Webp.prototype.encodeFromDataUrls = function(dataUrls, opt_parallaxXOffset) {
 Webp.prototype.wrapSafe = function(fn) {
   return goog.bind(function() {
     try {
-      fn.apply(this, arguments);
+      return fn.apply(this, arguments);
     } catch (e) {
       if (!pics3.encoder.encodeError.is(e)) {
         throw e;
@@ -135,6 +181,28 @@ Webp.prototype.runSafeDeferred = function(fn) {
 /** @return {Error} */
 Webp.prototype.getError = function() {
   return this.error_;
+};
+
+/**
+ * @return {!goog.async.Deferred} producing {boolean}
+ */
+Webp.prototype.testWebpSupport_ = function() {
+  if (goog.isDefAndNotNull(this.browserHasWebpSupport_)) {
+    return goog.async.Deferred.succeed(this.browserHasWebpSupport_);
+  }
+  var deferred = new goog.async.Deferred();
+  var image = new Image();
+  function handleImageDone() {
+    this.browserHasWebpSupport_ = image.naturalWidth > 0 &&
+        image.naturalHeight > 0;
+    deferred.callback(this.browserHasWebpSupport_);
+  }
+  this.eventHandler_.listen(image,
+      [goog.events.EventType.LOAD, goog.events.EventType.ERROR],
+      this.wrapSafe(goog.bind(handleImageDone, this)));
+  image.src = 'data:image/webp;base64,UklGRkgAAABXRUJQVlA4IDwAAADyAgCdASoBAAE' +
+      'ALiUSiUSCAAJEtIBOl0A/AABkIN9wAAD+/m0lj/7kA9kA9kA/hP//BnfgzvwZ3/gggAA=';
+  return deferred;
 };
 
 /**
@@ -240,15 +308,26 @@ Webp.prototype.createAndPrepareCanvas_ = function(width, height) {
   return canvasEl;
 };
 
-/** @param {Element} canvasEl */
+/**
+ * @param {Element} canvasEl
+ * @return {!goog.async.Deferred}
+ */
 Webp.prototype.encodeFromCanvas_ = function(canvasEl) {
-  var width = parseInt(canvasEl.getAttribute('width'), 10);
-  var height = parseInt(canvasEl.getAttribute('height'), 10);
-  this.assert(goog.math.isFiniteNumber(width), 'Expected a valid width');
-  this.assert(goog.math.isFiniteNumber(height), 'Expected a valid height');
-  var dataUrl = new pics3.parser.DataUrl(
-      canvasEl.toDataURL(pics3.PhotoMimeType.WEBP, this.quality_));
-  this.image_ = new pics3.encoder.Webp.Image(dataUrl, width, height);
+  if (this.enableNativeEncoder_ && this.browserHasWebpSupport_) {
+    var width = parseInt(canvasEl.getAttribute('width'), 10);
+    var height = parseInt(canvasEl.getAttribute('height'), 10);
+    this.assert(goog.math.isFiniteNumber(width), 'Expected a valid width');
+    this.assert(goog.math.isFiniteNumber(height), 'Expected a valid height');
+    var dataUrl = new pics3.parser.DataUrl(
+        canvasEl.toDataURL(pics3.PhotoMimeType.WEBP, this.quality_));
+    this.image_ = new pics3.encoder.Webp.Image(dataUrl, width, height);
+    return goog.async.Deferred.succeed();
+  } else {
+    this.fallbackEncoder_.encodeAsync(canvasEl, this.quality_ * 100).
+        addCallback(this.wrapSafe(function(image) {
+          this.image_ = image;
+        }), this);
+  }
 };
 
 /** @override */
@@ -256,6 +335,23 @@ Webp.prototype.disposeInternal = function() {
   goog.base(this, 'disposeInternal');
   delete this.image_;
 };
+
+/** @interface */
+Webp.Factory = function() {};
+
+/** @return {!pics3.encoder.Webp} */
+Webp.Factory.prototype.createWebp = goog.abstractMethod;
+
+/** @interface */
+Webp.AsyncEncoder = function() {};
+
+/**
+ * Encode an image to a webp version asynchronously.
+ * @param {Element} canvasEl Canvas element holding the image data.
+ * @param {number} quality
+ * @return {!goog.async.Deferred} producing {pics3.encoder.Webp.Image}
+ */
+Webp.AsyncEncoder.prototype.encodeAsync = goog.abstractMethod;
 
 /**
  * @param {pics3.parser.DataUrl} dataUrl

@@ -16,11 +16,15 @@ goog.require('pics3.Spinner');
 
 
 /**
+ * @param {!pics3.AppContext} appContext
  * @constructor
  * @extends {pics3.Component}
  */
-pics3.AlbumView = function() {
+pics3.AlbumView = function(appContext) {
   goog.base(this);
+
+  /** @type {!pics3.AppContext} */
+  this.appContext_ = appContext;
 
   /** @type {!Object.<number,!pics3.PhotoView>} */
   this.photoViewsMap_ = {};
@@ -267,7 +271,7 @@ pics3.AlbumView.prototype.getPhotoViewByIndex_ = function(index) {
   var photo = this.album_.get(index);
   var photoView = this.photoViewsMap_[photo.getUniqueId()];
   if (!photoView) {
-    photoView = new pics3.PhotoView(photo);
+    photoView = new pics3.PhotoView(this.appContext_, photo);
     this.photoViewsMap_[photo.getUniqueId()] = photoView;
   }
   return photoView;

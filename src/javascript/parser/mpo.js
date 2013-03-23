@@ -6,6 +6,7 @@ goog.require('goog.Disposable');
 goog.require('goog.array');
 goog.require('goog.asserts');
 goog.require('goog.debug.Logger');
+goog.require('pics3.PhotoMimeType');
 goog.require('pics3.parser.BaseParser');
 goog.require('pics3.parser.DataReader');
 goog.require('pics3.parser.DataUrl');
@@ -191,7 +192,7 @@ Mpo.Image.prototype.setByteLength = function(byteLength) {
 Mpo.Image.prototype.toDataUrl = function() {
   if (!this.dataUrl_) {
     this.dataUrl_ = pics3.parser.DataUrl.fromUint8Array(
-        'image/jpeg', this.reader_.getUint8Array());
+        pics3.PhotoMimeType.JPG, this.reader_.getUint8Array());
   }
   return this.dataUrl_;
 };

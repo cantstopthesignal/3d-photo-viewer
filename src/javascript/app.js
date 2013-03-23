@@ -125,7 +125,7 @@ pics3.App.prototype.start = function() {
   this.registerDisposable(this.aboutDialog_);
   this.aboutDialog_.renderButton(this.appBar_.el);
 
-  this.albumView_ = new pics3.AlbumView();
+  this.albumView_ = new pics3.AlbumView(this.appContext_);
   this.registerDisposable(this.albumView_);
   this.albumView_.render(this.appEl_);
 

@@ -22,7 +22,8 @@ goog.inherits(pics3.AllTests, goog.events.EventTarget);
 pics3.AllTests.TESTS = [
     'encoder/webmdemo.html',
     'encoder/webmtest.html',
-    'parser/mpotest.html'
+    'parser/mpotest.html',
+    'webp/encodertest.html'
     ];
 
 /** @type {goog.testing.MultiTestRunner} */

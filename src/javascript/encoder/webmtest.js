@@ -10,6 +10,7 @@ goog.require('goog.testing.jsunit');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.encoder.Webm');
 goog.require('pics3.encoder.Webp');
+goog.require('pics3.encoder.testing.WebpTestFactory');
 goog.require('pics3.encoder.testing.webmTestUtil');
 goog.require('pics3.encoder.util');
 goog.require('pics3.parser.base64');
@@ -27,6 +28,10 @@ pics3.encoder.WebmTest.install = function() {
 
 /** @type {number} */
 pics3.encoder.WebmTest.STEP_TIMEOUT_ = 10000;
+
+/** @type {!pics3.encoder.Webp.Factory} */
+pics3.encoder.WebmTest.WEBP_FACTORY_ =
+    new pics3.encoder.testing.WebpTestFactory();
 
 function setUp() {
   webm = new pics3.encoder.Webm();
@@ -143,9 +148,9 @@ function doTestEncodeVideo(frameGenerator, goldenOutputBase64,
       finalizeVideo(d);
       return;
     }
-    var webp = new pics3.encoder.Webp();
-    webp.encodeFromDataUrls(frameInfo.dataUrls).addCallback(function() {
-      var frame = pics3.encoder.Webm.Frame.newFrame(webp.getImage(),
+    var webpEncoder = pics3.encoder.WebmTest.WEBP_FACTORY_.createWebp();
+    webpEncoder.encodeFromDataUrls(frameInfo.dataUrls).addCallback(function() {
+      var frame = pics3.encoder.Webm.Frame.newFrame(webpEncoder.getImage(),
           frameInfo.duration);
       if (frameInfo.dataUrls.length == 2) {
         frame.setStereoSideBySide(true);

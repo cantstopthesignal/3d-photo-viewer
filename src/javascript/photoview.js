@@ -21,12 +21,16 @@ goog.require('pics3.display.type');
 
 
 /**
+ * @param {!pics3.AppContext} appContext
  * @param {!pics3.Photo} photo
  * @constructor
  * @extends {pics3.Component}
  */
-pics3.PhotoView = function(photo) {
+pics3.PhotoView = function(appContext, photo) {
   goog.base(this);
+
+  /** @type {!pics3.AppContext} */
+  this.appContext_ = appContext;
 
   /** @type {!pics3.Photo} */
   this.photo_ = photo;
@@ -123,7 +127,8 @@ pics3.PhotoView.prototype.createDisplay_ = function() {
         this.display_ = new pics3.display.ThreeDSingleImage(false, this.photo_);
         break;
       case pics3.display.Type.THREE_D_NVIDIA:
-        this.display_ = new pics3.display.ThreeDNvidia(this.photo_);
+        this.display_ = new pics3.display.ThreeDNvidia(this.appContext_,
+            this.photo_);
         break;
       case pics3.display.Type.THREE_D_WOBBLE:
         this.display_ = new pics3.display.ThreeDWobble(this.photo_);

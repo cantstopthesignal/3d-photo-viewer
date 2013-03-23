@@ -17,18 +17,21 @@ goog.require('pics3.encoder.util');
 
 
 /**
+ * @param {!pics3.AppContext} appContext
  * @param {!pics3.Photo} photo
  * @constructor
  * @extends {pics3.display.Base}
  */
-pics3.display.ThreeDNvidia = function(photo) {
+pics3.display.ThreeDNvidia = function(appContext, photo) {
   goog.base(this, pics3.display.Type.THREE_D_NVIDIA, photo);
   goog.asserts.assert(photo.getState() == pics3.Photo.State.LOADED);
   goog.asserts.assert(photo.getMimeType() == pics3.PhotoMimeType.MPO);
   goog.asserts.assert(photo.getImageCount() == 2);
 
+  var imageProcessor = pics3.ImageProcessor.get(appContext);
+
   /** @type {!pics3.encoder.Webp} */
-  this.webp_ = new pics3.encoder.Webp();
+  this.webp_ = new pics3.encoder.Webp(imageProcessor.getWebpAsyncEncoder());
   this.registerDisposable(this.webp_);
 
   /** @type {!pics3.encoder.Webm} */

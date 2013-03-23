@@ -9,7 +9,6 @@ goog.require('goog.debug.Logger');
 goog.require('pics3.encoder.Asserter');
 goog.require('pics3.encoder.BaseEncoder');
 goog.require('pics3.encoder.Ebml');
-goog.require('pics3.encoder.Webp');
 goog.require('pics3.parser.DataReader');
 goog.require('pics3.parser.DataUrl');
 goog.require('pics3.parser.util');
