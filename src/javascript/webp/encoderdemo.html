@@ -1,0 +1,55 @@
+<!-- Copyright cantstopthesignals@gmail.com -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>webp.EncoderDemo</title>
+  <script src="../../../lib/closure-library/closure/goog/base.js"></script>
+  <script src="../../../src/javascript/deps.js"></script>
+  <script>
+    goog.require('goog.events');
+    goog.require('goog.events.EventType');
+    goog.require('webp.EncoderDemo');
+  </script>
+  <script>
+    goog.events.listen(window, goog.events.EventType.LOAD, function() {
+      new webp.EncoderDemo().start();
+    });
+  </script>
+  <link rel="stylesheet" type="text/css" href="encoderdemo.css" />
+</head>
+<body>
+  <div class="controller">
+    <p>
+      Test image: &nbsp;
+      <input id="test-image1-radio" name="test-image-picker" type="radio"
+          checked/>
+      <label for="test-image1-radio">Test Image 1</label> &nbsp;
+      <input id="test-photo1-radio" name="test-image-picker" type="radio" />
+      <label for="test-photo1-radio">Test Photo 1</label>
+    </p>
+    <p>
+      Quality: <input id="quality-input" type="text" value="90" />
+    </p>
+    <p id="image-size-controls">
+      Width: <input id="width-input" type="text" value="64" /> &nbsp;
+      Height: <input id="height-input" type="text" value="48" />
+    </p>
+  </div>
+  <div class="result">
+    <div>Source image</div>
+    <div id="source-image" class="image-container"></div>
+  </div>
+  <div class="result">
+    <div>Encoded webp image</div>
+    <div id="encoded-webp-image" class="image-container"></div>
+  </div>
+  <div class="result">
+    <div>Native webp image</div>
+    <div id="native-webp-image" class="image-container"></div>
+  </div>
+  <div class="result">
+    <div>Native png image</div>
+    <div id="native-png-image" class="image-container"></div>
+  </div>
+</body>
+</html>

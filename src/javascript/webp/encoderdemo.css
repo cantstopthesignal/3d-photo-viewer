@@ -1,0 +1,26 @@
+/* Copyright cantstopthesignals@gmail.com */
+body {
+  font-family: Arial;
+  font-size: 13px;
+}
+
+.result {
+  display: inline-block;
+  padding: 10px;
+  min-width: 200px;
+  font-size: 18px;
+  border-left: 1px solid #ccc;
+  text-align: center;
+  vertical-align: top;
+  min-height: 200px;
+  margin-bottom: 10px;
+}
+
+.result:first-child {
+  border-left-width: 0;
+}
+
+.image-container {
+  display: inline-block;
+  margin-top: 10px;
+}
