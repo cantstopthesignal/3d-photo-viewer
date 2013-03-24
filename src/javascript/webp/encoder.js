@@ -92,6 +92,8 @@ Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
   }
   config.quality = this.quality_;
 
+  debug.log("====================== START ======================");
+
   pic.width = width;
   pic.height = height;
   if (!WebPPictureImportRGBA(pic, rgbaBuffer, stride)) {
@@ -112,6 +114,8 @@ Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
   if (!WebPEncode(config, pic)) {
     throw Error('WebPEncode error');
   }
+
+  debug.log("====================== DONE ======================");
 
   var output = new Uint8Array(outputLength);
   var pos = 0;
@@ -136,15 +140,11 @@ WebPEncode = function(config, pic) {
     return false;
   }
 
-  debug.log("====================== START ======================");
-
   var enc = InitVP8Encoder(config, pic);
   var ok = VP8EncAnalyze(enc) &&
       VP8StatLoop(enc) &&
       VP8EncLoop(enc) &&
       VP8EncWrite(enc);
-
-  debug.log("====================== DONE ======================");
 
   return ok;
 };

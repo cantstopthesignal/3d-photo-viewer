@@ -248,6 +248,14 @@ ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, picture) {
     }
   }
 
+  if (debug.isEnabled()) {
+    debug.log("ImportYUVAFromRGBA width", picture.width,
+              "height", picture.height,
+              "y", debug.checksumArray("y", 0, picture.y),
+              "u", debug.checksumArray("u", 0, picture.u),
+              "v", debug.checksumArray("v", 0, picture.v))
+  }
+
   return 1;
 };
 
