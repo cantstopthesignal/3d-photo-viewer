@@ -744,14 +744,14 @@ VP8EncQuantizeBlock = function(inBuf, outBuf, n, mtx) {
     var j = kZigzag[n];
     var sign = (inBuf[j] < 0);
     var coeff = (sign ? -inBuf[j] : inBuf[j]) + mtx.sharpen[j];
-    if (coeff > 2047) {
-      coeff = 2047;
-    }
     if (coeff > mtx.zthresh[j]) {
       var Q = mtx.q[j];
       var iQ = mtx.iq[j];
       var B = mtx.bias[j];
       outBuf[n] = QUANTDIV(coeff, iQ, B);
+      if (outBuf[n] > MAX_LEVEL) {
+        outBuf[n] = MAX_LEVEL;
+      }
       if (sign) {
         outBuf[n] = -outBuf[n];
       }

@@ -27,6 +27,7 @@ var NUM_MB_SEGMENTS = 4;
 var MAX_NUM_PARTITIONS = 8;
 var MAX_LF_LEVELS = 64;      // Maximum loop filter level
 var MAX_VARIABLE_LEVEL = 67;  // last (inclusive) level with variable cost
+var MAX_LEVEL = 2048;  // max level (note: max codable is 2047 + 67)
 
 var BPS = 16;   // this is the common stride
 var Y_SIZE = BPS * 16;
