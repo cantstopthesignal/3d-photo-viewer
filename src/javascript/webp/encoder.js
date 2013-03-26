@@ -6,24 +6,28 @@
  */
 
 goog.provide('webp.Encoder');
+goog.provide('webp.encoder');
 
 goog.require('goog.asserts');
 goog.require('goog.debug.Logger');
-goog.require('webp.Config');
 goog.require('webp.PhotoMimeType');
-goog.require('webp.Picture');
-goog.require('webp.vp8.Analysis');
-goog.require('webp.vp8.BitWriter');
-goog.require('webp.vp8.Constants');
-goog.require('webp.vp8.Encode');
-goog.require('webp.vp8.Frame');
-goog.require('webp.vp8.Syntax');
-goog.require('webp.vp8.Tree');
+goog.require('webp.config');
+goog.require('webp.picture');
+goog.require('webp.vp8.analysis');
+goog.require('webp.vp8.bitwriter');
+goog.require('webp.vp8.constants');
 goog.require('webp.vp8.debug');
+goog.require('webp.vp8.encode');
+goog.require('webp.vp8.frame');
+goog.require('webp.vp8.syntax');
+goog.require('webp.vp8.tree');
+
 
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
 var debug = webp.vp8.debug;
+var vp8 = webp.vp8;
 
 /**
  * @constructor
@@ -35,7 +39,7 @@ webp.Encoder = function() {
   /** @type {number} */
   this.quality_ = 90;
 };
-Encoder = webp.Encoder;
+var Encoder = webp.Encoder;
 
 /** @type {!goog.debug.Logger} */
 Encoder.prototype.logger_ = goog.debug.Logger.getLogger('webp.Encoder');
@@ -63,8 +67,8 @@ Encoder.prototype.getOutputAsBlob = function() {
  * @return {boolean}
  */
 Encoder.prototype.encode = function(canvasEl) {
-  var width = parseInt(canvasEl.getAttribute('width'));
-  var height = parseInt(canvasEl.getAttribute('height'));
+  var width = parseInt(canvasEl.getAttribute('width'), 10);
+  var height = parseInt(canvasEl.getAttribute('height'), 10);
   var canvasCtx = canvasEl.getContext('2d');
   var rgbaBuffer = new Uint8Array(canvasCtx.getImageData(
       0, 0, width, height).data);
@@ -82,12 +86,12 @@ Encoder.prototype.encode = function(canvasEl) {
 Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
   var startTime = goog.now();
 
-  var pic = new WebPPicture();
-  if (!WebPPictureInit(pic)) {
+  var pic = new webp.picture.WebPPicture();
+  if (!webp.picture.WebPPictureInit(pic)) {
     throw Error('WebPPictureInit error');
   }
-  var config = new WebPConfig();
-  if (!WebPConfigInit(config)) {
+  var config = new webp.config.WebPConfig();
+  if (!webp.config.WebPConfigInit(config)) {
     throw Error('WebPConfigInit error');
   }
   config.quality = this.quality_;
@@ -96,7 +100,7 @@ Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
 
   pic.width = width;
   pic.height = height;
-  if (!WebPPictureImportRGBA(pic, rgbaBuffer, stride)) {
+  if (!webp.picture.WebPPictureImportRGBA(pic, rgbaBuffer, stride)) {
     throw Error('WebPPictureImportRGBA error');
   }
 
@@ -111,7 +115,7 @@ Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
     }
   };
 
-  if (!WebPEncode(config, pic)) {
+  if (!webp.encoder.WebPEncode(config, pic)) {
     throw Error('WebPEncode error');
   }
 
@@ -131,20 +135,20 @@ Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
 };
 
 /**
- * @param {WebPConfig} config
- * @param {WebPPicture} pic
+ * @param {webp.config.WebPConfig} config
+ * @param {webp.picture.WebPPicture} pic
  * @return {boolean}
  */
-WebPEncode = function(config, pic) {
+webp.encoder.WebPEncode = function(config, pic) {
   if (!pic) {
     return false;
   }
 
-  var enc = InitVP8Encoder(config, pic);
-  var ok = VP8EncAnalyze(enc) &&
-      VP8StatLoop(enc) &&
-      VP8EncLoop(enc) &&
-      VP8EncWrite(enc);
+  var enc = vp8.encode.InitVP8Encoder(config, pic);
+  var ok = vp8.analysis.VP8EncAnalyze(enc) &&
+      vp8.frame.VP8StatLoop(enc) &&
+      vp8.frame.VP8EncLoop(enc) &&
+      vp8.syntax.VP8EncWrite(enc);
 
   return ok;
 };

@@ -5,9 +5,15 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.vp8.Cost');
+goog.provide('webp.vp8.cost');
+
+goog.require('webp.vp8.constants');
+
 
 goog.scope(function() {
+
+var constants = webp.vp8.constants;
+var vp8 = webp.vp8;
 
 // Cost of coding one event with probability 'proba'.
 /**
@@ -15,15 +21,15 @@ goog.scope(function() {
  * @param {number} proba
  * @return {number}
  */
-VP8BitCost = function(bit, proba) {
-  return !bit ? VP8EntropyCost[proba] : VP8EntropyCost[255 - proba];
+vp8.cost.VP8BitCost = function(bit, proba) {
+  return !bit ? vp8.cost.VP8EntropyCost[proba] : vp8.cost.VP8EntropyCost[255 - proba];
 };
 
 //------------------------------------------------------------------------------
 // Boolean-cost cost table
 
 /** @type {Uint16Array} */
-var VP8EntropyCost = new Uint16Array([
+vp8.cost.VP8EntropyCost = new Uint16Array([
   1792, 1792, 1792, 1536, 1536, 1408, 1366, 1280, 1280, 1216,
   1178, 1152, 1110, 1076, 1061, 1024, 1024,  992,  968,  951,
    939,  911,  896,  878,  871,  854,  838,  820,  811,  794,
@@ -58,7 +64,7 @@ var VP8EntropyCost = new Uint16Array([
 // For each given level, the following table gives the pattern of contexts to
 // use for coding it (in [][0]) as well as the bit value to use for each
 // context (in [][1]).
-VP8LevelCodes = [[0x001, 0x000], [0x007, 0x001], [0x00f, 0x005],
+vp8.cost.VP8LevelCodes = [[0x001, 0x000], [0x007, 0x001], [0x00f, 0x005],
   [0x00f, 0x00d], [0x033, 0x003], [0x033, 0x003], [0x033, 0x023],
   [0x033, 0x023], [0x033, 0x023], [0x033, 0x023], [0x0d3, 0x013],
   [0x0d3, 0x013], [0x0d3, 0x013], [0x0d3, 0x013], [0x0d3, 0x013],
@@ -82,13 +88,13 @@ VP8LevelCodes = [[0x001, 0x000], [0x007, 0x001], [0x00f, 0x005],
  * @param {Uint8Array} probas
  * @return {number}
  */
-VariableLevelCost = function(level, probas) {
-  var pattern = VP8LevelCodes[level - 1][0];
-  var bits = VP8LevelCodes[level - 1][1];
+vp8.cost.VariableLevelCost = function(level, probas) {
+  var pattern = vp8.cost.VP8LevelCodes[level - 1][0];
+  var bits = vp8.cost.VP8LevelCodes[level - 1][1];
   var cost = 0;
   for (var i = 2; pattern; ++i) {
     if (pattern & 1) {
-      cost += VP8BitCost(bits & 1, probas[i]);
+      cost += vp8.cost.VP8BitCost(bits & 1, probas[i]);
     }
     bits = bits >> 1;
     pattern = pattern >> 1;
@@ -99,21 +105,21 @@ VariableLevelCost = function(level, probas) {
 //------------------------------------------------------------------------------
 // Pre-calc level costs once for all
 
-/** @param {VP8Proba} proba */
-VP8CalculateLevelCosts = function(proba) {
+/** @param {webp.vp8.encode.VP8Proba} proba */
+vp8.cost.VP8CalculateLevelCosts = function(proba) {
   if (!proba.dirty) {
     return;  // nothing to do.
   }
 
-  for (var ctype = 0; ctype < NUM_TYPES; ++ctype) {
-    for (var band = 0; band < NUM_BANDS; ++band) {
-      for (var ctx = 0; ctx < NUM_CTX; ++ctx) {
+  for (var ctype = 0; ctype < constants.NUM_TYPES; ++ctype) {
+    for (var band = 0; band < constants.NUM_BANDS; ++band) {
+      for (var ctx = 0; ctx < constants.NUM_CTX; ++ctx) {
         var p = proba.coeffs[ctype][band][ctx];
         var table = proba.levelCost[ctype][band][ctx];
-        var costBase = VP8BitCost(1, p[1]);
-        table[0] = VP8BitCost(0, p[1]);
-        for (var v = 1; v <= MAX_VARIABLE_LEVEL; ++v) {
-          table[v] = costBase + VariableLevelCost(v, p);
+        var costBase = vp8.cost.VP8BitCost(1, p[1]);
+        table[0] = vp8.cost.VP8BitCost(0, p[1]);
+        for (var v = 1; v <= constants.MAX_VARIABLE_LEVEL; ++v) {
+          table[v] = costBase + vp8.cost.VariableLevelCost(v, p);
         }
         // Starting at level 67 and up, the variable part of the cost is
         // actually constant.

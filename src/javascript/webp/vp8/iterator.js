@@ -5,14 +5,25 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.vp8.Iterator');
+goog.provide('webp.vp8.iterator');
+
+goog.require('webp.vp8.constants');
+
 
 goog.scope(function() {
+
+var constants = webp.vp8.constants;
+var vp8 = webp.vp8;
+
+var BPS = constants.BPS;
+var Y_OFF = constants.Y_OFF;
+var U_OFF = constants.U_OFF;
+var V_OFF = constants.V_OFF;
 
 // Iterator structure to iterate through macroblocks, pointing to the
 // right neighbouring data (samples, predictions, contexts, ...)
 /** @constructor */
-VP8EncIterator = function() {
+vp8.iterator.VP8EncIterator = function() {
   // int x_, y_;                      // current macroblock
   this.x = 0;
   this.y = 0;
@@ -50,6 +61,7 @@ VP8EncIterator = function() {
   this.preds = null;
 
   // uint32_t*     nz_;               // non-zero pattern
+  /** @type {Uint32Array} */
   this.nz = null;
 
   // uint8_t       i4_boundary_[37];  // 32+5 boundary samples needed by intra4x4
@@ -86,14 +98,14 @@ VP8EncIterator = function() {
   this.percent0 = 0;
 };
 
-/** @param {VP8EncIterator} it */
-InitLeft = function(it) {
-  enc = it.enc;
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.InitLeft = function(it) {
+  var enc = it.enc;
 
   var val = it.y > 0 ? 129 : 127;
-  Uint8SetNeg(enc.yLeft, -1, val);
-  Uint8SetNeg(enc.uLeft, -1, val);
-  Uint8SetNeg(enc.vLeft, -1, val);
+  vp8.utils.Uint8SetNeg(enc.yLeft, -1, val);
+  vp8.utils.Uint8SetNeg(enc.uLeft, -1, val);
+  vp8.utils.Uint8SetNeg(enc.vLeft, -1, val);
   for (var i = 0; i < 16; i++) {
     enc.yLeft[i] = 129;
   }
@@ -104,8 +116,8 @@ InitLeft = function(it) {
   it.leftNz[8] = 0;
 };
 
-/** @param {VP8EncIterator} it */
-InitTop = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.InitTop = function(it) {
   var enc = it.enc;
   var topSize = enc.mbW * 16;
   for (var i = 0; i < topSize; i++) {
@@ -117,8 +129,8 @@ InitTop = function(it) {
   }
 };
 
-/** @param {VP8EncIterator} it */
-VP8IteratorReset = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.VP8IteratorReset = function(it) {
   var enc = it.enc;
   it.x = 0;
   it.y = 0;
@@ -129,18 +141,18 @@ VP8IteratorReset = function(it) {
   it.nz = enc.nz;
   it.bw = enc.part1;
   it.done = enc.mbW * enc.mbH;
-  InitTop(it);
-  InitLeft(it);
+  vp8.iterator.InitTop(it);
+  vp8.iterator.InitLeft(it);
   for (var i = 0; i < it.bitCount.length; i++) {
     it.bitCount[i] = 0;
   }
 };
 
 /**
- * @param {VP8Encoder} enc
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.encode.VP8Encoder} enc
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  */
-VP8IteratorInit = function(enc, it) {
+vp8.iterator.VP8IteratorInit = function(enc, it) {
   it.enc = enc;
   it.yStride  = enc.pic.yStride;
   it.uvStride = enc.pic.uvStride;
@@ -150,7 +162,7 @@ VP8IteratorInit = function(enc, it) {
   it.yuvOut2 = enc.yuvOut2;
   it.yuvP = enc.yuvP;
   it.percent0 = enc.percent;
-  VP8IteratorReset(it);
+  vp8.iterator.VP8IteratorReset(it);
 };
 
 //------------------------------------------------------------------------------
@@ -164,7 +176,7 @@ VP8IteratorInit = function(enc, it) {
  * @param {number} h
  * @param {number} size
  */
-ImportBlock = function(src, srcStride, dst, w, h, size) {
+vp8.iterator.ImportBlock = function(src, srcStride, dst, w, h, size) {
   var dstOffset = 0;
   var srcOffset = 0;
   for (var i = 0; i < h; ++i) {
@@ -187,8 +199,8 @@ ImportBlock = function(src, srcStride, dst, w, h, size) {
   }
 };
 
-/** @param {VP8EncIterator} it */
-VP8IteratorImport = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.VP8IteratorImport = function(it) {
   var enc = it.enc;
   var x = it.x;
   var y = it.y;
@@ -210,13 +222,13 @@ VP8IteratorImport = function(it) {
   }
 
   // Luma plane
-  ImportBlock(ysrc, pic.yStride, ydst, w, h, 16);
+  vp8.iterator.ImportBlock(ysrc, pic.yStride, ydst, w, h, 16);
 
   {   // U/V planes
     var uvW = (w + 1) >> 1;
     var uvH = (h + 1) >> 1;
-    ImportBlock(usrc, pic.uvStride, udst, uvW, uvH, 8);
-    ImportBlock(vsrc, pic.uvStride, vdst, uvW, uvH, 8);
+    vp8.iterator.ImportBlock(usrc, pic.uvStride, udst, uvW, uvH, 8);
+    vp8.iterator.ImportBlock(vsrc, pic.uvStride, vdst, uvW, uvH, 8);
   }
 };
 
@@ -224,10 +236,10 @@ VP8IteratorImport = function(it) {
 // Helper function to set mode properties
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {number} mode
  */
-VP8SetIntra16Mode = function(it, mode) {
+vp8.iterator.VP8SetIntra16Mode = function(it, mode) {
   var preds = it.preds;
   var predsOffset = 0;
   for (var y = 0; y < 4; ++y) {
@@ -240,10 +252,10 @@ VP8SetIntra16Mode = function(it, mode) {
 }
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {Uint8Array} modes
  */
-VP8SetIntra4Mode = function(it, modes) {
+vp8.iterator.VP8SetIntra4Mode = function(it, modes) {
   var preds = it.preds;
   var predsOffset = 0;
   var modesOffset = 0;
@@ -258,26 +270,26 @@ VP8SetIntra4Mode = function(it, modes) {
 };
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {number} mode
  */
-VP8SetIntraUVMode = function(it, mode) {
+vp8.iterator.VP8SetIntraUVMode = function(it, mode) {
   it.enc.mbInfo[it.mbIdx].uvMode = mode;
 };
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {number} skip
  */
-VP8SetSkip = function(it, skip) {
+vp8.iterator.VP8SetSkip = function(it, skip) {
   it.enc.mbInfo[it.mbIdx].skip = skip;
 };
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {number} segment
  */
-VP8SetSegment = function(it, segment) {
+vp8.iterator.VP8SetSegment = function(it, segment) {
   it.enc.mbInfo[it.mbIdx].segment = segment;
 };
 
@@ -299,15 +311,15 @@ VP8SetSegment = function(it, segment) {
 // 22 23
 // 24           DC-intra16
 
-/** @param {VP8EncIterator} it */
-VP8IteratorNzToBytes = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.VP8IteratorNzToBytes = function(it) {
   // Convert packed context to byte array
   var BIT = function(nz, n) {
     return !!((nz) & (1 << (n)));
   };
 
   var tnz = it.nz[0];
-  var lnz = Uint32GetNeg(it.nz, -1);
+  var lnz = vp8.utils.Uint32GetNeg(it.nz, -1);
   var topNz = it.topNz;
   var leftNz = it.leftNz;
 
@@ -339,8 +351,8 @@ VP8IteratorNzToBytes = function(it) {
   // left-DC is special, iterated separately
 }
 
-/** @param {VP8EncIterator} it */
-VP8IteratorBytesToNz = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.VP8IteratorBytesToNz = function(it) {
   var nz = 0;
   var topNz = it.topNz;
   var leftNz = it.leftNz;
@@ -362,11 +374,11 @@ VP8IteratorBytesToNz = function(it) {
 // Advance to the next position, doing the bookeeping.
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {Uint8Array} blockToSave
  * @return {boolean}
  */
-VP8IteratorNext = function(it, blockToSave) {
+vp8.iterator.VP8IteratorNext = function(it, blockToSave) {
   var enc = it.enc;
   if (blockToSave) {
     var x = it.x;
@@ -380,9 +392,9 @@ VP8IteratorNext = function(it, blockToSave) {
         enc.vLeft[i] = blockToSave[U_OFF + 15 + i * BPS];
       }
       // top-left (before 'top'!)
-      Uint8SetNeg(enc.yLeft, -1, enc.yTop[x * 16 + 15]);
-      Uint8SetNeg(enc.uLeft, -1, enc.uvTop[x * 16 + 0 + 7]);
-      Uint8SetNeg(enc.vLeft, -1, enc.uvTop[x * 16 + 8 + 7]);
+      vp8.utils.Uint8SetNeg(enc.yLeft, -1, enc.yTop[x * 16 + 15]);
+      vp8.utils.Uint8SetNeg(enc.uLeft, -1, enc.uvTop[x * 16 + 0 + 7]);
+      vp8.utils.Uint8SetNeg(enc.vLeft, -1, enc.uvTop[x * 16 + 8 + 7]);
     }
     if (y < enc.mbH - 1) {  // top
       for (var i = 0; i < 16; i++) {
@@ -404,7 +416,7 @@ VP8IteratorNext = function(it, blockToSave) {
     it.bw = enc.part1;
     it.preds = enc.preds.subarray(it.y * 4 * enc.predsW);
     it.nz = enc.nz;
-    InitLeft(it);
+    vp8.iterator.InitLeft(it);
   }
   return (0 < --it.done);
 };
@@ -442,23 +454,23 @@ VP8IteratorNext = function(it, blockToSave) {
 // Array to record the position of the top sample to pass to the prediction
 // functions in dsp.c.
 /** @type {Uint8Array} */
-var VP8TopLeftI4 = new Uint8Array([
+vp8.iterator.VP8TopLeftI4 = new Uint8Array([
   17, 21, 25, 29,
   13, 17, 21, 25,
   9,  13, 17, 21,
   5,   9, 13, 17
 ]);
 
-/** @param {VP8EncIterator} it */
-VP8IteratorStartI4 = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.iterator.VP8IteratorStartI4 = function(it) {
   var enc = it.enc;
 
   it.i4 = 0;    // first 4x4 sub-block
-  it.i4Top = it.i4Boundary.subarray(VP8TopLeftI4[0]);
+  it.i4Top = it.i4Boundary.subarray(vp8.iterator.VP8TopLeftI4[0]);
 
   // Import the boundary samples
-  yLeftBuffOff = 1
-  var yLeftBuf = Uint8Repoint(enc.yLeft, -yLeftBuffOff)
+  var yLeftBuffOff = 1
+  var yLeftBuf = vp8.utils.Uint8Repoint(enc.yLeft, -yLeftBuffOff)
   for (var i = 0; i < 17; ++i) {    // left
     it.i4Boundary[i] = yLeftBuf[yLeftBuffOff + 15 - i];
   }
@@ -475,18 +487,18 @@ VP8IteratorStartI4 = function(it) {
       it.i4Boundary[17 + i] = it.i4Boundary[17 + 15];
     }
   }
-  VP8IteratorNzToBytes(it);  // import the non-zero context
+  vp8.iterator.VP8IteratorNzToBytes(it);  // import the non-zero context
 };
 
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {Uint8Array} yuvOut
  * @return {boolean}
  */
-VP8IteratorRotateI4 = function(it, yuvOut) {
-  var blkOffset = VP8Scan[it.i4];
+vp8.iterator.VP8IteratorRotateI4 = function(it, yuvOut) {
+  var blkOffset = constants.VP8Scan[it.i4];
   var topOffset = 4;
-  var top = Uint8Repoint(it.i4Top, -topOffset);
+  var top = vp8.utils.Uint8Repoint(it.i4Top, -topOffset);
 
   // Update the cache with 7 fresh samples
   for (var i = 0; i <= 3; ++i) {
@@ -508,7 +520,7 @@ VP8IteratorRotateI4 = function(it, yuvOut) {
     return false;
   }
 
-  it.i4Top = it.i4Boundary.subarray(VP8TopLeftI4[it.i4]);
+  it.i4Top = it.i4Boundary.subarray(vp8.iterator.VP8TopLeftI4[it.i4]);
   return true;
 };
 

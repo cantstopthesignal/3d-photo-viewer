@@ -5,16 +5,19 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.Config');
+goog.provide('webp.config');
 
-goog.require('webp.vp8.Constants');
+goog.require('webp.vp8.constants');
+goog.require('webp.vp8.utils');
 
-var WebPConfig;
 
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
+var vp8 = webp.vp8;
+
 /** @constructor */
-WebPConfig = function() {
+webp.config.WebPConfig = function() {
   // float quality;          // between 0 (smallest file) and 100 (biggest)
   this.quality = 0;
 
@@ -31,20 +34,22 @@ WebPConfig = function() {
 // must have succeeded before using the 'config' object.
 // Note that the default values are lossless=0 and quality=75.
 /**
- * @param {WebPConfig} config
+ * @param {webp.config.WebPConfig} config
  * @return {boolean}
  */
-WebPConfigInit = function(config) {
-  return WebPConfigInitInternal(config, WEBP_ENCODER_ABI_VERSION);
+webp.config.WebPConfigInit = function(config) {
+  return webp.config.WebPConfigInitInternal(config,
+    constants.WEBP_ENCODER_ABI_VERSION);
 };
 
 /**
- * @param {WebPConfig} config
+ * @param {webp.config.WebPConfig} config
  * @param {number} version
  * @return {boolean}
  */
-WebPConfigInitInternal = function(config, version) {
-  if (WEBP_ABI_IS_INCOMPATIBLE(version, WEBP_ENCODER_ABI_VERSION)) {
+webp.config.WebPConfigInitInternal = function(config, version) {
+  if (vp8.utils.WEBP_ABI_IS_INCOMPATIBLE(version,
+      constants.WEBP_ENCODER_ABI_VERSION)) {
     return false;   // caller/system version mismatch!
   }
   if (!config) {
@@ -55,14 +60,14 @@ WebPConfigInitInternal = function(config, version) {
   config.snsStrength = 50;
   config.segments = 4;
 
-  return WebPValidateConfig(config);
+  return webp.config.WebPValidateConfig(config);
 };
 
 /**
- * @param {WebPConfig} config
+ * @param {webp.config.WebPConfig} config
  * @return {boolean}
  */
-WebPValidateConfig = function(config) {
+webp.config.WebPValidateConfig = function(config) {
   if (!config) {
     return false;
   }

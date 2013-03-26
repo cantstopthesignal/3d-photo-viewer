@@ -5,16 +5,20 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.vp8.BitWriter');
+goog.provide('webp.vp8.bitwriter');
 
+goog.require('webp.vp8.constants');
 goog.require('webp.vp8.debug');
+
 
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
 var debug = webp.vp8.debug;
+var vp8 = webp.vp8;
 
 /** @constructor */
-VP8BitWriter = function() {
+vp8.bitwriter.VP8BitWriter = function() {
   // int32_t  range_;      // range-1
   this.range = 0;
 
@@ -43,28 +47,28 @@ VP8BitWriter = function() {
 // return approximate write position (in bits)
 // static WEBP_INLINE uint64_t VP8BitWriterPos(const VP8BitWriter* const bw) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @return {number}
  */
-VP8BitWriterPos = function(bw) {
-  return (bw.posP + bw.run) * 8 + 8 + bw.nbBits;
+vp8.bitwriter.VP8BitWriterPos = function(bw) {
+  return (bw.pos + bw.run) * 8 + 8 + bw.nbBits;
 };
 
 // Returns a pointer to the internal buffer.
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @return {Uint8Array}
  */
-VP8BitWriterBuf = function(bw) {
+vp8.bitwriter.VP8BitWriterBuf = function(bw) {
   return bw.buf;
 };
 
 // Returns the size of the internal buffer.
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @return {number}
  */
-VP8BitWriterSize = function(bw) {
+vp8.bitwriter.VP8BitWriterSize = function(bw) {
   return bw.pos;
 };
 
@@ -73,11 +77,11 @@ VP8BitWriterSize = function(bw) {
 
 // static int BitWriterResize(VP8BitWriter* const bw, size_t extra_size) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @param {number} extraSize
  * @return {number}
  */
-BitWriterResize = function(bw, extraSize) {
+vp8.bitwriter.BitWriterResize = function(bw, extraSize) {
   var neededSize = bw.pos + extraSize;
   if (neededSize <= bw.maxPos) {
     return 1;
@@ -92,15 +96,15 @@ BitWriterResize = function(bw, extraSize) {
   }
   var newBuf = new Uint8Array(newSize);
   if (bw.buf && bw.pos > 0) {
-    newBuf.set(bw.buf, 0, bw.pos);
+    newBuf.set(bw.buf.subarray(0, bw.pos));
   }
   bw.buf = newBuf;
   bw.maxPos = newSize;
   return 1;
 };
 
-/** @param {VP8BitWriter} bw */
-kFlush = function(bw) {
+/** @param {vp8.bitwriter.VP8BitWriter} bw */
+vp8.bitwriter.kFlush = function(bw) {
   var s = 8 + bw.nbBits;
   var bits = bw.value >> s;
   if (bw.nbBits < 0) {
@@ -110,7 +114,7 @@ kFlush = function(bw) {
   bw.nbBits -= 8;
   if ((bits & 0xff) != 0xff) {
     var pos = bw.pos;
-    if (!BitWriterResize(bw, bw.run + 1)) {
+    if (!vp8.bitwriter.BitWriterResize(bw, bw.run + 1)) {
       return;
     }
     if (bits & 0x100) {  // overflow -> propagate carry over pending 0xff's
@@ -135,7 +139,7 @@ kFlush = function(bw) {
 // renormalization
 
 // static const uint8_t kNorm[128] = {  // renorm_sizes[i] = 8 - log2(i)
-kNorm = new Uint8Array([  // renorm_sizes[i] = 8 - log2(i)
+vp8.bitwriter.kNorm = new Uint8Array([  // renorm_sizes[i] = 8 - log2(i)
      7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
   3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -149,7 +153,7 @@ kNorm = new Uint8Array([  // renorm_sizes[i] = 8 - log2(i)
 
 // range = ((range + 1) << kVP8Log2Range[range]) - 1
 // static const uint8_t kNewRange[128] = {
-kNewRange = new Uint8Array([
+vp8.bitwriter.kNewRange = new Uint8Array([
   127, 127, 191, 127, 159, 191, 223, 127, 143, 159, 175, 191, 207, 223, 239,
   127, 135, 143, 151, 159, 167, 175, 183, 191, 199, 207, 215, 223, 231, 239,
   247, 127, 131, 135, 139, 143, 147, 151, 155, 159, 163, 167, 171, 175, 179,
@@ -163,12 +167,12 @@ kNewRange = new Uint8Array([
 
 // int VP8PutBit(VP8BitWriter* const bw, int bit, int prob) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @param {number} bit
  * @param {number} prob
  * @return {number}
  */
-VP8PutBit = function(bw, bit, prob) {
+vp8.bitwriter.VP8PutBit = function(bw, bit, prob) {
   bit = bit ? 1 : 0
   var split = (bw.range * prob) >> 8;
   if (debug.getBitWriterVerbose()) {
@@ -181,12 +185,12 @@ VP8PutBit = function(bw, bit, prob) {
     bw.range = split;
   }
   if (bw.range < 127) {   // emit 'shift' bits out and renormalize
-    var shift = kNorm[bw.range];
-    bw.range = kNewRange[bw.range];
+    var shift = vp8.bitwriter.kNorm[bw.range];
+    bw.range = vp8.bitwriter.kNewRange[bw.range];
     bw.value <<= shift;
     bw.nbBits += shift;
     if (bw.nbBits > 0) {
-      kFlush(bw);
+      vp8.bitwriter.kFlush(bw);
     }
   }
   return bit;
@@ -194,11 +198,11 @@ VP8PutBit = function(bw, bit, prob) {
 
 // int VP8PutBitUniform(VP8BitWriter* const bw, int bit) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @param {number} bit
  * @return {number}
  */
-VP8PutBitUniform = function(bw, bit) {
+vp8.bitwriter.VP8PutBitUniform = function(bw, bit) {
   var split = bw.range >> 1;
   if (bit) {
     bw.value += split + 1;
@@ -207,11 +211,11 @@ VP8PutBitUniform = function(bw, bit) {
     bw.range = split;
   }
   if (bw.range < 127) {
-    bw.range = kNewRange[bw.range];
+    bw.range = vp8.bitwriter.kNewRange[bw.range];
     bw.value <<= 1;
     bw.nbBits += 1;
     if (bw.nbBits > 0) {
-      kFlush(bw);
+      vp8.bitwriter.kFlush(bw);
     }
   }
   return bit;
@@ -219,30 +223,30 @@ VP8PutBitUniform = function(bw, bit) {
 
 // void VP8PutValue(VP8BitWriter* const bw, int value, int nb_bits) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @param {number} value
  * @param {number} nbBits
  */
-VP8PutValue = function(bw, value, nbBits) {
+vp8.bitwriter.VP8PutValue = function(bw, value, nbBits) {
   for (var mask = 1 << (nbBits - 1); mask; mask >>= 1) {
-    VP8PutBitUniform(bw, value & mask);
+    vp8.bitwriter.VP8PutBitUniform(bw, value & mask);
   }
 };
 
 // void VP8PutSignedValue(VP8BitWriter* const bw, int value, int nb_bits) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @param {number} value
  * @param {number} nbBits
  */
-VP8PutSignedValue = function(bw, value, nbBits) {
-  if (!VP8PutBitUniform(bw, value != 0)) {
+vp8.bitwriter.VP8PutSignedValue = function(bw, value, nbBits) {
+  if (!vp8.bitwriter.VP8PutBitUniform(bw, value != 0 ? 1 : 0)) {
     return;
   }
   if (value < 0) {
-    VP8PutValue(bw, ((-value) << 1) | 1, nbBits + 1);
+    vp8.bitwriter.VP8PutValue(bw, ((-value) << 1) | 1, nbBits + 1);
   } else {
-    VP8PutValue(bw, value << 1, nbBits + 1);
+    vp8.bitwriter.VP8PutValue(bw, value << 1, nbBits + 1);
   }
 };
 
@@ -251,11 +255,11 @@ VP8PutSignedValue = function(bw, value, nbBits) {
 // Initialize the object. Allocates some initial memory based on expected_size.
 // int VP8BitWriterInit(VP8BitWriter* const bw, size_t expected_size) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @param {number} expectedSize
  * @return {number}
  */
-VP8BitWriterInit = function(bw, expectedSize) {
+vp8.bitwriter.VP8BitWriterInit = function(bw, expectedSize) {
   bw.range   = 255 - 1;
   bw.value   = 0;
   bw.run     = 0;
@@ -264,22 +268,22 @@ VP8BitWriterInit = function(bw, expectedSize) {
   bw.maxPos  = 0;
   bw.error   = 0;
   bw.buf     = null;
-  return (expectedSize > 0) ? BitWriterResize(bw, expectedSize) : 1;
+  return (expectedSize > 0) ? vp8.bitwriter.BitWriterResize(bw, expectedSize) : 1;
 }
 
 /**
- * @param {VP8BitWriter} bw
+ * @param {vp8.bitwriter.VP8BitWriter} bw
  * @return {Uint8Array}
  */
-VP8BitWriterFinish = function(bw) {
-  VP8PutValue(bw, 0, 9 - bw.nbBits);
+vp8.bitwriter.VP8BitWriterFinish = function(bw) {
+  vp8.bitwriter.VP8PutValue(bw, 0, 9 - bw.nbBits);
   bw.nbBits = 0;   // pad with zeroes
-  kFlush(bw);
+  vp8.bitwriter.kFlush(bw);
   return bw.buf;
 };
 
-/** @param {VP8BitWriter} bw */
-VP8BitWriterWipeOut = function(bw) {
+/** @param {vp8.bitwriter.VP8BitWriter} bw */
+vp8.bitwriter.VP8BitWriterWipeOut = function(bw) {
   if (bw) {
     bw.range = 0;
     bw.value = 0;

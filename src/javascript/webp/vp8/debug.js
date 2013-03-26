@@ -7,8 +7,12 @@
 
 goog.provide('webp.vp8.debug');
 
+goog.require('webp.vp8.constants');
+
+
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
 var debug = webp.vp8.debug;
 
 /** @type {boolean} */
@@ -31,7 +35,7 @@ debug.isEnabled = function() {
 };
 
 debug.setEnabled = function(enabled) {
-  this.enabled_ = enabled;
+  debug.enabled_ = enabled;
 };
 
 debug.clear = function() {
@@ -50,6 +54,9 @@ debug.getBitWriterVerbose = function() {
   return debug.bitWriterVerbose_;
 };
 
+/**
+ * @param {...*} var_args
+ */
 debug.log = function(var_args) {
   if (!debug.isEnabled()) {
     return;
@@ -79,19 +86,25 @@ debug.addValueHash = function(oldVal, newVal) {
 };
 
 debug.checksumArrayDump = function(name, oldVal, arr) {
-  return debug.checksumArray(name, oldVal, arr, 1)
+  return debug.checksumArray(name, oldVal, arr, true);
 };
 
-debug.checksumArray = function(name, oldVal, arr, dump) {
+/**
+ * @param {string} name
+ * @param {number} oldVal
+ * @param {ArrayBufferView} arr
+ * @param {boolean=} opt_dump
+ */
+debug.checksumArray = function(name, oldVal, arr, opt_dump) {
   arr = new Uint8Array(arr.buffer);
   var val = oldVal;
   for (var i = 0; i < arr.length; i++) {
-    if (dump && arr[i] != 0) {
+    if (opt_dump && arr[i] != 0) {
       debug.log('ENC(' + name + ') SUB DUMP ' + i + ': ' + arr[i]);
     }
     val = debug.addValueHash(val, arr[i]);
   }
-  if (dump) {
+  if (opt_dump) {
     debug.log('ENC(' + name + ') SUB DUMP COUNT', arr.length)
   }
   return val;
@@ -155,9 +168,9 @@ debug.dumpProba = function(p) {
     "useSkipProba", p.useSkipProba ? 1 : 0,
     "nbSkip", p.nbSkip)
   var coeffsSum = 0, statsSum = 0, levelCostSum = 0
-  for (var t = 0; t < NUM_TYPES; t++) {
-    for (var b = 0; b < NUM_BANDS; b++) {
-      for (var c = 0; c < NUM_CTX; c++) {
+  for (var t = 0; t < constants.NUM_TYPES; t++) {
+    for (var b = 0; b < constants.NUM_BANDS; b++) {
+      for (var c = 0; c < constants.NUM_CTX; c++) {
         coeffsSum = debug.checksumArray(
             "coeffs", coeffsSum, p.coeffs[t][b][c]);
         statsSum = debug.checksumArray(
@@ -242,7 +255,7 @@ debug.dumpEncoderEx = function(name, enc, full) {
       "dqY2Ac", enc.dqY2Ac,
       "dqUvDc", enc.dqUvDc,
       "dqUvAc", enc.dqUvAc)
-    for (var i = 0; i < NUM_MB_SEGMENTS; i++) {
+    for (var i = 0; i < constants.NUM_MB_SEGMENTS; i++) {
       debug.dumpDqm(enc.dqm[i], i);
     }
     debug.dumpProba(enc.proba);
@@ -257,7 +270,7 @@ debug.dumpEncoderEx = function(name, enc, full) {
 
 debug.int64ToStr = function(input) {
   if (Math.abs(input) > 0xffffffff) {
-    output = "" + input;
+    var output = "" + input;
     return output.substr(0, 12) + '_BIG';
   }
   return "" + input;

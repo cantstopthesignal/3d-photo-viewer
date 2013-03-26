@@ -5,14 +5,18 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.vp8.Types');
+goog.provide('webp.vp8.types');
 
-var WebPEncCSP;
+goog.require('webp.vp8.constants');
+
 
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
+var vp8 = webp.vp8;
+
 /** @enum {number} */
-WebPEncCSP = {
+vp8.types.WebPEncCSP = {
   // chroma sampling
   WEBP_YUV420: 0,   // 4:2:0
   WEBP_YUV422: 1,   // 4:2:2
@@ -29,7 +33,7 @@ WebPEncCSP = {
 
 // Encoding error conditions.
 /** @enum {number} */
-WebPEncodingError = {
+vp8.types.WebPEncodingError = {
   VP8_ENC_OK: 0,
   VP8_ENC_ERROR_OUT_OF_MEMORY: 1,            // memory error allocating objects
   VP8_ENC_ERROR_BITSTREAM_OUT_OF_MEMORY: 2,  // memory error while flushing bits

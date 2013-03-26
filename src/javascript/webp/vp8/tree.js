@@ -5,23 +5,27 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.vp8.Tree');
+goog.provide('webp.vp8.tree');
 
-goog.require('webp.vp8.Constants');
+goog.require('webp.vp8.constants');
+
 
 goog.scope(function() {
 
-/** @param {VP8Encoder} enc */
-VP8DefaultProbas = function(enc) {
+var constants = webp.vp8.constants;
+var vp8 = webp.vp8;
+
+/** @param {webp.vp8.encode.VP8Encoder} enc */
+vp8.tree.VP8DefaultProbas = function(enc) {
   var probas = enc.proba;
   probas.useSkipProba = 0;
   for (var i = 0; i < probas.segments.length; i++) {
     probas.segments[i] = 255;
   }
-  for (var t = 0; t < NUM_TYPES; t++) {
-    for (var b = 0; b < NUM_BANDS; b++) {
-      for (var c = 0; c < NUM_CTX; c++) {
-        probas.coeffs[t][b][c].set(VP8CoeffsProba0[t][b][c]);
+  for (var t = 0; t < constants.NUM_TYPES; t++) {
+    for (var b = 0; b < constants.NUM_BANDS; b++) {
+      for (var c = 0; c < constants.NUM_CTX; c++) {
+        probas.coeffs[t][b][c].set(vp8.tree.VP8CoeffsProba0[t][b][c]);
       }
     }
   }
@@ -32,7 +36,7 @@ VP8DefaultProbas = function(enc) {
 
 // Paragraph 13.5
 // genereated using vp8_default_coef_probs() in entropy.c:129
-VP8CoeffsProba0 = [
+vp8.tree.VP8CoeffsProba0 = [
   [ [ [ 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 ],
       [ 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 ],
       [ 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 ]
@@ -172,7 +176,7 @@ VP8CoeffsProba0 = [
 
 // Paragraph 11.5.  900bytes.
 // static const uint8_t kBModesProba[NUM_BMODES][NUM_BMODES][NUM_BMODES - 1] = {
-kBModesProba = [
+vp8.tree.kBModesProba = [
   [ [ 231, 120, 48, 89, 115, 113, 120, 152, 112 ],
     [ 152, 179, 64, 126, 170, 118, 46, 70, 95 ],
     [ 175, 69, 143, 80, 85, 82, 72, 155, 103 ],
@@ -278,22 +282,22 @@ kBModesProba = [
 // static int PutI4Mode(VP8BitWriter* const bw, int mode,
 //                      const uint8_t* const prob) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {webp.vp8.bitwriter.VP8BitWriter} bw
  * @param {number} mode
  * @param {Uint8Array} prob
  */
-PutI4Mode = function(bw, mode, prob) {
-  if (VP8PutBit(bw, mode != B_DC_PRED, prob[0])) {
-    if (VP8PutBit(bw, mode != B_TM_PRED, prob[1])) {
-      if (VP8PutBit(bw, mode != B_VE_PRED, prob[2])) {
-        if (!VP8PutBit(bw, mode >= B_LD_PRED, prob[3])) {
-          if (VP8PutBit(bw, mode != B_HE_PRED, prob[4])) {
-            VP8PutBit(bw, mode != B_RD_PRED, prob[5]);
+vp8.tree.PutI4Mode = function(bw, mode, prob) {
+  if (vp8.bitwriter.VP8PutBit(bw, mode != constants.B_DC_PRED ? 1 : 0, prob[0])) {
+    if (vp8.bitwriter.VP8PutBit(bw, mode != constants.B_TM_PRED ? 1 : 0, prob[1])) {
+      if (vp8.bitwriter.VP8PutBit(bw, mode != constants.B_VE_PRED ? 1 : 0, prob[2])) {
+        if (!vp8.bitwriter.VP8PutBit(bw, mode >= constants.B_LD_PRED ? 1 : 0, prob[3])) {
+          if (vp8.bitwriter.VP8PutBit(bw, mode != constants.B_HE_PRED ? 1 : 0, prob[4])) {
+            vp8.bitwriter.VP8PutBit(bw, mode != constants.B_RD_PRED ? 1 : 0, prob[5]);
           }
         } else {
-          if (VP8PutBit(bw, mode != B_LD_PRED, prob[6])) {
-            if (VP8PutBit(bw, mode != B_VL_PRED, prob[7])) {
-              VP8PutBit(bw, mode != B_HD_PRED, prob[8]);
+          if (vp8.bitwriter.VP8PutBit(bw, mode != constants.B_LD_PRED ? 1 : 0, prob[6])) {
+            if (vp8.bitwriter.VP8PutBit(bw, mode != constants.B_VL_PRED ? 1 : 0, prob[7])) {
+              vp8.bitwriter.VP8PutBit(bw, mode != constants.B_HD_PRED ? 1 : 0, prob[8]);
             }
           }
         }
@@ -304,81 +308,82 @@ PutI4Mode = function(bw, mode, prob) {
 };
 
 /**
- * @param {VP8BitWriter} bw
+ * @param {webp.vp8.bitwriter.VP8BitWriter} bw
  * @param {number} mode
  */
-PutI16Mode = function(bw, mode) {
-  if (VP8PutBit(bw, (mode == TM_PRED || mode == H_PRED), 156)) {
-    VP8PutBit(bw, mode == TM_PRED, 128);    // TM or HE
+vp8.tree.PutI16Mode = function(bw, mode) {
+  if (vp8.bitwriter.VP8PutBit(bw, (mode == constants.TM_PRED ||
+                                   mode == constants.H_PRED) ? 1 : 0, 156)) {
+    vp8.bitwriter.VP8PutBit(bw, mode == constants.TM_PRED ? 1 : 0, 128);    // TM or HE
   } else {
-    VP8PutBit(bw, mode == V_PRED, 163);     // VE or DC
+    vp8.bitwriter.VP8PutBit(bw, mode == constants.V_PRED ? 1 : 0, 163);     // VE or DC
   }
 };
 
 /**
- * @param {VP8BitWriter} bw
+ * @param {webp.vp8.bitwriter.VP8BitWriter} bw
  * @param {number} uvMode
  */
-PutUVMode = function(bw, uvMode) {
-  if (VP8PutBit(bw, uvMode != DC_PRED, 142)) {
-    if (VP8PutBit(bw, uvMode != V_PRED, 114)) {
-      VP8PutBit(bw, uvMode != H_PRED, 183);    // else: TM_PRED
+vp8.tree.PutUVMode = function(bw, uvMode) {
+  if (vp8.bitwriter.VP8PutBit(bw, uvMode != constants.DC_PRED ? 1 : 0, 142)) {
+    if (vp8.bitwriter.VP8PutBit(bw, uvMode != constants.V_PRED ? 1 : 0, 114)) {
+      vp8.bitwriter.VP8PutBit(bw, uvMode != constants.H_PRED ? 1 : 0, 183);    // else: TM_PRED
     }
   }
 };
 
 // static void PutSegment(VP8BitWriter* const bw, int s, const uint8_t* p) {
 /**
- * @param {VP8BitWriter} bw
+ * @param {webp.vp8.bitwriter.VP8BitWriter} bw
  * @param {number} s
  * @param {Uint8Array} p
  */
-PutSegment = function(bw, s, p) {
+vp8.tree.PutSegment = function(bw, s, p) {
   var pOffset = 0;
-  if (VP8PutBit(bw, s >= 2, p[pOffset])) {
+  if (vp8.bitwriter.VP8PutBit(bw, s >= 2 ? 1 : 0, p[pOffset])) {
     pOffset += 1;
   }
-  VP8PutBit(bw, s & 1, p[pOffset + 1]);
+  vp8.bitwriter.VP8PutBit(bw, s & 1, p[pOffset + 1]);
 };
 
-/** @param {VP8Encoder} enc */
-VP8CodeIntraModes = function(enc) {
+/** @param {webp.vp8.encode.VP8Encoder} enc */
+vp8.tree.VP8CodeIntraModes = function(enc) {
   var predsW = enc.predsW;
   var bw = enc.bw;
-  var it = new VP8EncIterator();
-  VP8IteratorInit(enc, it);
+  var it = new vp8.iterator.VP8EncIterator();
+  vp8.iterator.VP8IteratorInit(enc, it);
   do {
     var mb = enc.mbInfo[it.mbIdx];
     var predsOffset = predsW;
-    var preds = Uint8Repoint(it.preds, -predsOffset);
+    var preds = vp8.utils.Uint8Repoint(it.preds, -predsOffset);
     if (enc.segmentHdr.updateMap) {
-      PutSegment(bw, mb.segment, enc.proba.segments);
+      vp8.tree.PutSegment(bw, mb.segment, enc.proba.segments);
     }
     if (enc.proba.useSkipProba) {
-      VP8PutBit(bw, mb.skip, enc.proba.skipProba);
+      vp8.bitwriter.VP8PutBit(bw, mb.skip, enc.proba.skipProba);
     }
-    if (VP8PutBit(bw, (mb.type != 0), 145)) {  // i16x16
-      PutI16Mode(bw, preds[predsOffset + 0]);
+    if (vp8.bitwriter.VP8PutBit(bw, (mb.type != 0) ? 1 : 0, 145)) {  // i16x16
+      vp8.tree.PutI16Mode(bw, preds[predsOffset + 0]);
     } else {
       var topPredOffset = predsOffset - predsW;
       for (var y = 0; y < 4; ++y) {
         var left = preds[predsOffset - 1];
         for (var x = 0; x < 4; ++x) {
-          var probas = kBModesProba[preds[topPredOffset + x]][left];
-          left = PutI4Mode(bw, preds[predsOffset + x], probas);
+          var probas = vp8.tree.kBModesProba[preds[topPredOffset + x]][left];
+          left = vp8.tree.PutI4Mode(bw, preds[predsOffset + x], probas);
         }
         topPredOffset = predsOffset;
         predsOffset += predsW;
       }
     }
-    PutUVMode(bw, mb.uvMode);
-  } while (VP8IteratorNext(it, 0));
+    vp8.tree.PutUVMode(bw, mb.uvMode);
+  } while (vp8.iterator.VP8IteratorNext(it, null));
 };
 
 //------------------------------------------------------------------------------
 // Paragraph 13
 
-VP8CoeffsUpdateProba = [
+vp8.tree.VP8CoeffsUpdateProba = [
   [ [ [ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 ],
       [ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 ],
       [ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 ]
@@ -514,25 +519,26 @@ VP8CoeffsUpdateProba = [
 ];
 
 /**
- * @param {VP8BitWriter} bw
- * @param {VP8Proba} probas
+ * @param {webp.vp8.bitwriter.VP8BitWriter} bw
+ * @param {webp.vp8.encode.VP8Proba} probas
  */
-VP8WriteProbas = function(bw, probas) {
-  for (var t = 0; t < NUM_TYPES; ++t) {
-    for (var b = 0; b < NUM_BANDS; ++b) {
-      for (var c = 0; c < NUM_CTX; ++c) {
-        for (var p = 0; p < NUM_PROBAS; ++p) {
+vp8.tree.VP8WriteProbas = function(bw, probas) {
+  for (var t = 0; t < constants.NUM_TYPES; ++t) {
+    for (var b = 0; b < constants.NUM_BANDS; ++b) {
+      for (var c = 0; c < constants.NUM_CTX; ++c) {
+        for (var p = 0; p < constants.NUM_PROBAS; ++p) {
           var p0 = probas.coeffs[t][b][c][p];
-          var update = (p0 != VP8CoeffsProba0[t][b][c][p]);
-          if (VP8PutBit(bw, update, VP8CoeffsUpdateProba[t][b][c][p])) {
-            VP8PutValue(bw, p0, 8);
+          var update = (p0 != vp8.tree.VP8CoeffsProba0[t][b][c][p]);
+          if (vp8.bitwriter.VP8PutBit(bw, update ? 1 : 0,
+              vp8.tree.VP8CoeffsUpdateProba[t][b][c][p])) {
+            vp8.bitwriter.VP8PutValue(bw, p0, 8);
           }
         }
       }
     }
   }
-  if (VP8PutBitUniform(bw, probas.useSkipProba)) {
-    VP8PutValue(bw, probas.skipProba, 8);
+  if (vp8.bitwriter.VP8PutBitUniform(bw, probas.useSkipProba)) {
+    vp8.bitwriter.VP8PutValue(bw, probas.skipProba, 8);
   }
 };
 

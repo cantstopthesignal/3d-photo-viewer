@@ -5,36 +5,43 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.vp8.Quant');
+goog.provide('webp.vp8.quant');
 
-goog.require('webp.vp8.Constants');
-goog.require('webp.vp8.Dsp');
+goog.require('webp.vp8.constants');
 goog.require('webp.vp8.debug');
+goog.require('webp.vp8.dsp');
+
 
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
 var debug = webp.vp8.debug;
+var vp8 = webp.vp8;
 
-/** @param {VP8EncIterator} it */
-VP8MakeLuma16Preds = function(it) {
+var Y_OFF = constants.Y_OFF;
+var U_OFF = constants.U_OFF;
+var NUM_MB_SEGMENTS = constants.NUM_MB_SEGMENTS;
+
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.quant.VP8MakeLuma16Preds = function(it) {
   var enc = it.enc;
   var left = it.x ? enc.yLeft : null;
   var top = it.y ? enc.yTop.subarray(it.x * 16) : null;
-  VP8EncPredLuma16(it.yuvP, left, top);
+  vp8.dsp.VP8EncPredLuma16(it.yuvP, left, top);
 };
 
-var MID_ALPHA = 64;      // neutral value for susceptibility
-var MIN_ALPHA = 30;      // lowest usable value for susceptibility
-var MAX_ALPHA = 100;     // higher meaninful value for susceptibility
+vp8.quant.MID_ALPHA = 64;      // neutral value for susceptibility
+vp8.quant.MIN_ALPHA = 30;      // lowest usable value for susceptibility
+vp8.quant.MAX_ALPHA = 100;     // higher meaninful value for susceptibility
 
-var SNS_TO_DQ = 0.9;     // Scaling constant between the sns value and the QP
+vp8.quant.SNS_TO_DQ = 0.9;     // Scaling constant between the sns value and the QP
                          // power-law modulation. Must be strictly less than 1.
 
-kZigzag = new Uint8Array([
+vp8.quant.kZigzag = new Uint8Array([
   0, 1, 4, 8, 5, 2, 3, 6, 9, 12, 13, 10, 7, 11, 14, 15
 ]);
 
-kDcTable = new Uint8Array([
+vp8.quant.kDcTable = new Uint8Array([
   4,     5,   6,   7,   8,   9,  10,  10,
   11,   12,  13,  14,  15,  16,  17,  17,
   18,   19,  20,  20,  21,  21,  22,  22,
@@ -53,7 +60,7 @@ kDcTable = new Uint8Array([
   138, 140, 143, 145, 148, 151, 154, 157
 ]);
 
-kAcTable = new Uint16Array([
+vp8.quant.kAcTable = new Uint16Array([
   4,     5,   6,   7,   8,   9,  10,  11,
   12,   13,  14,  15,  16,  17,  18,  19,
   20,   21,  22,  23,  24,  25,  26,  27,
@@ -72,7 +79,7 @@ kAcTable = new Uint16Array([
   249, 254, 259, 264, 269, 274, 279, 284
 ]);
 
-kAcTable2 = new Uint16Array([
+vp8.quant.kAcTable2 = new Uint16Array([
   8,     8,   9,  10,  12,  13,  15,  17,
   18,   20,  21,  23,  24,  26,  27,  29,
   31,   32,  34,  35,  37,  38,  40,  41,
@@ -92,7 +99,7 @@ kAcTable2 = new Uint16Array([
 ]);
 
 // TODO(skal): tune more. Coeff thresholding?
-kBiasMatrices = [  // [3] = [luma-ac,luma-dc,chroma]
+vp8.quant.kBiasMatrices = [  // [3] = [luma-ac,luma-dc,chroma]
   [ 96, 96, 96, 96,
     96, 96, 96, 96,
     96, 96, 96, 96,
@@ -109,7 +116,7 @@ kBiasMatrices = [  // [3] = [luma-ac,luma-dc,chroma]
 
 // Sharpening by (slightly) raising the hi-frequency coeffs (only for trellis).
 // Hack-ish but helpful for mid-bitrate range. Use with care.
-kFreqSharpening = new Uint8Array([
+vp8.quant.kFreqSharpening = new Uint8Array([
   0,  30, 60, 90,
   30, 60, 90, 90,
   60, 90, 90, 90,
@@ -121,46 +128,46 @@ kFreqSharpening = new Uint8Array([
 
 // Returns the average quantizer
 /**
- * @param {VP8Matrix} m
+ * @param {webp.vp8.encode.VP8Matrix} m
  * @param {number} type
  * @return {number}
  */
-ExpandMatrix = function(m, type) {
+vp8.quant.ExpandMatrix = function(m, type) {
   var sum = 0;
   for (var i = 2; i < 16; ++i) {
     m.q[i] = m.q[1];
   }
   for (var i = 0; i < 16; ++i) {
-    var j = kZigzag[i];
-    var bias = kBiasMatrices[type][j];
-    m.iq[j] = (1 << QFIX) / m.q[j];
-    m.bias[j] = BIAS(bias);
+    var j = vp8.quant.kZigzag[i];
+    var bias = vp8.quant.kBiasMatrices[type][j];
+    m.iq[j] = (1 << constants.QFIX) / m.q[j];
+    m.bias[j] = vp8.utils.BIAS(bias);
     // TODO(skal): tune kCoeffThresh[]
     m.zthresh[j] = ((256 - bias) * m.q[j] + 127) >> 8;
-    m.sharpen[j] = (kFreqSharpening[j] * m.q[j]) >> 11;
+    m.sharpen[j] = (vp8.quant.kFreqSharpening[j] * m.q[j]) >> 11;
     sum += m.q[j];
   }
   return (sum + 8) >> 4;
 };
 
-/** @param {VP8Encoder} enc */
-SetupMatrices = function(enc) {
+/** @param {webp.vp8.encode.VP8Encoder} enc */
+vp8.quant.SetupMatrices = function(enc) {
   var numSegments = enc.segmentHdr.numSegments;
   for (var i = 0; i < numSegments; ++i) {
     var m = enc.dqm[i];
     var q = m.quant;
-    m.y1.q[0] = kDcTable[CLIP(q + enc.dqY1Dc, 0, 127)];
-    m.y1.q[1] = kAcTable[CLIP(q,              0, 127)];
+    m.y1.q[0] = vp8.quant.kDcTable[vp8.utils.CLIP(q + enc.dqY1Dc, 0, 127)];
+    m.y1.q[1] = vp8.quant.kAcTable[vp8.utils.CLIP(q,              0, 127)];
 
-    m.y2.q[0] = kDcTable[ CLIP(q + enc.dqY2Dc, 0, 127)] * 2;
-    m.y2.q[1] = kAcTable2[CLIP(q + enc.dqY2Ac, 0, 127)];
+    m.y2.q[0] = vp8.quant.kDcTable[ vp8.utils.CLIP(q + enc.dqY2Dc, 0, 127)] * 2;
+    m.y2.q[1] = vp8.quant.kAcTable2[vp8.utils.CLIP(q + enc.dqY2Ac, 0, 127)];
 
-    m.uv.q[0] = kDcTable[CLIP(q + enc.dqUvDc, 0, 117)];
-    m.uv.q[1] = kAcTable[CLIP(q + enc.dqUvAc, 0, 127)];
+    m.uv.q[0] = vp8.quant.kDcTable[vp8.utils.CLIP(q + enc.dqUvDc, 0, 117)];
+    m.uv.q[1] = vp8.quant.kAcTable[vp8.utils.CLIP(q + enc.dqUvAc, 0, 127)];
 
-    var q4  = ExpandMatrix(m.y1, 0);
-    var q16 = ExpandMatrix(m.y2, 1);
-    var quv = ExpandMatrix(m.uv, 2);
+    var q4  = vp8.quant.ExpandMatrix(m.y1, 0);
+    var q16 = vp8.quant.ExpandMatrix(m.y2, 1);
+    var quv = vp8.quant.ExpandMatrix(m.uv, 2);
 
     // TODO: Switch to kLambda*[] tables?
     {
@@ -179,8 +186,8 @@ SetupMatrices = function(enc) {
 //------------------------------------------------------------------------------
 // Initialize filtering parameters
 
-/** @param {VP8Encoder} enc */
-SetupFilterStrength = function(enc) {
+/** @param {webp.vp8.encode.VP8Encoder} enc */
+vp8.quant.SetupFilterStrength = function(enc) {
   for (var i = 0; i < NUM_MB_SEGMENTS; ++i) {
     enc.dqm[i].fstrength = 0;
   }
@@ -194,8 +201,8 @@ SetupFilterStrength = function(enc) {
 
 // Note: if you change the values below, remember that the max range
 // allowed by the syntax for DQ_UV is [-16,16].
-var MAX_DQ_UV = 6;
-var MIN_DQ_UV = -4;
+vp8.quant.MAX_DQ_UV = 6;
+vp8.quant.MIN_DQ_UV = -4;
 
 // We want to emulate jpeg-like behaviour where the expected "good" quality
 // is around q=75. Internally, our "good" middle is around c=50. So we
@@ -204,19 +211,19 @@ var MIN_DQ_UV = -4;
  * @param {number} q
  * @return {number}
  */
-QualityToCompression = function(q) {
+vp8.quant.QualityToCompression = function(q) {
   var c = q / 100.;
   return (c < 0.75) ? c * (2. / 3.) : 2. * c - 1.;
 };
 
 /**
- * @param {VP8Encoder} enc
+ * @param {webp.vp8.encode.VP8Encoder} enc
  * @param {number} quality
  */
-VP8SetSegmentParams = function(enc, quality) {
+vp8.quant.VP8SetSegmentParams = function(enc, quality) {
   var numSegments = enc.config.segments;
-  var amp = SNS_TO_DQ * enc.config.snsStrength / 100. / 128.;
-  var cBase = QualityToCompression(quality);
+  var amp = vp8.quant.SNS_TO_DQ * enc.config.snsStrength / 100. / 128.;
+  var cBase = vp8.quant.QualityToCompression(quality);
   for (var i = 0; i < numSegments; ++i) {
     // The file size roughly scales as pow(quantizer, 3.). Actually, the
     // exponent is somewhere between 2.8 and 3.2, but we're mostly interested
@@ -229,11 +236,11 @@ VP8SetSegmentParams = function(enc, quality) {
     // more.
     var expn = (1. - amp * enc.dqm[i].alpha) / 3.;
     var c = Math.pow(cBase, expn);
-    var q = parseInt(127. * (1. - c));
+    var q = parseInt(127. * (1. - c), 10);
     if (expn <= 0.) {
       throw Error('Invalid condition');
     }
-    enc.dqm[i].quant = CLIP(q, 0, 127);
+    enc.dqm[i].quant = vp8.utils.CLIP(q, 0, 127);
   }
 
   // purely indicative in the bitstream (except for the 1-segment case)
@@ -247,17 +254,17 @@ VP8SetSegmentParams = function(enc, quality) {
   // uv_alpha_ is normally spread around ~60. The useful range is
   // typically ~30 (quite bad) to ~100 (ok to decimate UV more).
   // We map it to the safe maximal range of MAX/MIN_DQ_UV for dq_uv.
-  var dqUvAc = parseInt((enc.uvAlpha - MID_ALPHA) * (MAX_DQ_UV - MIN_DQ_UV)
-                          / (MAX_ALPHA - MIN_ALPHA));
+  var dqUvAc = parseInt((enc.uvAlpha - vp8.quant.MID_ALPHA) * (vp8.quant.MAX_DQ_UV - vp8.quant.MIN_DQ_UV)
+                          / (vp8.quant.MAX_ALPHA - vp8.quant.MIN_ALPHA), 10);
   // we rescale by the user-defined strength of adaptation
-  dqUvAc = parseInt(dqUvAc * enc.config.snsStrength / 100);
+  dqUvAc = parseInt(dqUvAc * enc.config.snsStrength / 100, 10);
   // and make it safe.
-  dqUvAc = CLIP(dqUvAc, MIN_DQ_UV, MAX_DQ_UV);
+  dqUvAc = vp8.utils.CLIP(dqUvAc, vp8.quant.MIN_DQ_UV, vp8.quant.MAX_DQ_UV);
   // We also boost the dc-uv-quant a little, based on sns-strength, since
   // U/V channels are quite more reactive to high quants (flat DC-blocks
   // tend to appear, and are displeasant).
-  var dqUvDc = parseInt(-4 * enc.config.snsStrength / 100);
-  dqUvDc = CLIP(dqUvDc, -15, 15);   // 4bit-signed max allowed
+  var dqUvDc = parseInt(-4 * enc.config.snsStrength / 100, 10);
+  dqUvDc = vp8.utils.CLIP(dqUvDc, -15, 15);   // 4bit-signed max allowed
 
   enc.dqY1Dc = 0;       // TODO(skal): dq-lum
   enc.dqY2Dc = 0;
@@ -265,35 +272,35 @@ VP8SetSegmentParams = function(enc, quality) {
   enc.dqUvDc = dqUvDc;
   enc.dqUvAc = dqUvAc;
 
-  SetupMatrices(enc);
+  vp8.quant.SetupMatrices(enc);
 
-  SetupFilterStrength(enc);   // initialize segments' filtering, eventually
+  vp8.quant.SetupFilterStrength(enc);   // initialize segments' filtering, eventually
 };
 
-/** @param {VP8EncIterator} it */
-VP8MakeChroma8Preds = function(it) {
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.quant.VP8MakeChroma8Preds = function(it) {
   var enc = it.enc;
   var left = it.x ? enc.uLeft : null;
   var top = it.y ? enc.uvTop.subarray(it.x * 16) : null;
-  VP8EncPredChroma8(it.yuvP, left, top);
+  vp8.dsp.VP8EncPredChroma8(it.yuvP, left, top);
 };
 
-/** @param {VP8EncIterator} it */
-VP8MakeIntra4Preds = function(it) {
-  VP8EncPredLuma4(it.yuvP, it.i4Top);
+/** @param {webp.vp8.iterator.VP8EncIterator} it */
+vp8.quant.VP8MakeIntra4Preds = function(it) {
+  vp8.dsp.VP8EncPredLuma4(it.yuvP, it.i4Top);
 };
 
 //------------------------------------------------------------------------------
 // Distortion measurement
 
 // Init/Copy the common fields in score.
-/** @param {VP8ModeScore} rd */
-InitScore = function(rd) {
+/** @param {webp.vp8.encode.VP8ModeScore} rd */
+vp8.quant.InitScore = function(rd) {
   rd.D  = 0;
   rd.SD = 0;
   rd.R  = 0;
   rd.nz = 0;
-  rd.score = MAX_COST;
+  rd.score = constants.MAX_COST;
 };
 
 //------------------------------------------------------------------------------
@@ -302,36 +309,39 @@ InitScore = function(rd) {
 // quantized levels in *levels.
 
 /**
- * @param {VP8EncIterator} it
- * @param {VP8ModeScore} rd
+ * @param {webp.vp8.iterator.VP8EncIterator} it
+ * @param {webp.vp8.encode.VP8ModeScore} rd
  * @param {Uint8Array} yuvOut
  * @param {number} mode
  */
-ReconstructIntra16 = function(it, rd, yuvOut, mode) {
+vp8.quant.ReconstructIntra16 = function(it, rd, yuvOut, mode) {
   var enc = it.enc;
-  var refOffset = VP8I16ModeOffsets[mode];
+  var refOffset = constants.VP8I16ModeOffsets[mode];
   var dqm = enc.dqm[enc.mbInfo[it.mbIdx].segment];
   var nz = 0;
   var tmp = new Int16Array(16 * 16);
   var dcTmp = new Int16Array(16);
 
   for (var n = 0; n < 16; ++n) {
-    VP8FTransform(it.yuvIn.subarray(Y_OFF + VP8Scan[n]),
-                  it.yuvP.subarray(refOffset + VP8Scan[n]),
-                  tmp.subarray(n * 16));
+    vp8.dsp.VP8FTransform(
+      it.yuvIn.subarray(Y_OFF + constants.VP8Scan[n]),
+      it.yuvP.subarray(refOffset + constants.VP8Scan[n]),
+      tmp.subarray(n * 16));
   }
-  VP8FTransformWHT(tmp, dcTmp);
-  nz |= VP8EncQuantizeBlock(dcTmp, rd.yDcLevels, 0, dqm.y2) << 24;
+  vp8.dsp.VP8FTransformWHT(tmp, dcTmp);
+  nz |= vp8.dsp.VP8EncQuantizeBlock(dcTmp, rd.yDcLevels, 0, dqm.y2) << 24;
 
   for (var n = 0; n < 16; ++n) {
-    nz |= VP8EncQuantizeBlock(tmp.subarray(n * 16), rd.yAcLevels[n], 1, dqm.y1) << n;
+    nz |= vp8.dsp.VP8EncQuantizeBlock(tmp.subarray(n * 16), rd.yAcLevels[n], 1, dqm.y1) << n;
   }
 
   // Transform back
-  VP8ITransformWHT(dcTmp, tmp);
+  vp8.dsp.VP8ITransformWHT(dcTmp, tmp);
   for (var n = 0; n < 16; n += 2) {
-    VP8ITransform(it.yuvP.subarray(refOffset + VP8Scan[n]), tmp.subarray(n * 16),
-                  yuvOut.subarray(VP8Scan[n]), 1);
+    vp8.dsp.VP8ITransform(
+        it.yuvP.subarray(refOffset + constants.VP8Scan[n]),
+        tmp.subarray(n * 16),
+        yuvOut.subarray(constants.VP8Scan[n]), true);
   }
 
   return nz;
@@ -343,50 +353,53 @@ ReconstructIntra16 = function(it, rd, yuvOut, mode) {
 //                              uint8_t* const yuv_out,
 //                              int mode) {
 /**
- * @param {VP8EncIterator} it
+ * @param {webp.vp8.iterator.VP8EncIterator} it
  * @param {Int16Array} levels
  * @param {Uint8Array} src
  * @param {Uint8Array} yuvOut
  * @param {number} mode
  * @return {number}
  */
-ReconstructIntra4 = function(it, levels, src, yuvOut, mode) {
+vp8.quant.ReconstructIntra4 = function(it, levels, src, yuvOut, mode) {
   var enc = it.enc;
-  var ref = it.yuvP.subarray(VP8I4ModeOffsets[mode]);
+  var ref = it.yuvP.subarray(constants.VP8I4ModeOffsets[mode]);
   var dqm = enc.dqm[enc.mbInfo[it.mbIdx].segment];
   var tmp = new Int16Array(16);
 
-  VP8FTransform(src, ref, tmp);
-  var nz = VP8EncQuantizeBlock(tmp, levels, 0, dqm.y1);
-  VP8ITransform(ref, tmp, yuvOut, 0);
+  vp8.dsp.VP8FTransform(src, ref, tmp);
+  var nz = vp8.dsp.VP8EncQuantizeBlock(tmp, levels, 0, dqm.y1);
+  vp8.dsp.VP8ITransform(ref, tmp, yuvOut, false);
   return nz;
 };
 
 /**
- * @param {VP8EncIterator} it
- * @param {VP8ModeScore} rd
+ * @param {webp.vp8.iterator.VP8EncIterator} it
+ * @param {webp.vp8.encode.VP8ModeScore} rd
  * @param {Uint8Array} yuvOut
  * @param {number} mode
  * @return {number}
  */
-ReconstructUV = function(it, rd, yuvOut, mode) {
+vp8.quant.ReconstructUV = function(it, rd, yuvOut, mode) {
   var enc = it.enc;
-  var refOffset = VP8UVModeOffsets[mode];
+  var refOffset = constants.VP8UVModeOffsets[mode];
   var dqm = enc.dqm[enc.mbInfo[it.mbIdx].segment];
   var nz = 0;
   var tmp = new Int16Array(8 * 16);
 
   for (var n = 0; n < 8; ++n) {
-    VP8FTransform(it.yuvIn.subarray(U_OFF + VP8Scan[16 + n]),
-                  it.yuvP.subarray(refOffset + VP8Scan[16 + n]),
-                  tmp.subarray(16 * n));
+    vp8.dsp.VP8FTransform(
+      it.yuvIn.subarray(U_OFF + constants.VP8Scan[16 + n]),
+      it.yuvP.subarray(refOffset + constants.VP8Scan[16 + n]),
+      tmp.subarray(16 * n));
   }
   for (var n = 0; n < 8; ++n) {
-    nz |= VP8EncQuantizeBlock(tmp.subarray(16 * n), rd.uvLevels[n], 0, dqm.uv) << n;
+    nz |= vp8.dsp.VP8EncQuantizeBlock(tmp.subarray(16 * n), rd.uvLevels[n], 0, dqm.uv) << n;
   }
   for (var n = 0; n < 8; n += 2) {
-    VP8ITransform(it.yuvP.subarray(refOffset + VP8Scan[16 + n]), tmp.subarray(16 *n),
-                  yuvOut.subarray(VP8Scan[16 + n]), 1);
+    vp8.dsp.VP8ITransform(
+      it.yuvP.subarray(refOffset + constants.VP8Scan[16 + n]),
+      tmp.subarray(16 * n),
+      yuvOut.subarray(constants.VP8Scan[16 + n]), true);
   }
   return (nz << 16);
 };
@@ -395,28 +408,28 @@ ReconstructUV = function(it, rd, yuvOut, mode) {
 // Final reconstruction and quantization.
 
 /**
- * @param {VP8EncIterator} it
- * @param {VP8ModeScore} rd
+ * @param {webp.vp8.iterator.VP8EncIterator} it
+ * @param {webp.vp8.encode.VP8ModeScore} rd
  */
-SimpleQuantize = function(it, rd) {
+vp8.quant.SimpleQuantize = function(it, rd) {
   var enc = it.enc;
   var i16 = (enc.mbInfo[it.mbIdx].type == 1);
   var nz = 0;
 
   if (i16) {
-    nz = ReconstructIntra16(it, rd, it.yuvOut.subarray(Y_OFF), it.preds[0]);
+    nz = vp8.quant.ReconstructIntra16(it, rd, it.yuvOut.subarray(Y_OFF), it.preds[0]);
   } else {
-    VP8IteratorStartI4(it);
+    vp8.iterator.VP8IteratorStartI4(it);
     do {
       var mode = it.preds[(it.i4 & 3) + (it.i4 >> 2) * enc.predsW];
-      var src = it.yuvIn.subarray(Y_OFF + VP8Scan[it.i4]);
-      var dst = it.yuvOut.subarray(Y_OFF + VP8Scan[it.i4]);
-      VP8MakeIntra4Preds(it);
-      nz |= ReconstructIntra4(it, rd.yAcLevels[it.i4], src, dst, mode) << it.i4;
-    } while (VP8IteratorRotateI4(it, it.yuvOut.subarray(Y_OFF)));
+      var src = it.yuvIn.subarray(Y_OFF + constants.VP8Scan[it.i4]);
+      var dst = it.yuvOut.subarray(Y_OFF + constants.VP8Scan[it.i4]);
+      vp8.quant.VP8MakeIntra4Preds(it);
+      nz |= vp8.quant.ReconstructIntra4(it, rd.yAcLevels[it.i4], src, dst, mode) << it.i4;
+    } while (vp8.iterator.VP8IteratorRotateI4(it, it.yuvOut.subarray(Y_OFF)));
   }
 
-  nz |= ReconstructUV(it, rd, it.yuvOut.subarray(U_OFF),
+  nz |= vp8.quant.ReconstructUV(it, rd, it.yuvOut.subarray(U_OFF),
       enc.mbInfo[it.mbIdx].uvMode);
   rd.nz = nz;
 };
@@ -425,21 +438,21 @@ SimpleQuantize = function(it, rd) {
 // Entry point
 
 /**
- * @param {VP8EncIterator} it
- * @param {VP8ModeScore} rd
+ * @param {webp.vp8.iterator.VP8EncIterator} it
+ * @param {webp.vp8.encode.VP8ModeScore} rd
  * @return {boolean}
  */
-VP8Decimate = function(it, rd) {
-  InitScore(rd);
+vp8.quant.VP8Decimate = function(it, rd) {
+  vp8.quant.InitScore(rd);
 
   // We can perform predictions for Luma16x16 and Chroma8x8 already.
   // Luma4x4 predictions needs to be done as-we-go.
-  VP8MakeLuma16Preds(it);
-  VP8MakeChroma8Preds(it);
+  vp8.quant.VP8MakeLuma16Preds(it);
+  vp8.quant.VP8MakeChroma8Preds(it);
 
-  SimpleQuantize(it, rd);
+  vp8.quant.SimpleQuantize(it, rd);
   var isSkipped = (rd.nz == 0);
-  VP8SetSkip(it, isSkipped);
+  vp8.iterator.VP8SetSkip(it, isSkipped ? 1 : 0);
   return isSkipped;
 };
 

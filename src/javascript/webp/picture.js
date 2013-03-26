@@ -5,27 +5,28 @@
  * which is provided with a BSD license.  See COPYING.
  */
 
-goog.provide('webp.Picture');
+goog.provide('webp.picture');
 
-goog.require('webp.vp8.Constants');
-goog.require('webp.vp8.Types');
-goog.require('webp.vp8.Utils');
+goog.require('webp.vp8.constants');
 goog.require('webp.vp8.debug');
+goog.require('webp.vp8.types');
+goog.require('webp.vp8.utils');
 
-var WebPPicture;
 
 goog.scope(function() {
 
+var constants = webp.vp8.constants;
 var debug = webp.vp8.debug;
+var vp8 = webp.vp8;
 
 /** @constructor */
-WebPPicture = function() {
+webp.picture.WebPPicture = function() {
   //   INPUT
   //////////////
 
   // YUV input (mostly used for input to lossy compression)
   // colorspace: should be YUV420 for now (=Y'CbCr).
-  this.colorspace = WebPEncCSP.WEBP_YUV420;
+  this.colorspace = vp8.types.WebPEncCSP.WEBP_YUV420;
 
   // int width, height;         // dimensions (less or equal to WEBP_MAX_DIMENSION)
   this.width = 0;
@@ -65,8 +66,8 @@ WebPPicture = function() {
   // void* memory_;          // row chunk of memory for yuva planes
 };
 
-HALVE = function(x) {
-  return parseInt(((x) + 1) >> 1);
+webp.picture.HALVE = function(x) {
+  return parseInt(((x) + 1) >> 1, 10);
 };
 
 //------------------------------------------------------------------------------
@@ -74,21 +75,21 @@ HALVE = function(x) {
 //------------------------------------------------------------------------------
 
 /**
- * @param {WebPPicture} picture
+ * @param {webp.picture.WebPPicture} picture
  * @return {boolean}
  */
-WebPPictureAlloc = function(picture) {
-  var uvCsp = picture.colorspace & WebPEncCSP.WEBP_CSP_UV_MASK;
+webp.picture.WebPPictureAlloc = function(picture) {
+  var uvCsp = picture.colorspace & vp8.types.WebPEncCSP.WEBP_CSP_UV_MASK;
   var width = picture.width;
   var height = picture.height;
 
   var yStride = width;
-  var uvWidth = HALVE(width);
-  var uvHeight = HALVE(height);
+  var uvWidth = webp.picture.HALVE(width);
+  var uvHeight = webp.picture.HALVE(height);
   var uvStride = uvWidth;
 
   // U/V
-  if (uvCsp != WebPEncCSP.WEBP_YUV420) {
+  if (uvCsp != vp8.types.WebPEncCSP.WEBP_YUV420) {
     return false;
   }
 
@@ -103,7 +104,7 @@ WebPPictureAlloc = function(picture) {
     return false;
   }
   // Clear previous buffer and allocate a new one.
-  WebPPictureFree(picture);   // erase previous buffer
+  webp.picture.WebPPictureFree(picture);   // erase previous buffer
 
   // From now on, we're in the clear, we can no longer fail...
   picture.yStride  = yStride;
@@ -120,28 +121,30 @@ WebPPictureAlloc = function(picture) {
 // 'picture' object.
 // Note that, by default, use_argb is false and colorspace is WEBP_YUV420.
 /**
- * @param {WebPPicture} picture
+ * @param {webp.picture.WebPPicture} picture
  * @return {boolean}
  */
-WebPPictureInit = function(picture) {
-  return WebPPictureInitInternal(picture, WEBP_ENCODER_ABI_VERSION);
+webp.picture.WebPPictureInit = function(picture) {
+  return webp.picture.WebPPictureInitInternal(picture,
+      constants.WEBP_ENCODER_ABI_VERSION);
 };
 
 /**
- * @param {WebPPicture} picture
+ * @param {webp.picture.WebPPicture} picture
  * @param {number} version
  * @return {boolean}
  */
-WebPPictureInitInternal = function(picture, version) {
-  if (WEBP_ABI_IS_INCOMPATIBLE(version, WEBP_ENCODER_ABI_VERSION)) {
+webp.picture.WebPPictureInitInternal = function(picture, version) {
+  if (vp8.utils.WEBP_ABI_IS_INCOMPATIBLE(
+      version, constants.WEBP_ENCODER_ABI_VERSION)) {
     return false;   // caller/system version mismatch!
   }
   return true;
 };
 
 // Release memory owned by 'picture' (both YUV and ARGB buffers).
-/** @param {WebPPicture} picture */
-WebPPictureFree = function(picture) {
+/** @param {webp.picture.WebPPicture} picture */
+webp.picture.WebPPictureFree = function(picture) {
   if (picture) {
     picture.y = null;
     picture.u = null;
@@ -153,30 +156,30 @@ WebPPictureFree = function(picture) {
 };
 
 /**
- * @param {WebPPicture} picture
+ * @param {webp.picture.WebPPicture} picture
  * @param {Uint8Array} rgba
  * @param {number} rgbStride
  * @return {boolean}
  */
-WebPPictureImportRGBA = function(picture, rgba, rgbStride) {
-  return Import(picture, rgba, rgbStride, 4);
+webp.picture.WebPPictureImportRGBA = function(picture, rgba, rgbStride) {
+  return webp.picture.Import(picture, rgba, rgbStride, 4);
 };
 
 /**
- * @param {WebPPicture} picture
+ * @param {webp.picture.WebPPicture} picture
  * @param {Uint8Array} rgb
  * @param {number} rgbStride
  * @param {number} step
  * @return {boolean}
  */
-Import = function(picture, rgb, rgbStride, step) {
+webp.picture.Import = function(picture, rgb, rgbStride, step) {
   var rBuf = rgb.subarray(0);  // uint8_t*
   var gBuf = rgb.subarray(1);  // uint8_t*
   var bBuf = rgb.subarray(2);  // uint8_t*
   var width = picture.width;
   var height = picture.height;
 
-  return ImportYUVAFromRGBA(rBuf, gBuf, bBuf, step, rgbStride, picture);
+  return webp.picture.ImportYUVAFromRGBA(rBuf, gBuf, bBuf, step, rgbStride, picture);
 };
 
 /**
@@ -185,24 +188,24 @@ Import = function(picture, rgb, rgbStride, step) {
  * @param {Uint8Array} bBuf
  * @param {number} step bytes per pixel
  * @param {number} rgbStride bytes per scanline
- * @param {WebPPicture} picture
+ * @param {webp.picture.WebPPicture} picture
  * @return {boolean}
  */
-ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, picture) {
-  var uvCsp = picture.colorspace & WebPEncCSP.WEBP_CSP_UV_MASK;
+webp.picture.ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, picture) {
+  var uvCsp = picture.colorspace & vp8.types.WebPEncCSP.WEBP_CSP_UV_MASK;
   var width = picture.width;
   var height = picture.height;
 
   picture.colorspace = uvCsp;
-  if (!WebPPictureAlloc(picture)) {
-    return 0;
+  if (!webp.picture.WebPPictureAlloc(picture)) {
+    return false;
   }
 
   // Import luma plane
   for (var y = 0; y < height; ++y) {
     for (var x = 0; x < width; ++x) {
       var offset = step * x + y * rgbStride;
-      picture.y[x + y * picture.yStride] = VP8RGBToY(
+      picture.y[x + y * picture.yStride] = vp8.utils.VP8RGBToY(
           rBuf[offset], gBuf[offset], bBuf[offset]);
     }
   }
@@ -226,8 +229,8 @@ ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, picture) {
     var r = sumFn(rBuf, src);
     var g = sumFn(gBuf, src);
     var b = sumFn(bBuf, src);
-    picture.u[dst] = VP8RGBToU(r, g, b);
-    picture.v[dst] = VP8RGBToV(r, g, b);
+    picture.u[dst] = vp8.utils.VP8RGBToU(r, g, b);
+    picture.v[dst] = vp8.utils.VP8RGBToV(r, g, b);
   }
 
   // Downsample U/V plane
@@ -256,7 +259,7 @@ ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, picture) {
               "v", debug.checksumArray("v", 0, picture.v))
   }
 
-  return 1;
+  return true;
 };
 
 });
