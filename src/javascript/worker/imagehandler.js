@@ -87,9 +87,11 @@ pics3.worker.ImageHandler.prototype.handleEncodeWebpRpc_ = function(request) {
   var stride = request['stride'];
   var rgbaBuffer = request['rgbaBuffer'];
   var quality = request['quality'];
+  var fast = request['fast'];
 
   var webpEncoder = new webp.Encoder();
   webpEncoder.setQuality(quality);
+  webpEncoder.setFast(fast);
   if (!webpEncoder.encodeFromRgba(rgbaBuffer, width, height, stride)) {
     return goog.async.Deferred.fail(Error('Error encoding Webp'));
   }

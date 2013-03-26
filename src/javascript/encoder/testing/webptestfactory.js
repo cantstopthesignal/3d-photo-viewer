@@ -30,7 +30,7 @@ WebpTestFactory.FallbackAsyncEncoder = function() {
 
 /** @override */
 WebpTestFactory.FallbackAsyncEncoder.prototype.encodeAsync = function(
-    canvasEl, quality) {
+    canvasEl, quality, fast) {
   var width = parseInt(canvasEl.getAttribute('width'));
   var height = parseInt(canvasEl.getAttribute('height'));
   var canvasCtx = canvasEl.getContext('2d');
@@ -39,6 +39,7 @@ WebpTestFactory.FallbackAsyncEncoder.prototype.encodeAsync = function(
   var stride = 4 * width;
   var webpEncoder = new webp.Encoder();
   webpEncoder.setQuality(quality);
+  webpEncoder.setFast(fast);
   if (!webpEncoder.encodeFromRgba(rgbaBuffer, width, height, stride)) {
     return goog.async.Deferred.fail(Error('Error encoding Webp'));
   }

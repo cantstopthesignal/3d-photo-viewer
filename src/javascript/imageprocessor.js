@@ -79,9 +79,11 @@ pics3.ImageProcessor.prototype.getWebpAsyncEncoder = function() {
  * encoder.
  * @param {Element} canvasEl Canvas element holding the image data.
  * @param {number} quality
+ * @param {boolean} fast
  * @return {!goog.async.Deferred} producing {pics3.encoder.Webp.Image}
  */
-pics3.ImageProcessor.prototype.encodeWebpAsync = function(canvasEl, quality) {
+pics3.ImageProcessor.prototype.encodeWebpAsync = function(canvasEl, quality,
+    fast) {
   var width = parseInt(canvasEl.getAttribute('width'), 10);
   var height = parseInt(canvasEl.getAttribute('height'), 10);
   var canvasCtx = canvasEl.getContext('2d');
@@ -93,7 +95,8 @@ pics3.ImageProcessor.prototype.encodeWebpAsync = function(canvasEl, quality) {
     'height': height,
     'stride': 4 * width,
     'rgbaBuffer': rgbaBuffer,
-    'quality': quality
+    'quality': quality,
+    'fast': fast
   };
   var rpcMessage = new pics3.worker.RpcMessage(
       pics3.worker.RpcMessage.Type.ENCODE_WEBP, request);

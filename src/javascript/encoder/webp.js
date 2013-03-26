@@ -76,6 +76,9 @@ Webp.prototype.maxImageHeight_;
 Webp.prototype.quality_ = 0.8;
 
 /** @type {boolean} */
+Webp.prototype.fast_ = true;
+
+/** @type {boolean} */
 Webp.prototype.browserHasWebpSupport_;
 
 Webp.prototype.updateMaxImageSize_ = function() {
@@ -324,7 +327,8 @@ Webp.prototype.encodeFromCanvas_ = function(canvasEl) {
     this.image_ = new pics3.encoder.Webp.Image(dataUrl, width, height);
     return goog.async.Deferred.succeed();
   } else {
-    return this.fallbackEncoder_.encodeAsync(canvasEl, this.quality_ * 100).
+    return this.fallbackEncoder_.encodeAsync(canvasEl, this.quality_ * 100,
+        this.fast_).
         addCallback(this.wrapSafe(function(image) {
           this.image_ = image;
         }), this);
@@ -350,6 +354,7 @@ Webp.AsyncEncoder = function() {};
  * Encode an image to a webp version asynchronously.
  * @param {Element} canvasEl Canvas element holding the image data.
  * @param {number} quality
+ * @param {boolean} fast
  * @return {!goog.async.Deferred} producing {pics3.encoder.Webp.Image}
  */
 Webp.AsyncEncoder.prototype.encodeAsync = goog.abstractMethod;
