@@ -46,6 +46,7 @@ pics3.worker.Worker.prototype.start = function() {
 pics3.worker.Worker.prototype.registerHandlers_ = function() {
   var imageHandler = new pics3.worker.ImageHandler();
   this.handlerMap_[pics3.worker.RpcMessage.Type.PARSE_IMAGE] = imageHandler;
+  this.handlerMap_[pics3.worker.RpcMessage.Type.ENCODE_WEBP] = imageHandler;
 };
 
 /** @param {goog.events.Event} e */

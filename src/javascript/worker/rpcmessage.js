@@ -24,7 +24,8 @@ pics3.worker.RpcMessage = function(type, data, opt_id) {
 
 /** @enum {string} */
 pics3.worker.RpcMessage.Type = {
-  PARSE_IMAGE: 'PARSE_IMAGE'
+  PARSE_IMAGE: 'PARSE_IMAGE',
+  ENCODE_WEBP: 'ENCODE_WEBP'
 };
 
 /** @type {number} */

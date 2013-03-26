@@ -7,6 +7,7 @@
 
 goog.provide('webp.vp8.debug');
 
+goog.require('goog.dom');
 goog.require('webp.vp8.constants');
 
 

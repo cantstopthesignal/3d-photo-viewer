@@ -11,6 +11,7 @@ goog.require('goog.debug.Logger');
 goog.require('goog.events.EventHandler');
 goog.require('goog.events.EventType');
 goog.require('goog.math');
+goog.require('pics3.Photo');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.encoder.BaseEncoder');
 goog.require('pics3.parser.DataReader');
@@ -66,10 +67,10 @@ Webp.prototype.supportTransparency_ = false;
 Webp.prototype.enableNativeEncoder_ = true;
 
 /** @type {number} */
-Webp.prototype.maxImageWidth_ = 1920;
+Webp.prototype.maxImageWidth_;
 
 /** @type {number} */
-Webp.prototype.maxImageHeight_ = 1080;
+Webp.prototype.maxImageHeight_;
 
 /** @type {number} */
 Webp.prototype.quality_ = 0.8;
@@ -323,7 +324,7 @@ Webp.prototype.encodeFromCanvas_ = function(canvasEl) {
     this.image_ = new pics3.encoder.Webp.Image(dataUrl, width, height);
     return goog.async.Deferred.succeed();
   } else {
-    this.fallbackEncoder_.encodeAsync(canvasEl, this.quality_ * 100).
+    return this.fallbackEncoder_.encodeAsync(canvasEl, this.quality_ * 100).
         addCallback(this.wrapSafe(function(image) {
           this.image_ = image;
         }), this);
@@ -369,6 +370,24 @@ Webp.Image = function(dataUrl, width, height) {
 
   /** @type {number} */
   this.height = height;
+};
+
+/**
+ * @param {Object} object
+ * @return {!pics3.encoder.Webp.Image}
+ */
+Webp.Image.fromObject = function(object) {
+  return new Webp.Image(pics3.parser.DataUrl.fromObject(object['dataUrl']),
+      object['width'], object['height']);
+};
+
+/** @return {Object} */
+Webp.Image.prototype.toObject = function() {
+  return {
+    'dataUrl': this.dataUrl.toObject(),
+    'width': this.width,
+    'height': this.height
+  };
 };
 
 });

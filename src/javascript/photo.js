@@ -6,8 +6,12 @@ goog.require('goog.asserts');
 goog.require('goog.async.Deferred');
 goog.require('goog.events.EventTarget');
 goog.require('pics3.ImageProcessor');
+goog.require('pics3.PhotoId');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.loader.EventType');
+goog.require('pics3.loader.File');
+goog.require('pics3.loader.FileResult');
+goog.require('pics3.loader.ProgressEvent');
 goog.require('pics3.parser.DataUrl');
 
 
