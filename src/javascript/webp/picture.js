@@ -192,6 +192,7 @@ webp.picture.Import = function(picture, rgb, rgbStride, step) {
  * @return {boolean}
  */
 webp.picture.ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, picture) {
+  var debugTimer = debug.startTimer('webp.picture.ImportYUVAFromRGBA');
   var uvCsp = picture.colorspace & vp8.types.WebPEncCSP.WEBP_CSP_UV_MASK;
   var width = picture.width;
   var height = picture.height;
@@ -258,6 +259,7 @@ webp.picture.ImportYUVAFromRGBA = function(rBuf, gBuf, bBuf, step, rgbStride, pi
               "u", debug.checksumArray("u", 0, picture.u),
               "v", debug.checksumArray("v", 0, picture.v))
   }
+  debugTimer.report();
 
   return true;
 };

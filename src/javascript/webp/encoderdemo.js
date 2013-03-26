@@ -74,12 +74,16 @@ EncoderDemo.prototype.heightInputEl_;
 /** @type {Element} */
 EncoderDemo.prototype.qualityInputEl_;
 
+/** @type {Element} */
+EncoderDemo.prototype.fastCheckboxEl_;
+
 EncoderDemo.prototype.start = function() {
   this.image1RadioEl_ = document.getElementById('test-image1-radio');
   this.photo1RadioEl_ = document.getElementById('test-photo1-radio');
   this.widthInputEl_ = document.getElementById('width-input');
   this.heightInputEl_ = document.getElementById('height-input');
   this.qualityInputEl_ = document.getElementById('quality-input');
+  this.fastCheckboxEl_ = document.getElementById('fast-checkbox');
   this.imageSizeControlsEl_ = document.getElementById('image-size-controls');
 
   this.encodedWebpContainerEl_ = document.getElementById('encoded-webp-image');
@@ -97,6 +101,8 @@ EncoderDemo.prototype.start = function() {
       listen(this.heightInputEl_, goog.events.EventType.CHANGE,
           this.handleTestImageChange_).
       listen(this.qualityInputEl_, goog.events.EventType.CHANGE,
+          this.handleTestImageChange_).
+      listen(this.fastCheckboxEl_, goog.events.EventType.CHANGE,
           this.handleTestImageChange_);
 
   this.runDemo_();
@@ -164,6 +170,7 @@ EncoderDemo.prototype.encodeWebpImage_ = function() {
   var height = parseInt(this.canvasEl_.getAttribute('height'));
   var webpEncoder = new webp.Encoder();
   webpEncoder.setQuality(this.getQualityInputValue_());
+  webpEncoder.setFast(this.fastCheckboxEl_.checked);
   if (!webpEncoder.encode(this.canvasEl_)) {
     throw Error('Error encoding Webp');
   }

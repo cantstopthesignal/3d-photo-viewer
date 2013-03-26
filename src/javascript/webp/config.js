@@ -27,6 +27,9 @@ webp.config.WebPConfig = function() {
 
   // int sns_strength;       // Spatial Noise Shaping. 0=off, 100=maximum.
   this.snsStrength = 0;
+
+  // Encode as fast as possible, making sacrifices
+  this.fastAndDirty = 0;
 };
 
 // Should always be called, to initialize a fresh WebPConfig structure before

@@ -38,6 +38,9 @@ webp.Encoder = function() {
 
   /** @type {number} */
   this.quality_ = 90;
+
+  /** @type {boolean} */
+  this.fast_ = false;
 };
 var Encoder = webp.Encoder;
 
@@ -49,6 +52,11 @@ Encoder.prototype.setQuality = function(quality) {
   goog.asserts.assert(quality >= 1 && quality <= 100,
       'Quality should be between 1 and 100');
   this.quality_ = quality;
+};
+
+/** @param {boolean} fast */
+Encoder.prototype.setFast = function(fast) {
+  this.fast_ = fast;
 };
 
 /** @return {!Uint8Array} */
@@ -95,6 +103,7 @@ Encoder.prototype.encodeFromRgba = function(rgbaBuffer, width, height, stride) {
     throw Error('WebPConfigInit error');
   }
   config.quality = this.quality_;
+  config.fastAndDirty = this.fast_;
 
   debug.log("====================== START ======================");
 

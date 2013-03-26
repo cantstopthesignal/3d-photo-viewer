@@ -291,6 +291,7 @@ vp8.syntax.GeneratePartition0 = function(enc) {
  * @return {boolean}
  */
 vp8.syntax.VP8EncWrite = function(enc) {
+  var debugTimer = debug.startTimer('vp8.syntax.VP8EncWrite');
   var pic = enc.pic;
   var bw = enc.bw;
   var ok = false;
@@ -339,6 +340,7 @@ vp8.syntax.VP8EncWrite = function(enc) {
   if (debug.isEnabled()) {
     debug.dumpEncoderFull("VP8EncWrite.END", enc);
   }
+  debugTimer.report();
   return ok;
 };
 

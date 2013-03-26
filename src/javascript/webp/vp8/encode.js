@@ -294,6 +294,7 @@ vp8.encode.VP8MBInfo = function() {
  * @return {webp.vp8.encode.VP8Encoder}
  */
 vp8.encode.InitVP8Encoder = function(config, picture) {
+  var debugTimer = debug.startTimer('vp8.encode.InitVP8Encoder');
   var mbW = (picture.width + 15) >> 4;
   var mbH = (picture.height + 15) >> 4;
   var predsW = 4 * mbW + 1;
@@ -342,6 +343,7 @@ vp8.encode.InitVP8Encoder = function(config, picture) {
     debug.dumpEncoder('InitVP8Encoder.BBB', enc);
   }
 
+  debugTimer.report();
   return enc;
 };
 

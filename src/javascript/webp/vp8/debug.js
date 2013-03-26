@@ -302,4 +302,18 @@ debug.dumpModeScore = function(name, info) {
   }
 };
 
+debug.startTimer = function(name) {
+  return new debug.Timer_(name, goog.now());
+};
+
+/** @constructor */
+debug.Timer_ = function(name, startTime) {
+  this.name = name;
+  this.startTime = startTime;
+};
+
+debug.Timer_.prototype.report = function() {
+  debug.log(this.name + ' completed in ' + (goog.now() - this.startTime) + 'ms');
+};
+
 });

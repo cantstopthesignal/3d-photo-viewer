@@ -490,6 +490,7 @@ vp8.frame.ResetAfterSkip = function(it) {
  * @return {boolean}
  */
 vp8.frame.VP8EncLoop = function(enc) {
+  var debugTimer = debug.startTimer('vp8.frame.VP8EncLoop');
   var ok = 1;
   var it = new vp8.iterator.VP8EncIterator();
   var info = new vp8.encode.VP8ModeScore();
@@ -526,6 +527,7 @@ vp8.frame.VP8EncLoop = function(enc) {
   if (debug.isEnabled()) {
     debug.dumpEncoder("VP8EncLoop.END", enc);
   }
+  debugTimer.report();
   return !!ok;
 };
 
@@ -580,6 +582,7 @@ vp8.frame.OneStatPass = function(enc, q, nbMbs) {
  * @return {boolean}
  */
 vp8.frame.VP8StatLoop = function(enc) {
+  var debugTimer = debug.startTimer('vp8.frame.VP8StatLoop');
   var q = enc.config.quality;
   var taskPercent = 20;
 
@@ -599,6 +602,7 @@ vp8.frame.VP8StatLoop = function(enc) {
     debug.dumpEncoder("VP8StatLoop.END", enc);
   }
 
+  debugTimer.report();
   return result;
 }
 

@@ -38,6 +38,7 @@ var NUM_MB_SEGMENTS = constants.NUM_MB_SEGMENTS;
  * @return {boolean}
  */
 vp8.analysis.VP8EncAnalyze = function(enc) {
+  var debugTimer = debug.startTimer('vp8.analysis.VP8EncAnalyze');
   var alphas = new Int32Array(256);
   var it = new vp8.iterator.VP8EncIterator();
 
@@ -59,6 +60,7 @@ vp8.analysis.VP8EncAnalyze = function(enc) {
   if (debug.isEnabled()) {
     debug.dumpEncoder("VP8EncAnalyze.END", enc);
   }
+  debugTimer.report();
   return true;
 };
 
@@ -71,13 +73,20 @@ vp8.analysis.MAX_ITERS_K_MEANS = 6;
 vp8.analysis.MBAnalyze = function(it, alphas) {
   var enc = it.enc;
 
-  vp8.iterator.VP8SetIntra16Mode(it, 0);  // default: Intra16, DC_PRED
+  if (!enc.config.fastAndDirty) {
+    vp8.iterator.VP8SetIntra16Mode(it, 0);  // default: Intra16, DC_PRED
+  }
   vp8.iterator.VP8SetSkip(it, 0);         // not skipped
   vp8.iterator.VP8SetSegment(it, 0);      // default segment, spec-wise.
 
-  var bestAlpha = vp8.analysis.MBAnalyzeBestIntra16Mode(it);
-  bestAlpha = vp8.analysis.MBAnalyzeBestIntra4Mode(it, bestAlpha);
-  var bestUvAlpha = vp8.analysis.MBAnalyzeBestUVMode(it);
+  if (!enc.config.fastAndDirty) {
+    var bestAlpha = vp8.analysis.MBAnalyzeBestIntra16Mode(it);
+    bestAlpha = vp8.analysis.MBAnalyzeBestIntra4Mode(it, bestAlpha);
+    var bestUvAlpha = vp8.analysis.MBAnalyzeBestUVMode(it);
+  } else {
+    var bestAlpha = 0;
+    var bestUvAlpha = 0;
+  }
 
   // Final susceptibility mix
   bestAlpha = parseInt((bestAlpha + bestUvAlpha + 1) / 2, 10);
