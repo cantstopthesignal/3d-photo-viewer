@@ -25,8 +25,7 @@ pics3.ThreeDDisplayChooser = function(opt_selectedType) {
 
   /** @type {!pics3.ThreeDDisplayChooser.Entry_} */
   this.selectedEntry_ = /** @type {!pics3.ThreeDDisplayChooser.Entry_} */ (
-      goog.asserts.assertObject(this.getEntry_(
-          opt_selectedType || pics3.display.Type.THREE_D_CROSS)));
+      this.getEntryForInitialSelection_(opt_selectedType));
 };
 goog.inherits(pics3.ThreeDDisplayChooser, pics3.Component);
 
@@ -34,6 +33,9 @@ goog.inherits(pics3.ThreeDDisplayChooser, pics3.Component);
 pics3.ThreeDDisplayChooser.EventType = {
   CHANGED: goog.events.getUniqueId('changed')
 };
+
+pics3.ThreeDDisplayChooser.SELECTED_TYPE_KEY =
+    'pics3.ThreeDDisplayChooser.SELECTED_TYPE';
 
 /** @type {Element} */
 pics3.ThreeDDisplayChooser.prototype.underlay1El_;
@@ -98,8 +100,39 @@ pics3.ThreeDDisplayChooser.prototype.createEntries_ = function() {
       '/images/nvidia.svg'));
 };
 
+/** @return {boolean} Whether the display type was changed */
+pics3.ThreeDDisplayChooser.prototype.updateToMatchUserPreference = function() {
+  var prefType = window.localStorage[
+      pics3.ThreeDDisplayChooser.SELECTED_TYPE_KEY];
+  var entry = this.getEntry_(prefType);
+  if (entry && entry != this.selectedEntry_) {
+    this.selectedEntry_ = entry;
+    this.updateSelection_();
+    return true;
+  }
+  return false;
+};
+
+/** @return {!pics3.ThreeDDisplayChooser.Entry_} */
+pics3.ThreeDDisplayChooser.prototype.getEntryForInitialSelection_ = function(
+    opt_selectedType) {
+  var entry = this.getEntry_(opt_selectedType);
+  if (!entry) {
+    var prefType = window.localStorage[
+        pics3.ThreeDDisplayChooser.SELECTED_TYPE_KEY];
+    entry = this.getEntry_(prefType);
+  }
+  if (!entry) {
+    entry = goog.asserts.assertObject(
+        this.getEntry_(pics3.display.Type.THREE_D_CROSS));
+  }
+  return entry;
+};
+
 pics3.ThreeDDisplayChooser.prototype.handleEntryClick_ = function(entry) {
   this.selectedEntry_ = entry;
+  window.localStorage[pics3.ThreeDDisplayChooser.SELECTED_TYPE_KEY] =
+      this.selectedEntry_.type;
   this.updateSelection_();
   this.dispatchEvent(pics3.ThreeDDisplayChooser.EventType.CHANGED);
 };

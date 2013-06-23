@@ -225,8 +225,10 @@ pics3.AlbumView.prototype.displayPhotoByIndex_ = function(index) {
   if (!photoView.el) {
     photoView.render(this.el);
     photoView.start();
+    photoView.display();
   } else {
     this.el.appendChild(photoView.el);
+    photoView.display();
   }
   this.resizePhotoView_();
   this.updateNav_();

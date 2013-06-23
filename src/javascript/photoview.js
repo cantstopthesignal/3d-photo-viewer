@@ -83,6 +83,15 @@ pics3.PhotoView.prototype.start = function() {
       }, this).addBoth(this.updateDisplay_, this);
 };
 
+pics3.PhotoView.prototype.display = function() {
+  if (!this.displayChooser_.updateToMatchUserPreference()) {
+    return;  // No change made
+  }
+  if (this.display_ && this.photo_.stateIn(pics3.Photo.State.LOADED)) {
+    this.recreateDisplay_();
+  }
+};
+
 /** @param {pics3.loader.ProgressEvent} e */
 pics3.PhotoView.prototype.handlePhotoLoadProgress_ = function(e) {
   goog.style.setStyle(this.progress_.el, 'visibility', '');
