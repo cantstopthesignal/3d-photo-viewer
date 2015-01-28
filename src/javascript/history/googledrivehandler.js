@@ -15,6 +15,7 @@ goog.require('pics3.history.GoogleDriveFilesToken');
 goog.require('pics3.history.Handler');
 goog.require('pics3.history.Token');
 goog.require('pics3.loader.GoogleDriveFile');
+goog.require('pics3.loader.GoogleDriveFolder');
 
 
 /**
@@ -33,6 +34,9 @@ pics3.history.GoogleDriveHandler = function(appContext) {
 
   /** @type {!pics3.GoogleDriveApi} */
   this.googleDriveApi_ = pics3.GoogleDriveApi.get(this.appContext_);
+
+  /** @type {!pics3.MediaManager} */
+  this.mediaManager_ = pics3.MediaManager.get(this.appContext_);
 };
 goog.inherits(pics3.history.GoogleDriveHandler, pics3.history.Handler);
 
@@ -49,6 +53,8 @@ pics3.history.GoogleDriveHandler.prototype.processUri = function(uri) {
     return this.processStateUri_(uri);
   } else if (uri.getParameterValue(pics3.history.GoogleDriveFilesToken.PARAM)) {
     return pics3.history.GoogleDriveFilesToken.fromUri(uri);
+  } else if (uri.getParameterValue(pics3.history.GoogleDriveFolderAlbumToken.PARAM)) {
+    return pics3.history.GoogleDriveFolderAlbumToken.fromUri(uri);
   }
   return null;
 };
@@ -79,23 +85,47 @@ pics3.history.GoogleDriveHandler.prototype.processStateUri_ = function(uri) {
 
 /** @override */
 pics3.history.GoogleDriveHandler.prototype.handleToken = function(token) {
-  goog.asserts.assert(token instanceof pics3.history.GoogleDriveFilesToken);
-  var fileIds = token.getFileIds();
-  var currentFileId = token.getCurrentFileId();
-  this.logger_.info('Open ' + fileIds.length + ' files from Google Drive');
-  this.googleClient_.addRequiredScopes(
-      pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
-  this.googleClient_.getAuthDeferred().addCallback(function() {
-    this.googleDriveApi_.loadAsync().addCallback(function() {
-      var fileIdStrs = goog.array.map(fileIds, function(fileId) {
-        return fileId.id;
-      });
-      var loadFiles = this.googleDriveApi_.newLoadFiles(fileIdStrs).
-          setLoadMetadata(true);
-      loadFiles.load().addCallback(goog.partial(
-          this.openFilesWithMetadata_, currentFileId), this);
+  if (token instanceof pics3.history.GoogleDriveFilesToken) {
+    var fileIds = token.getFileIds();
+    var currentFileId = token.getCurrentFileId();
+    this.logger_.info('Open ' + fileIds.length + ' files from Google Drive');
+    this.googleClient_.addRequiredScopes(
+        pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
+    this.googleClient_.getAuthDeferred().addCallback(function() {
+      this.googleDriveApi_.loadAsync().addCallback(function() {
+        var fileIdStrs = goog.array.map(fileIds, function(fileId) {
+          return fileId.id;
+        });
+        var loadFiles = this.googleDriveApi_.newLoadFiles(fileIdStrs).
+            setLoadMetadata(true);
+        loadFiles.load().addCallback(goog.partial(
+            this.openFilesWithMetadata_, currentFileId), this);
+      }, this);
     }, this);
-  }, this);
+  } else if (token instanceof pics3.history.GoogleDriveFolderAlbumToken) {
+    this.logger_.info('Open folder from Google Drive');
+    this.googleClient_.addRequiredScopes(
+        pics3.GoogleClient.GOOGLE_DRIVE_SCOPES);
+    this.googleClient_.getAuthDeferred().addCallback(function() {
+      this.googleDriveApi_.loadAsync().addCallback(function() {
+        var albumId = token.getAlbumId();
+        var photoId = token.getPhotoId();
+        var album = this.mediaManager_.getAlbumById(albumId);
+        if (!album) {
+          var loader = new pics3.loader.GoogleDriveFolder(this.appContext_, albumId);
+          album = new pics3.Album(albumId, loader);
+          this.mediaManager_.addAllAlbums([album]);
+        }
+        if (photoId) {
+          this.mediaManager_.openPhoto(album, photoId);
+        } else {
+          this.mediaManager_.openAlbum(album);
+        }
+      }, this);
+    }, this);
+  } else {
+    goog.asserts.fail('Unexpected token type: ' + token);
+  }
 };
 
 /**
@@ -121,13 +151,12 @@ pics3.history.GoogleDriveHandler.prototype.openFilesWithMetadata_ = function(
     }
   }, this);
 
-  var mediaManager = pics3.MediaManager.get(this.appContext_);
-  var album = mediaManager.getSourceAlbum(
+  var album = this.mediaManager_.getSourceAlbum(
       pics3.MediaManager.Source.GOOGLE_DRIVE);
   album.addAll(photos);
   if (currentFileId) {
-    mediaManager.openPhoto(album, currentFileId);
+    this.mediaManager_.openPhoto(album, currentFileId);
   } else {
-    mediaManager.openAlbum(album);
+    this.mediaManager_.openAlbum(album);
   }
 };

@@ -8,6 +8,7 @@ goog.require('goog.dom');
 goog.require('goog.dom.classes');
 goog.require('pics3.Album');
 goog.require('pics3.GoogleClient');
+goog.require('pics3.GoogleDriveFolderAlbumId');
 goog.require('pics3.GooglePickerClient');
 goog.require('pics3.MediaManager');
 goog.require('pics3.source.Tile');
@@ -20,7 +21,7 @@ goog.require('pics3.source.Tile');
  * @extends {pics3.source.Tile}
  */
 pics3.source.AlbumTile = function(appContext, album) {
-  goog.base(this, appContext, 'google-plus-logo');
+  goog.base(this, appContext, pics3.source.AlbumTile.getAlbumIconClassName_(album));
 
   /** @type {!pics3.Album} */
   this.album = album;
@@ -29,6 +30,18 @@ pics3.source.AlbumTile = function(appContext, album) {
       this.handleAlbumStateChange_);
 };
 goog.inherits(pics3.source.AlbumTile, pics3.source.Tile);
+
+/**
+ * @param {!pics3.Album} album
+ * @return {string}
+ */
+pics3.source.AlbumTile.getAlbumIconClassName_ = function(album) {
+  if (album.getAlbumId() instanceof pics3.GoogleDriveFolderAlbumId) {
+    return 'google-drive-logo';
+  } else {
+    return 'google-plus-logo';
+  }
+};
 
 pics3.source.AlbumTile.prototype.handleAlbumStateChange_ = function() {
   if (this.album.getState() == pics3.Album.State.LOADING) {

@@ -8,6 +8,8 @@ goog.require('goog.events.Event');
 goog.require('goog.events.EventTarget');
 goog.require('pics3.Album');
 goog.require('pics3.Service');
+goog.require('pics3.history.PicasaAlbumToken');
+goog.require('pics3.history.GoogleDriveFolderAlbumToken');
 
 
 /**
@@ -127,9 +129,15 @@ pics3.MediaManager.prototype.getHistoryTokenForAlbum = function(album,
     opt_photoId) {
   var albumId = album.getAlbumId();
   if (albumId) {
-    goog.asserts.assert(albumId instanceof pics3.PicasaAlbumId);
-    return new pics3.history.PicasaAlbumToken(
-        /** @type {!pics3.PicasaAlbumId} */ (albumId), opt_photoId);
+    if (albumId instanceof pics3.PicasaAlbumId) {
+      return new pics3.history.PicasaAlbumToken(
+          /** @type {!pics3.PicasaAlbumId} */ (albumId), opt_photoId);
+    } else if (albumId instanceof pics3.GoogleDriveFolderAlbumId) {
+      return new pics3.history.GoogleDriveFolderAlbumToken(
+          /** @type {!pics3.GoogleDriveFolderAlbumId} */ (albumId), opt_photoId);
+    } else {
+      goog.asserts.fail('Unexpected album id type: ' + albumId);
+    }
   }
   if (album == this.getSourceAlbum(pics3.MediaManager.Source.GOOGLE_DRIVE)) {
     return new pics3.history.GoogleDriveFilesToken(album.getPhotoIds(),

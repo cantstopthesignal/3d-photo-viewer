@@ -22,7 +22,8 @@ goog.require('pics3.source.Tile');
 pics3.source.GoogleDriveTile = function(appContext) {
   goog.base(this, appContext, 'google-drive-logo');
 
-  var mediaManager = pics3.MediaManager.get(this.appContext);
+  /** @type {!pics3.MediaManager} */
+  this.mediaManager_ = pics3.MediaManager.get(this.appContext);
 
   /** @type {!pics3.GoogleClient} */
   this.googleClient_ = pics3.GoogleClient.get(this.appContext);
@@ -30,7 +31,7 @@ pics3.source.GoogleDriveTile = function(appContext) {
   /** @type {!pics3.GooglePickerClient} */
   this.pickerClient_ = pics3.GooglePickerClient.get(this.appContext);
 
-  this.album = mediaManager.getSourceAlbum(
+  this.album = this.mediaManager_.getSourceAlbum(
       pics3.MediaManager.Source.GOOGLE_DRIVE);
 };
 goog.inherits(pics3.source.GoogleDriveTile, pics3.source.ButtonTile);
@@ -68,6 +69,13 @@ pics3.source.GoogleDriveTile.prototype.displayPicker_ = function() {
 pics3.source.GoogleDriveTile.prototype.handlePickerPick_ = function(e) {
   var photos = e.result.getPhotos();
   this.album.addAll(photos);
+  var albums = e.result.getAlbums();
+  if (albums.length) {
+    this.mediaManager_.addAllAlbums(albums);
+    var firstAlbum = this.mediaManager_.getAlbumById(albums[0].getAlbumId());
+    goog.asserts.assert(firstAlbum);
+    this.mediaManager_.openAlbum(firstAlbum);
+  }
   if (photos.length) {
     this.select();
   }

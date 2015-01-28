@@ -13,10 +13,12 @@ goog.require('goog.events.EventType');
 goog.require('goog.json');
 goog.require('pics3.Dialog');
 goog.require('pics3.GoogleClient');
+goog.require('pics3.GoogleDriveFolderAlbumId');
 goog.require('pics3.Photo');
 goog.require('pics3.PhotoId');
 goog.require('pics3.PicasaAlbumId');
 goog.require('pics3.loader.GoogleDriveFile');
+goog.require('pics3.loader.GoogleDriveFolder');
 goog.require('pics3.loader.PicasaAlbum');
 goog.require('pics3.loader.PicasaPhoto');
 goog.require('pics3.util');
@@ -176,6 +178,7 @@ pics3.GooglePickerClient.PickerBuilder.prototype.build = function() {
   if (this.mode_ == Mode.ALL || this.mode_ == Mode.GOOGLE_DRIVE) {
     var docsView = pics3.util.createNamedObject('google.picker.DocsView');
     docsView['setIncludeFolders'](true);
+    docsView['setSelectFolderEnabled'](true);
     docsView['setMimeTypes'](mimeTypes);
     this.builder_['addView'](docsView);
   }
@@ -279,15 +282,22 @@ pics3.GooglePickerClient.PickerResult.prototype.parseResults_ = function() {
           parseInt(thumbnailObject['height'], 10), thumbnailObject['url']);
     });
     if (serviceId == 'docs') {
-      var loader = new pics3.loader.GoogleDriveFile(this.appContext_, id,
-          mimeType, name);
-      if (pics3.photoMimeType.isSupported(mimeType)) {
-        var photo = new pics3.Photo(this.appContext_,
-            new pics3.PhotoId(id), loader);
-        photo.addThumbnails(thumbnails);
-        this.photos_.push(photo);
+      if (mimeType == 'application/vnd.google-apps.folder') {
+        var albumId = pics3.GoogleDriveFolderAlbumId.fromId(id);
+        var loader = new pics3.loader.GoogleDriveFolder(this.appContext_,
+            albumId, name);
+        this.albums_.push(new pics3.Album(albumId, loader));
       } else {
-        this.logger_.warning('Unsupported docs MimeType picked: ' + mimeType);
+        var loader = new pics3.loader.GoogleDriveFile(this.appContext_, id,
+            mimeType, name);
+        if (pics3.photoMimeType.isSupported(mimeType)) {
+          var photo = new pics3.Photo(this.appContext_,
+              new pics3.PhotoId(id), loader);
+          photo.addThumbnails(thumbnails);
+          this.photos_.push(photo);
+        } else {
+          this.logger_.warning('Unsupported docs MimeType picked: ' + mimeType);
+        }
       }
     } else if (serviceId == 'picasa') {
       var url = goog.asserts.assertString(item['url']);

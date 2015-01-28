@@ -102,6 +102,24 @@ pics3.GoogleDriveApi.prototype.newLoadFiles = function(fileIds) {
 };
 
 /**
+ * @param {string} folderId
+ * @return {goog.async.Deferred} producing {Object}
+ */
+pics3.GoogleDriveApi.prototype.loadFolder = function(folderId) {
+  var params = {
+    'folderId': folderId,
+    'maxResults': 1000
+  };
+  var callback = function(resp) {
+    goog.asserts.assert(resp['kind'] == 'drive#childList');
+    this.logger_.info('Folder children loaded: ' + resp['items'].length
+        + ' children');
+  };
+  return this.callApi_('drive.children.list', 'v2', params).
+      addCallback(callback, this);
+};
+
+/**
  * @param {string} fileId
  * @return {goog.async.Deferred} producing {Object}
  */
