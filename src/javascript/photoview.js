@@ -12,6 +12,7 @@ goog.require('pics3.Photo');
 goog.require('pics3.PhotoMimeType');
 goog.require('pics3.ProgressIndicator');
 goog.require('pics3.ThreeDDisplayChooser');
+goog.require('pics3.display.ThreeDAnaglyph');
 goog.require('pics3.display.ThreeDCross');
 goog.require('pics3.display.ThreeDNvidia');
 goog.require('pics3.display.ThreeDSingleImage');
@@ -141,6 +142,9 @@ pics3.PhotoView.prototype.createDisplay_ = function() {
         break;
       case pics3.display.Type.THREE_D_WOBBLE:
         this.display_ = new pics3.display.ThreeDWobble(this.photo_);
+        break;
+      case pics3.display.Type.THREE_D_ANAGLYPH:
+        this.display_ = new pics3.display.ThreeDAnaglyph(this.photo_);
         break;
       default:
         goog.asserts.fail('Unexpected display type: ' + type);

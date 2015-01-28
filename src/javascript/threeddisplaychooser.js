@@ -96,6 +96,9 @@ pics3.ThreeDDisplayChooser.prototype.createEntries_ = function() {
   this.entries_.push(new pics3.ThreeDDisplayChooser.Entry_(
       pics3.display.Type.THREE_D_WOBBLE, 'Wobble', '/images/wobble.svg'));
   this.entries_.push(new pics3.ThreeDDisplayChooser.Entry_(
+      pics3.display.Type.THREE_D_ANAGLYPH, 'Anaglyph',
+      '/images/anaglyph.svg'));
+  this.entries_.push(new pics3.ThreeDDisplayChooser.Entry_(
       pics3.display.Type.THREE_D_NVIDIA, 'Nvidia 3D Vision',
       '/images/nvidia.svg'));
 };
