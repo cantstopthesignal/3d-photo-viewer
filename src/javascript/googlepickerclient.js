@@ -92,37 +92,14 @@ pics3.GooglePickerClient.prototype.newPickerBuilder = function() {
   goog.asserts.assert(this.loadDeferred_.hasFired());
   var pickerBuilder = new pics3.GooglePickerClient.PickerBuilder(
       this.appContext_);
-  // TODO: Setting the auth token causes album picker view to fail.
-  // pickerBuilder.setOAuthToken(this.googleClient_.getOAuthToken());
+  pickerBuilder.setOAuthToken(this.googleClient_.getOAuthToken());
+  pickerBuilder.setDeveloperKey(pics3.GoogleClient.GAPI_API_KEY);
   return pickerBuilder;
 };
 
 pics3.GooglePickerClient.prototype.loadGoogleLoaderAndPicker_ = function() {
-  if (goog.getObjectByName('google.load') &&
-      goog.getObjectByName('google.picker.PickerBuilder')) {
-    this.logger_.info('loadGoogleLoaderAndPicker_ already present');
-    this.handleGoogleJsapiLoad_();
-    return;
-  }
-  var callbackName = 'callback_' + goog.getUid(this);
-  goog.exportSymbol(callbackName,
+  this.googleClient_.loadApi('picker',
       goog.bind(this.handleGoogleJsapiLoad_, this));
-  var moduleObject = {
-    'modules': [
-      {
-        'name': 'picker',
-        'version': '1',
-        'callback': callbackName
-      }
-    ]
-  };
-  var moduleString = goog.json.serialize(moduleObject);
-  var scriptEl = document.createElement("script");
-  scriptEl.async = true;
-  scriptEl.type = "text/javascript";
-  scriptEl.src = "https://www.google.com/jsapi?autoload=" +
-      encodeURIComponent(moduleString);
-  document.body.appendChild(scriptEl);
 };
 
 pics3.GooglePickerClient.prototype.handleGoogleJsapiLoad_ = function() {
@@ -174,6 +151,12 @@ pics3.GooglePickerClient.PickerBuilder.prototype.handleCallback_ = function(
 pics3.GooglePickerClient.PickerBuilder.prototype.setOAuthToken = function(
     token) {
   this.builder_['setOAuthToken'](token);
+  return this;
+};
+
+pics3.GooglePickerClient.PickerBuilder.prototype.setDeveloperKey = function(
+    key) {
+  this.builder_['setDeveloperKey'](key);
   return this;
 };
 

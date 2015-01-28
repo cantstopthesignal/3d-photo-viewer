@@ -34,9 +34,10 @@ goog.inherits(pics3.GoogleClient, goog.events.EventTarget);
 
 pics3.GoogleClient.SERVICE_ID = 's' + goog.getUid(pics3.GoogleClient);
 
-pics3.GoogleClient.GAPI_API_KEY = 'AIzaSyA7jCmXxuW-fZk1_OZGJ2HRwVY2z1vGDhQ';
+pics3.GoogleClient.GAPI_API_KEY = 'AIzaSyAUVDvZqeqZ-nLSsNwMaDa-IMiC1nlcNR8';
 
-pics3.GoogleClient.GAPI_CLIENT_ID = '416949524888.apps.googleusercontent.com';
+pics3.GoogleClient.GAPI_CLIENT_ID = '343773111594-4kotb1ultd6uh83lh91a0he0pbtuhnic.apps' +
+    '.googleusercontent.com';
 
 /** @type {!pics3.GoogleClientScopes} */
 pics3.GoogleClient.GOOGLE_DRIVE_SCOPES = new pics3.GoogleClientScopes([
@@ -46,6 +47,7 @@ pics3.GoogleClient.GOOGLE_DRIVE_SCOPES = new pics3.GoogleClientScopes([
 
 /** @type {!pics3.GoogleClientScopes} */
 pics3.GoogleClient.PICASA_SCOPES = new pics3.GoogleClientScopes([
+    'https://www.googleapis.com/auth/photos',
     'https://picasaweb.google.com/data/'
     ]);
 
@@ -135,6 +137,14 @@ pics3.GoogleClient.prototype.getOAuthToken = function() {
   return token ? token['access_token'] || null : null;
 };
 
+pics3.GoogleClient.prototype.loadApi = function(apiName, callback) {
+  this.loadAsync().addCallback(function() {
+    goog.getObjectByName('gapi.load')(apiName, {
+      'callback': callback
+    });
+  });
+};
+
 pics3.GoogleClient.prototype.loadGapiJavascriptClientAndAuth_ = function() {
   if (goog.getObjectByName('gapi.client') &&
       goog.getObjectByName('gapi.auth')) {
@@ -195,7 +205,7 @@ pics3.GoogleClient.prototype.fullAuth_ = function() {
 
 pics3.GoogleClient.prototype.handleAuthResult_ = function(checkedScopes,
     authResult) {
-  if (authResult) {
+  if (authResult && 'access_token' in authResult) {
     this.logger_.info('handleAuthResult_: authorized');
     this.setAuthRefreshTimer_(parseInt(authResult['expires_in'], 10));
   } else {
@@ -207,7 +217,7 @@ pics3.GoogleClient.prototype.handleAuthResult_ = function(checkedScopes,
   if (this.authDeferred_.hasFired()) {
     return;
   }
-  if (!authResult) {
+  if (!(authResult  && 'access_token' in authResult)) {
     if (!this.requiredScopes_.isEmpty()) {
       if (!this.requiredScopes_.equals(checkedScopes)) {
         // It's possible that checked scopes was too broad, try again
